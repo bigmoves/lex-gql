@@ -1,10 +1,30 @@
 {
   "name": "lex-gql",
   "version": "0.1.0",
+  "description": "Generate a complete GraphQL API from AT Protocol lexicons",
   "license": "MIT",
   "type": "module",
   "main": "lex-gql.js",
   "types": "lex-gql.d.ts",
+  "files": [
+    "lex-gql.js",
+    "lex-gql.d.ts"
+  ],
+  "keywords": [
+    "graphql",
+    "atproto",
+    "at-protocol",
+    "bluesky",
+    "lexicon"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bigmoves/lex-gql.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bigmoves/lex-gql/issues"
+  },
+  "homepage": "https://github.com/bigmoves/lex-gql#readme",
   "peerDependencies": {
     "graphql": "^16.0.0"
   },
