@@ -2,7 +2,7 @@
 
 GraphQL for AT Protocol. Generate a complete GraphQL API from AT Protocol lexicons.
 
-> **Work in Progress** - This project is under active development. APIs may change and there are probably bugs.
+> ⚠️ **Experimental** ⚠️ - This project is under active development. APIs may change and there are probably bugs.
 
 ```javascript
 import { parseLexicon, createAdapter } from 'lex-gql';
