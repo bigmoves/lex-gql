@@ -1,0 +1,5487 @@
+"""
+Order aggregation results by count
+"""
+input AggregationOrderBy {
+  """
+  Order by count (asc or desc)
+  """
+  count: SortDirection
+}
+
+"""
+Record type: app.bsky.actor.profile
+"""
+type AppBskyActorProfile {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  avatar: Blob
+
+  """
+  Field from lexicon
+  """
+  banner: Blob
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  description: String
+
+  """
+  Field from lexicon
+  """
+  displayName: String
+
+  """
+  Field from lexicon
+  """
+  joinedViaStarterPack: ComAtprotoRepoStrongRef
+
+  """
+  Field from lexicon
+  """
+  labels: AppBskyActorProfileLabels
+
+  """
+  Field from lexicon
+  """
+  pinnedPost: ComAtprotoRepoStrongRef
+
+  """
+  Field from lexicon
+  """
+  pronouns: String
+
+  """
+  Field from lexicon
+  """
+  website: String
+
+  """
+  Forward join to referenced record
+  """
+  pinnedPostResolved: Record
+
+  """
+  Forward join to referenced record
+  """
+  joinedViaStarterPackResolved: Record
+
+  """
+  Reverse join: records in app.bsky.feed.threadgate that reference this record via post
+  """
+  appBskyFeedThreadgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  Reverse join: records in app.bsky.feed.postgate that reference this record via post
+  """
+  appBskyFeedPostgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  Reverse join: records in app.bsky.graph.follow that reference this record via via
+  """
+  appBskyGraphFollowViaVia(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.graph.follow that share the same DID as this record
+  """
+  appBskyGraphFollowByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.feed.postgate that share the same DID as this record
+  """
+  appBskyFeedPostgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  DID join: records in app.bsky.feed.threadgate that share the same DID as this record
+  """
+  appBskyFeedThreadgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  DID join: records in app.bsky.feed.post that share the same DID as this record
+  """
+  appBskyFeedPostByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostWhereInput
+  ): AppBskyFeedPostConnection
+
+  """
+  Viewer's app.bsky.feed.threadgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedThreadgateViaPost: AppBskyFeedThreadgate
+
+  """
+  Viewer's app.bsky.feed.postgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedPostgateViaPost: AppBskyFeedPostgate
+
+  """
+  Viewer's app.bsky.graph.follow record referencing this via via (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaVia: AppBskyGraphFollow
+
+  """
+  Viewer's app.bsky.graph.follow record where subject matches this record's DID (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaSubject: AppBskyGraphFollow
+}
+
+"""
+Aggregated results for app.bsky.actor.profile
+"""
+type AppBskyActorProfileAggregated {
+  """
+  Grouped field value
+  """
+  uri: String
+
+  """
+  Grouped field value
+  """
+  cid: String
+
+  """
+  Grouped field value
+  """
+  did: String
+
+  """
+  Grouped field value
+  """
+  collection: String
+
+  """
+  Grouped field value
+  """
+  indexed_at: String
+
+  """
+  Grouped field value
+  """
+  avatar: String
+
+  """
+  Grouped field value
+  """
+  banner: String
+
+  """
+  Grouped field value
+  """
+  createdAt: String
+
+  """
+  Grouped field value
+  """
+  description: String
+
+  """
+  Grouped field value
+  """
+  displayName: String
+
+  """
+  Grouped field value
+  """
+  joinedViaStarterPack: String
+
+  """
+  Grouped field value
+  """
+  labels: String
+
+  """
+  Grouped field value
+  """
+  pinnedPost: String
+
+  """
+  Grouped field value
+  """
+  pronouns: String
+
+  """
+  Grouped field value
+  """
+  website: String
+
+  """
+  Count of records in this group
+  """
+  count: Int!
+}
+
+"""
+A connection to a list of items for AppBskyActorProfile
+"""
+type AppBskyActorProfileConnection {
+  """
+  A list of edges
+  """
+  edges: [AppBskyActorProfileEdge!]!
+
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items in the connection
+  """
+  totalCount: Int
+}
+
+"""
+An edge in a connection for AppBskyActorProfile
+"""
+type AppBskyActorProfileEdge {
+  """
+  The item at the end of the edge
+  """
+  node: AppBskyActorProfile!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+"""
+Filter operators for AppBskyActorProfile fields
+"""
+input AppBskyActorProfileFieldCondition {
+  """
+  Exact match (equals)
+  """
+  eq: String
+
+  """
+  Match any value in the list
+  """
+  in: [String!]
+
+  """
+  Case-insensitive substring match (string fields only)
+  """
+  contains: String
+
+  """
+  Greater than
+  """
+  gt: String
+
+  """
+  Greater than or equal to
+  """
+  gte: String
+
+  """
+  Less than
+  """
+  lt: String
+
+  """
+  Less than or equal to
+  """
+  lte: String
+
+  """
+  Filter for null or missing values (true) or non-null values (false)
+  """
+  isNull: Boolean
+}
+
+"""
+Available groupBy fields for AppBskyActorProfile
+"""
+enum AppBskyActorProfileGroupByField {
+  """
+  Group by uri
+  """
+  uri
+
+  """
+  Group by cid
+  """
+  cid
+
+  """
+  Group by did
+  """
+  did
+
+  """
+  Group by collection
+  """
+  collection
+
+  """
+  Group by indexedAt
+  """
+  indexedAt
+
+  """
+  Group by actorHandle
+  """
+  actorHandle
+
+  """
+  Group by createdAt
+  """
+  createdAt
+
+  """
+  Group by description
+  """
+  description
+
+  """
+  Group by displayName
+  """
+  displayName
+
+  """
+  Group by labels
+  """
+  labels
+
+  """
+  Group by pronouns
+  """
+  pronouns
+
+  """
+  Group by website
+  """
+  website
+}
+
+"""
+Specifies a field to group by with optional date truncation
+"""
+input AppBskyActorProfileGroupByFieldInput {
+  """
+  Field name to group by
+  """
+  field: AppBskyActorProfileGroupByField!
+
+  """
+  Date truncation interval (for datetime fields)
+  """
+  interval: DateInterval
+}
+
+"""
+Input type for AppBskyActorProfileInput
+"""
+input AppBskyActorProfileInput {
+  """
+  Input field for avatar
+  """
+  avatar: BlobInput
+
+  """
+  Input field for banner
+  """
+  banner: BlobInput
+
+  """
+  Input field for createdAt
+  """
+  createdAt: String
+
+  """
+  Input field for description
+  """
+  description: String
+
+  """
+  Input field for displayName
+  """
+  displayName: String
+
+  """
+  Input field for joinedViaStarterPack
+  """
+  joinedViaStarterPack: String
+
+  """
+  Input field for labels
+  """
+  labels: String
+
+  """
+  Input field for pinnedPost
+  """
+  pinnedPost: String
+
+  """
+  Input field for pronouns
+  """
+  pronouns: String
+
+  """
+  Input field for website
+  """
+  website: String
+}
+
+union AppBskyActorProfileLabels = ComAtprotoLabelDefsSelfLabels
+
+"""
+Filter for AppBskyActorProfile reference fields (presence check only)
+"""
+input AppBskyActorProfileRefFieldCondition {
+  """
+  Filter for null (true) or non-null (false) values
+  """
+  isNull: Boolean
+}
+
+"""
+Available sort fields for AppBskyActorProfile
+"""
+enum AppBskyActorProfileSortField {
+  """
+  Sort by uri
+  """
+  uri
+
+  """
+  Sort by cid
+  """
+  cid
+
+  """
+  Sort by did
+  """
+  did
+
+  """
+  Sort by collection
+  """
+  collection
+
+  """
+  Sort by indexedAt
+  """
+  indexedAt
+
+  """
+  Sort by createdAt
+  """
+  createdAt
+
+  """
+  Sort by description
+  """
+  description
+
+  """
+  Sort by displayName
+  """
+  displayName
+
+  """
+  Sort by labels
+  """
+  labels
+
+  """
+  Sort by pronouns
+  """
+  pronouns
+
+  """
+  Sort by website
+  """
+  website
+}
+
+"""
+Specifies a field to sort by and its direction for AppBskyActorProfile
+"""
+input AppBskyActorProfileSortFieldInput {
+  """
+  Field to sort by
+  """
+  field: AppBskyActorProfileSortField!
+
+  """
+  Sort direction (ASC or DESC)
+  """
+  direction: SortDirection!
+}
+
+"""
+Filter conditions for AppBskyActorProfile with nested AND/OR support
+"""
+input AppBskyActorProfileWhereInput {
+  """
+  Filter by uri
+  """
+  uri: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by cid
+  """
+  cid: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by did
+  """
+  did: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by collection
+  """
+  collection: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by indexedAt
+  """
+  indexedAt: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by actorHandle
+  """
+  actorHandle: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by createdAt
+  """
+  createdAt: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by description
+  """
+  description: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by displayName
+  """
+  displayName: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by joinedViaStarterPack
+  """
+  joinedViaStarterPack: AppBskyActorProfileRefFieldCondition
+
+  """
+  Filter by labels
+  """
+  labels: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by pinnedPost
+  """
+  pinnedPost: AppBskyActorProfileRefFieldCondition
+
+  """
+  Filter by pronouns
+  """
+  pronouns: AppBskyActorProfileFieldCondition
+
+  """
+  Filter by website
+  """
+  website: AppBskyActorProfileFieldCondition
+
+  """
+  All conditions must match (AND logic)
+  """
+  and: [AppBskyActorProfileWhereInput!]
+
+  """
+  Any condition must match (OR logic)
+  """
+  or: [AppBskyActorProfileWhereInput!]
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedDefsAspectRatio {
+  """
+  Field from object definition
+  """
+  height: Int!
+
+  """
+  Field from object definition
+  """
+  width: Int!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedExternal {
+  """
+  Field from object definition
+  """
+  external: AppBskyEmbedExternalExternal!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedExternalExternal {
+  """
+  Field from object definition
+  """
+  description: String!
+
+  """
+  Field from object definition
+  """
+  thumb: Blob
+
+  """
+  Field from object definition
+  """
+  title: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedImages {
+  """
+  Field from object definition
+  """
+  images: [AppBskyEmbedImagesImage!]!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedImagesImage {
+  """
+  Field from object definition
+  """
+  alt: String!
+
+  """
+  Field from object definition
+  """
+  aspectRatio: AppBskyEmbedDefsAspectRatio
+
+  """
+  Field from object definition
+  """
+  image: Blob!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedRecord {
+  """
+  Field from object definition
+  """
+  record: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedRecordWithMedia {
+  """
+  Field from object definition
+  """
+  media: String!
+
+  """
+  Field from object definition
+  """
+  record: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedVideo {
+  """
+  Field from object definition
+  """
+  alt: String
+
+  """
+  Field from object definition
+  """
+  aspectRatio: AppBskyEmbedDefsAspectRatio
+
+  """
+  Field from object definition
+  """
+  captions: [AppBskyEmbedVideoCaption!]
+
+  """
+  Field from object definition
+  """
+  video: Blob!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyEmbedVideoCaption {
+  """
+  Field from object definition
+  """
+  file: Blob!
+
+  """
+  Field from object definition
+  """
+  lang: String!
+}
+
+"""
+Record type: app.bsky.feed.post
+"""
+type AppBskyFeedPost {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  embed: AppBskyFeedPostEmbed
+
+  """
+  Field from lexicon
+  """
+  entities: [AppBskyFeedPostEntity!]
+
+  """
+  Field from lexicon
+  """
+  facets: [AppBskyRichtextFacet!]
+
+  """
+  Labels applied to this record (self-labels and moderator labels)
+  """
+  labels: [Label!]!
+
+  """
+  Field from lexicon
+  """
+  langs: [String!]
+
+  """
+  Field from lexicon
+  """
+  reply: AppBskyFeedPostReplyRef
+
+  """
+  Field from lexicon
+  """
+  tags: [String!]
+
+  """
+  Field from lexicon
+  """
+  text: String
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.feed.threadgate that reference this record via post
+  """
+  appBskyFeedThreadgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  Reverse join: records in app.bsky.feed.postgate that reference this record via post
+  """
+  appBskyFeedPostgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  Reverse join: records in app.bsky.graph.follow that reference this record via via
+  """
+  appBskyGraphFollowViaVia(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.graph.follow that share the same DID as this record
+  """
+  appBskyGraphFollowByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.feed.postgate that share the same DID as this record
+  """
+  appBskyFeedPostgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  DID join: records in app.bsky.feed.threadgate that share the same DID as this record
+  """
+  appBskyFeedThreadgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  DID join: record in app.bsky.actor.profile that shares the same DID as this record
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via joinedViaStarterPack (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaJoinedViaStarterPack: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via pinnedPost (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaPinnedPost: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.feed.threadgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedThreadgateViaPost: AppBskyFeedThreadgate
+
+  """
+  Viewer's app.bsky.feed.postgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedPostgateViaPost: AppBskyFeedPostgate
+
+  """
+  Viewer's app.bsky.graph.follow record referencing this via via (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaVia: AppBskyGraphFollow
+
+  """
+  Viewer's app.bsky.graph.follow record where subject matches this record's DID (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaSubject: AppBskyGraphFollow
+}
+
+"""
+Aggregated results for app.bsky.feed.post
+"""
+type AppBskyFeedPostAggregated {
+  """
+  Grouped field value
+  """
+  uri: String
+
+  """
+  Grouped field value
+  """
+  cid: String
+
+  """
+  Grouped field value
+  """
+  did: String
+
+  """
+  Grouped field value
+  """
+  collection: String
+
+  """
+  Grouped field value
+  """
+  indexed_at: String
+
+  """
+  Grouped field value
+  """
+  createdAt: String
+
+  """
+  Grouped field value
+  """
+  embed: String
+
+  """
+  Grouped field value
+  """
+  entities: String
+
+  """
+  Grouped field value
+  """
+  facets: String
+
+  """
+  Grouped field value
+  """
+  labels: String
+
+  """
+  Grouped field value
+  """
+  langs: String
+
+  """
+  Grouped field value
+  """
+  reply: String
+
+  """
+  Grouped field value
+  """
+  tags: String
+
+  """
+  Grouped field value
+  """
+  text: String
+
+  """
+  Count of records in this group
+  """
+  count: Int!
+}
+
+"""
+A connection to a list of items for AppBskyFeedPost
+"""
+type AppBskyFeedPostConnection {
+  """
+  A list of edges
+  """
+  edges: [AppBskyFeedPostEdge!]!
+
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items in the connection
+  """
+  totalCount: Int
+}
+
+"""
+An edge in a connection for AppBskyFeedPost
+"""
+type AppBskyFeedPostEdge {
+  """
+  The item at the end of the edge
+  """
+  node: AppBskyFeedPost!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+union AppBskyFeedPostEmbed =
+  | AppBskyEmbedImages
+  | AppBskyEmbedVideo
+  | AppBskyEmbedExternal
+  | AppBskyEmbedRecord
+  | AppBskyEmbedRecordWithMedia
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedPostEntity {
+  """
+  Field from object definition
+  """
+  index: String!
+
+  """
+  Field from object definition
+  """
+  type: String!
+
+  """
+  Field from object definition
+  """
+  value: String!
+}
+
+"""
+Filter operators for AppBskyFeedPost fields
+"""
+input AppBskyFeedPostFieldCondition {
+  """
+  Exact match (equals)
+  """
+  eq: String
+
+  """
+  Match any value in the list
+  """
+  in: [String!]
+
+  """
+  Case-insensitive substring match (string fields only)
+  """
+  contains: String
+
+  """
+  Greater than
+  """
+  gt: String
+
+  """
+  Greater than or equal to
+  """
+  gte: String
+
+  """
+  Less than
+  """
+  lt: String
+
+  """
+  Less than or equal to
+  """
+  lte: String
+
+  """
+  Filter for null or missing values (true) or non-null values (false)
+  """
+  isNull: Boolean
+}
+
+"""
+Record type: app.bsky.feed.postgate
+"""
+type AppBskyFeedPostgate {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  detachedEmbeddingUris: [String!]
+
+  """
+  Field from lexicon
+  """
+  embeddingRules: [AppBskyFeedPostgateEmbeddingRulesUnion!]
+
+  """
+  Field from lexicon
+  """
+  post: String
+
+  """
+  Forward join to referenced record
+  """
+  postResolved: Record
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.feed.threadgate that reference this record via post
+  """
+  appBskyFeedThreadgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  Reverse join: records in app.bsky.graph.follow that reference this record via via
+  """
+  appBskyGraphFollowViaVia(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.graph.follow that share the same DID as this record
+  """
+  appBskyGraphFollowByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.feed.threadgate that share the same DID as this record
+  """
+  appBskyFeedThreadgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  DID join: records in app.bsky.feed.post that share the same DID as this record
+  """
+  appBskyFeedPostByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostWhereInput
+  ): AppBskyFeedPostConnection
+
+  """
+  DID join: record in app.bsky.actor.profile that shares the same DID as this record
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via joinedViaStarterPack (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaJoinedViaStarterPack: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via pinnedPost (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaPinnedPost: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.feed.threadgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedThreadgateViaPost: AppBskyFeedThreadgate
+
+  """
+  Viewer's app.bsky.graph.follow record referencing this via via (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaVia: AppBskyGraphFollow
+
+  """
+  Viewer's app.bsky.graph.follow record where subject matches this record's DID (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaSubject: AppBskyGraphFollow
+
+  """
+  Moderation labels applied to this record
+  """
+  labels: [Label!]!
+}
+
+"""
+Aggregated results for app.bsky.feed.postgate
+"""
+type AppBskyFeedPostgateAggregated {
+  """
+  Grouped field value
+  """
+  uri: String
+
+  """
+  Grouped field value
+  """
+  cid: String
+
+  """
+  Grouped field value
+  """
+  did: String
+
+  """
+  Grouped field value
+  """
+  collection: String
+
+  """
+  Grouped field value
+  """
+  indexed_at: String
+
+  """
+  Grouped field value
+  """
+  createdAt: String
+
+  """
+  Grouped field value
+  """
+  detachedEmbeddingUris: String
+
+  """
+  Grouped field value
+  """
+  embeddingRules: String
+
+  """
+  Grouped field value
+  """
+  post: String
+
+  """
+  Count of records in this group
+  """
+  count: Int!
+}
+
+"""
+A connection to a list of items for AppBskyFeedPostgate
+"""
+type AppBskyFeedPostgateConnection {
+  """
+  A list of edges
+  """
+  edges: [AppBskyFeedPostgateEdge!]!
+
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items in the connection
+  """
+  totalCount: Int
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedPostgateDisableRule {
+  """
+  Placeholder field for empty object type
+  """
+  _: Boolean
+}
+
+"""
+An edge in a connection for AppBskyFeedPostgate
+"""
+type AppBskyFeedPostgateEdge {
+  """
+  The item at the end of the edge
+  """
+  node: AppBskyFeedPostgate!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+union AppBskyFeedPostgateEmbeddingRulesUnion = AppBskyFeedPostgateDisableRule
+
+"""
+Filter operators for AppBskyFeedPostgate fields
+"""
+input AppBskyFeedPostgateFieldCondition {
+  """
+  Exact match (equals)
+  """
+  eq: String
+
+  """
+  Match any value in the list
+  """
+  in: [String!]
+
+  """
+  Case-insensitive substring match (string fields only)
+  """
+  contains: String
+
+  """
+  Greater than
+  """
+  gt: String
+
+  """
+  Greater than or equal to
+  """
+  gte: String
+
+  """
+  Less than
+  """
+  lt: String
+
+  """
+  Less than or equal to
+  """
+  lte: String
+
+  """
+  Filter for null or missing values (true) or non-null values (false)
+  """
+  isNull: Boolean
+}
+
+"""
+Available groupBy fields for AppBskyFeedPostgate
+"""
+enum AppBskyFeedPostgateGroupByField {
+  """
+  Group by uri
+  """
+  uri
+
+  """
+  Group by cid
+  """
+  cid
+
+  """
+  Group by did
+  """
+  did
+
+  """
+  Group by collection
+  """
+  collection
+
+  """
+  Group by indexedAt
+  """
+  indexedAt
+
+  """
+  Group by actorHandle
+  """
+  actorHandle
+
+  """
+  Group by createdAt
+  """
+  createdAt
+
+  """
+  Group by detachedEmbeddingUris
+  """
+  detachedEmbeddingUris
+
+  """
+  Group by embeddingRules
+  """
+  embeddingRules
+
+  """
+  Group by post
+  """
+  post
+}
+
+"""
+Specifies a field to group by with optional date truncation
+"""
+input AppBskyFeedPostgateGroupByFieldInput {
+  """
+  Field name to group by
+  """
+  field: AppBskyFeedPostgateGroupByField!
+
+  """
+  Date truncation interval (for datetime fields)
+  """
+  interval: DateInterval
+}
+
+"""
+Input type for AppBskyFeedPostgateInput
+"""
+input AppBskyFeedPostgateInput {
+  """
+  Input field for createdAt
+  """
+  createdAt: String!
+
+  """
+  Input field for detachedEmbeddingUris
+  """
+  detachedEmbeddingUris: [String!]
+
+  """
+  Input field for embeddingRules
+  """
+  embeddingRules: [String!]
+
+  """
+  Input field for post
+  """
+  post: String!
+}
+
+"""
+Available sort fields for AppBskyFeedPostgate
+"""
+enum AppBskyFeedPostgateSortField {
+  """
+  Sort by uri
+  """
+  uri
+
+  """
+  Sort by cid
+  """
+  cid
+
+  """
+  Sort by did
+  """
+  did
+
+  """
+  Sort by collection
+  """
+  collection
+
+  """
+  Sort by indexedAt
+  """
+  indexedAt
+
+  """
+  Sort by createdAt
+  """
+  createdAt
+
+  """
+  Sort by post
+  """
+  post
+}
+
+"""
+Specifies a field to sort by and its direction for AppBskyFeedPostgate
+"""
+input AppBskyFeedPostgateSortFieldInput {
+  """
+  Field to sort by
+  """
+  field: AppBskyFeedPostgateSortField!
+
+  """
+  Sort direction (ASC or DESC)
+  """
+  direction: SortDirection!
+}
+
+"""
+Filter conditions for AppBskyFeedPostgate with nested AND/OR support
+"""
+input AppBskyFeedPostgateWhereInput {
+  """
+  Filter by uri
+  """
+  uri: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by cid
+  """
+  cid: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by did
+  """
+  did: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by collection
+  """
+  collection: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by indexedAt
+  """
+  indexedAt: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by actorHandle
+  """
+  actorHandle: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by createdAt
+  """
+  createdAt: AppBskyFeedPostgateFieldCondition
+
+  """
+  Filter by post
+  """
+  post: AppBskyFeedPostgateFieldCondition
+
+  """
+  All conditions must match (AND logic)
+  """
+  and: [AppBskyFeedPostgateWhereInput!]
+
+  """
+  Any condition must match (OR logic)
+  """
+  or: [AppBskyFeedPostgateWhereInput!]
+}
+
+"""
+Available groupBy fields for AppBskyFeedPost
+"""
+enum AppBskyFeedPostGroupByField {
+  """
+  Group by uri
+  """
+  uri
+
+  """
+  Group by cid
+  """
+  cid
+
+  """
+  Group by did
+  """
+  did
+
+  """
+  Group by collection
+  """
+  collection
+
+  """
+  Group by indexedAt
+  """
+  indexedAt
+
+  """
+  Group by actorHandle
+  """
+  actorHandle
+
+  """
+  Group by createdAt
+  """
+  createdAt
+
+  """
+  Group by embed
+  """
+  embed
+
+  """
+  Group by entities
+  """
+  entities
+
+  """
+  Group by facets
+  """
+  facets
+
+  """
+  Group by labels
+  """
+  labels
+
+  """
+  Group by langs
+  """
+  langs
+
+  """
+  Group by tags
+  """
+  tags
+
+  """
+  Group by text
+  """
+  text
+}
+
+"""
+Specifies a field to group by with optional date truncation
+"""
+input AppBskyFeedPostGroupByFieldInput {
+  """
+  Field name to group by
+  """
+  field: AppBskyFeedPostGroupByField!
+
+  """
+  Date truncation interval (for datetime fields)
+  """
+  interval: DateInterval
+}
+
+"""
+Input type for AppBskyFeedPostInput
+"""
+input AppBskyFeedPostInput {
+  """
+  Input field for createdAt
+  """
+  createdAt: String!
+
+  """
+  Input field for embed
+  """
+  embed: AppBskyFeedPostInputEmbedInput
+
+  """
+  Input field for entities
+  """
+  entities: [String!]
+
+  """
+  Input field for facets
+  """
+  facets: [String!]
+
+  """
+  Input field for labels
+  """
+  labels: String
+
+  """
+  Input field for langs
+  """
+  langs: [String!]
+
+  """
+  Input field for reply
+  """
+  reply: String
+
+  """
+  Input field for tags
+  """
+  tags: [String!]
+
+  """
+  Input field for text
+  """
+  text: String!
+}
+
+"""
+Union input for embed - use type field to select variant
+"""
+input AppBskyFeedPostInputEmbedInput {
+  """
+  Select which variant to use
+  """
+  type: AppBskyFeedPostInputEmbedType!
+
+  """
+  Data for app.bsky.embed.images variant
+  """
+  images: String
+
+  """
+  Data for app.bsky.embed.video variant
+  """
+  video: String
+
+  """
+  Data for app.bsky.embed.external variant
+  """
+  external: String
+
+  """
+  Data for app.bsky.embed.record variant
+  """
+  record: String
+
+  """
+  Data for app.bsky.embed.recordWithMedia variant
+  """
+  recordWithMedia: String
+}
+
+"""
+Discriminator for embed union variants
+"""
+enum AppBskyFeedPostInputEmbedType {
+  """
+  Select app.bsky.embed.images variant
+  """
+  IMAGES
+
+  """
+  Select app.bsky.embed.video variant
+  """
+  VIDEO
+
+  """
+  Select app.bsky.embed.external variant
+  """
+  EXTERNAL
+
+  """
+  Select app.bsky.embed.record variant
+  """
+  RECORD
+
+  """
+  Select app.bsky.embed.recordWithMedia variant
+  """
+  RECORD_WITH_MEDIA
+}
+
+union AppBskyFeedPostLabels = ComAtprotoLabelDefsSelfLabels
+
+"""
+Filter for AppBskyFeedPost reference fields (presence check only)
+"""
+input AppBskyFeedPostRefFieldCondition {
+  """
+  Filter for null (true) or non-null (false) values
+  """
+  isNull: Boolean
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedPostReplyRef {
+  """
+  Field from object definition
+  """
+  parent: ComAtprotoRepoStrongRef!
+
+  """
+  Field from object definition
+  """
+  root: ComAtprotoRepoStrongRef!
+
+  """
+  Forward join to referenced record
+  """
+  parentResolved: Record
+
+  """
+  Forward join to referenced record
+  """
+  rootResolved: Record
+}
+
+"""
+Available sort fields for AppBskyFeedPost
+"""
+enum AppBskyFeedPostSortField {
+  """
+  Sort by uri
+  """
+  uri
+
+  """
+  Sort by cid
+  """
+  cid
+
+  """
+  Sort by did
+  """
+  did
+
+  """
+  Sort by collection
+  """
+  collection
+
+  """
+  Sort by indexedAt
+  """
+  indexedAt
+
+  """
+  Sort by createdAt
+  """
+  createdAt
+
+  """
+  Sort by embed
+  """
+  embed
+
+  """
+  Sort by labels
+  """
+  labels
+
+  """
+  Sort by text
+  """
+  text
+}
+
+"""
+Specifies a field to sort by and its direction for AppBskyFeedPost
+"""
+input AppBskyFeedPostSortFieldInput {
+  """
+  Field to sort by
+  """
+  field: AppBskyFeedPostSortField!
+
+  """
+  Sort direction (ASC or DESC)
+  """
+  direction: SortDirection!
+}
+
+"""
+Filter conditions for AppBskyFeedPost with nested AND/OR support
+"""
+input AppBskyFeedPostWhereInput {
+  """
+  Filter by uri
+  """
+  uri: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by cid
+  """
+  cid: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by did
+  """
+  did: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by collection
+  """
+  collection: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by indexedAt
+  """
+  indexedAt: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by actorHandle
+  """
+  actorHandle: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by createdAt
+  """
+  createdAt: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by embed
+  """
+  embed: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by labels
+  """
+  labels: AppBskyFeedPostFieldCondition
+
+  """
+  Filter by reply
+  """
+  reply: AppBskyFeedPostRefFieldCondition
+
+  """
+  Filter by text
+  """
+  text: AppBskyFeedPostFieldCondition
+
+  """
+  All conditions must match (AND logic)
+  """
+  and: [AppBskyFeedPostWhereInput!]
+
+  """
+  Any condition must match (OR logic)
+  """
+  or: [AppBskyFeedPostWhereInput!]
+}
+
+"""
+Record type: app.bsky.feed.threadgate
+"""
+type AppBskyFeedThreadgate {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  allow: [AppBskyFeedThreadgateAllowUnion!]
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  hiddenReplies: [String!]
+
+  """
+  Field from lexicon
+  """
+  post: String
+
+  """
+  Forward join to referenced record
+  """
+  postResolved: Record
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.feed.postgate that reference this record via post
+  """
+  appBskyFeedPostgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  Reverse join: records in app.bsky.graph.follow that reference this record via via
+  """
+  appBskyGraphFollowViaVia(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.graph.follow that share the same DID as this record
+  """
+  appBskyGraphFollowByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: records in app.bsky.feed.postgate that share the same DID as this record
+  """
+  appBskyFeedPostgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  DID join: records in app.bsky.feed.post that share the same DID as this record
+  """
+  appBskyFeedPostByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostWhereInput
+  ): AppBskyFeedPostConnection
+
+  """
+  DID join: record in app.bsky.actor.profile that shares the same DID as this record
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via joinedViaStarterPack (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaJoinedViaStarterPack: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via pinnedPost (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaPinnedPost: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.feed.postgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedPostgateViaPost: AppBskyFeedPostgate
+
+  """
+  Viewer's app.bsky.graph.follow record referencing this via via (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaVia: AppBskyGraphFollow
+
+  """
+  Viewer's app.bsky.graph.follow record where subject matches this record's DID (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaSubject: AppBskyGraphFollow
+
+  """
+  Moderation labels applied to this record
+  """
+  labels: [Label!]!
+}
+
+"""
+Aggregated results for app.bsky.feed.threadgate
+"""
+type AppBskyFeedThreadgateAggregated {
+  """
+  Grouped field value
+  """
+  uri: String
+
+  """
+  Grouped field value
+  """
+  cid: String
+
+  """
+  Grouped field value
+  """
+  did: String
+
+  """
+  Grouped field value
+  """
+  collection: String
+
+  """
+  Grouped field value
+  """
+  indexed_at: String
+
+  """
+  Grouped field value
+  """
+  allow: String
+
+  """
+  Grouped field value
+  """
+  createdAt: String
+
+  """
+  Grouped field value
+  """
+  hiddenReplies: String
+
+  """
+  Grouped field value
+  """
+  post: String
+
+  """
+  Count of records in this group
+  """
+  count: Int!
+}
+
+union AppBskyFeedThreadgateAllowUnion =
+  | AppBskyFeedThreadgateMentionRule
+  | AppBskyFeedThreadgateFollowerRule
+  | AppBskyFeedThreadgateFollowingRule
+  | AppBskyFeedThreadgateListRule
+
+"""
+A connection to a list of items for AppBskyFeedThreadgate
+"""
+type AppBskyFeedThreadgateConnection {
+  """
+  A list of edges
+  """
+  edges: [AppBskyFeedThreadgateEdge!]!
+
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items in the connection
+  """
+  totalCount: Int
+}
+
+"""
+An edge in a connection for AppBskyFeedThreadgate
+"""
+type AppBskyFeedThreadgateEdge {
+  """
+  The item at the end of the edge
+  """
+  node: AppBskyFeedThreadgate!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+"""
+Filter operators for AppBskyFeedThreadgate fields
+"""
+input AppBskyFeedThreadgateFieldCondition {
+  """
+  Exact match (equals)
+  """
+  eq: String
+
+  """
+  Match any value in the list
+  """
+  in: [String!]
+
+  """
+  Case-insensitive substring match (string fields only)
+  """
+  contains: String
+
+  """
+  Greater than
+  """
+  gt: String
+
+  """
+  Greater than or equal to
+  """
+  gte: String
+
+  """
+  Less than
+  """
+  lt: String
+
+  """
+  Less than or equal to
+  """
+  lte: String
+
+  """
+  Filter for null or missing values (true) or non-null values (false)
+  """
+  isNull: Boolean
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedThreadgateFollowerRule {
+  """
+  Placeholder field for empty object type
+  """
+  _: Boolean
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedThreadgateFollowingRule {
+  """
+  Placeholder field for empty object type
+  """
+  _: Boolean
+}
+
+"""
+Available groupBy fields for AppBskyFeedThreadgate
+"""
+enum AppBskyFeedThreadgateGroupByField {
+  """
+  Group by uri
+  """
+  uri
+
+  """
+  Group by cid
+  """
+  cid
+
+  """
+  Group by did
+  """
+  did
+
+  """
+  Group by collection
+  """
+  collection
+
+  """
+  Group by indexedAt
+  """
+  indexedAt
+
+  """
+  Group by actorHandle
+  """
+  actorHandle
+
+  """
+  Group by allow
+  """
+  allow
+
+  """
+  Group by createdAt
+  """
+  createdAt
+
+  """
+  Group by hiddenReplies
+  """
+  hiddenReplies
+
+  """
+  Group by post
+  """
+  post
+}
+
+"""
+Specifies a field to group by with optional date truncation
+"""
+input AppBskyFeedThreadgateGroupByFieldInput {
+  """
+  Field name to group by
+  """
+  field: AppBskyFeedThreadgateGroupByField!
+
+  """
+  Date truncation interval (for datetime fields)
+  """
+  interval: DateInterval
+}
+
+"""
+Input type for AppBskyFeedThreadgateInput
+"""
+input AppBskyFeedThreadgateInput {
+  """
+  Input field for allow
+  """
+  allow: [AppBskyFeedThreadgateInputAllowItemInput!]
+
+  """
+  Input field for createdAt
+  """
+  createdAt: String!
+
+  """
+  Input field for hiddenReplies
+  """
+  hiddenReplies: [String!]
+
+  """
+  Input field for post
+  """
+  post: String!
+}
+
+"""
+Union input for allowItem - use type field to select variant
+"""
+input AppBskyFeedThreadgateInputAllowItemInput {
+  """
+  Select which variant to use
+  """
+  type: AppBskyFeedThreadgateInputAllowItemType!
+
+  """
+  Data for #mentionRule variant
+  """
+  mentionRule: String
+
+  """
+  Data for #followerRule variant
+  """
+  followerRule: String
+
+  """
+  Data for #followingRule variant
+  """
+  followingRule: String
+
+  """
+  Data for #listRule variant
+  """
+  listRule: String
+}
+
+"""
+Discriminator for allowItem union variants
+"""
+enum AppBskyFeedThreadgateInputAllowItemType {
+  """
+  Select #mentionRule variant
+  """
+  MENTION_RULE
+
+  """
+  Select #followerRule variant
+  """
+  FOLLOWER_RULE
+
+  """
+  Select #followingRule variant
+  """
+  FOLLOWING_RULE
+
+  """
+  Select #listRule variant
+  """
+  LIST_RULE
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedThreadgateListRule {
+  """
+  Field from object definition
+  """
+  list: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyFeedThreadgateMentionRule {
+  """
+  Placeholder field for empty object type
+  """
+  _: Boolean
+}
+
+"""
+Available sort fields for AppBskyFeedThreadgate
+"""
+enum AppBskyFeedThreadgateSortField {
+  """
+  Sort by uri
+  """
+  uri
+
+  """
+  Sort by cid
+  """
+  cid
+
+  """
+  Sort by did
+  """
+  did
+
+  """
+  Sort by collection
+  """
+  collection
+
+  """
+  Sort by indexedAt
+  """
+  indexedAt
+
+  """
+  Sort by createdAt
+  """
+  createdAt
+
+  """
+  Sort by post
+  """
+  post
+}
+
+"""
+Specifies a field to sort by and its direction for AppBskyFeedThreadgate
+"""
+input AppBskyFeedThreadgateSortFieldInput {
+  """
+  Field to sort by
+  """
+  field: AppBskyFeedThreadgateSortField!
+
+  """
+  Sort direction (ASC or DESC)
+  """
+  direction: SortDirection!
+}
+
+"""
+Filter conditions for AppBskyFeedThreadgate with nested AND/OR support
+"""
+input AppBskyFeedThreadgateWhereInput {
+  """
+  Filter by uri
+  """
+  uri: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by cid
+  """
+  cid: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by did
+  """
+  did: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by collection
+  """
+  collection: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by indexedAt
+  """
+  indexedAt: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by actorHandle
+  """
+  actorHandle: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by createdAt
+  """
+  createdAt: AppBskyFeedThreadgateFieldCondition
+
+  """
+  Filter by post
+  """
+  post: AppBskyFeedThreadgateFieldCondition
+
+  """
+  All conditions must match (AND logic)
+  """
+  and: [AppBskyFeedThreadgateWhereInput!]
+
+  """
+  Any condition must match (OR logic)
+  """
+  or: [AppBskyFeedThreadgateWhereInput!]
+}
+
+"""
+Record type: app.bsky.graph.follow
+"""
+type AppBskyGraphFollow {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  subject: String
+
+  """
+  Field from lexicon
+  """
+  via: ComAtprotoRepoStrongRef
+
+  """
+  Forward join to referenced record
+  """
+  viaResolved: Record
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.actor.profile that reference this record via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Reverse join: records in app.bsky.feed.threadgate that reference this record via post
+  """
+  appBskyFeedThreadgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  Reverse join: records in app.bsky.feed.postgate that reference this record via post
+  """
+  appBskyFeedPostgateViaPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  DID join: records in app.bsky.feed.postgate that share the same DID as this record
+  """
+  appBskyFeedPostgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  DID join: records in app.bsky.feed.threadgate that share the same DID as this record
+  """
+  appBskyFeedThreadgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  DID join: records in app.bsky.feed.post that share the same DID as this record
+  """
+  appBskyFeedPostByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostWhereInput
+  ): AppBskyFeedPostConnection
+
+  """
+  DID join: record in app.bsky.actor.profile that shares the same DID as this record
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via joinedViaStarterPack (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaJoinedViaStarterPack: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.actor.profile record referencing this via pinnedPost (null if not authenticated or no record)
+  """
+  viewerAppBskyActorProfileViaPinnedPost: AppBskyActorProfile
+
+  """
+  Viewer's app.bsky.feed.threadgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedThreadgateViaPost: AppBskyFeedThreadgate
+
+  """
+  Viewer's app.bsky.feed.postgate record referencing this via post (null if not authenticated or no record)
+  """
+  viewerAppBskyFeedPostgateViaPost: AppBskyFeedPostgate
+
+  """
+  Viewer's app.bsky.graph.follow record where subject matches this record's DID (null if not authenticated or no record)
+  """
+  viewerAppBskyGraphFollowViaSubject: AppBskyGraphFollow
+
+  """
+  Moderation labels applied to this record
+  """
+  labels: [Label!]!
+}
+
+"""
+Aggregated results for app.bsky.graph.follow
+"""
+type AppBskyGraphFollowAggregated {
+  """
+  Grouped field value
+  """
+  uri: String
+
+  """
+  Grouped field value
+  """
+  cid: String
+
+  """
+  Grouped field value
+  """
+  did: String
+
+  """
+  Grouped field value
+  """
+  collection: String
+
+  """
+  Grouped field value
+  """
+  indexed_at: String
+
+  """
+  Grouped field value
+  """
+  createdAt: String
+
+  """
+  Grouped field value
+  """
+  subject: String
+
+  """
+  Grouped field value
+  """
+  via: String
+
+  """
+  Count of records in this group
+  """
+  count: Int!
+}
+
+"""
+A connection to a list of items for AppBskyGraphFollow
+"""
+type AppBskyGraphFollowConnection {
+  """
+  A list of edges
+  """
+  edges: [AppBskyGraphFollowEdge!]!
+
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items in the connection
+  """
+  totalCount: Int
+}
+
+"""
+An edge in a connection for AppBskyGraphFollow
+"""
+type AppBskyGraphFollowEdge {
+  """
+  The item at the end of the edge
+  """
+  node: AppBskyGraphFollow!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+"""
+Filter operators for AppBskyGraphFollow fields
+"""
+input AppBskyGraphFollowFieldCondition {
+  """
+  Exact match (equals)
+  """
+  eq: String
+
+  """
+  Match any value in the list
+  """
+  in: [String!]
+
+  """
+  Case-insensitive substring match (string fields only)
+  """
+  contains: String
+
+  """
+  Greater than
+  """
+  gt: String
+
+  """
+  Greater than or equal to
+  """
+  gte: String
+
+  """
+  Less than
+  """
+  lt: String
+
+  """
+  Less than or equal to
+  """
+  lte: String
+
+  """
+  Filter for null or missing values (true) or non-null values (false)
+  """
+  isNull: Boolean
+}
+
+"""
+Available groupBy fields for AppBskyGraphFollow
+"""
+enum AppBskyGraphFollowGroupByField {
+  """
+  Group by uri
+  """
+  uri
+
+  """
+  Group by cid
+  """
+  cid
+
+  """
+  Group by did
+  """
+  did
+
+  """
+  Group by collection
+  """
+  collection
+
+  """
+  Group by indexedAt
+  """
+  indexedAt
+
+  """
+  Group by actorHandle
+  """
+  actorHandle
+
+  """
+  Group by createdAt
+  """
+  createdAt
+
+  """
+  Group by subject
+  """
+  subject
+}
+
+"""
+Specifies a field to group by with optional date truncation
+"""
+input AppBskyGraphFollowGroupByFieldInput {
+  """
+  Field name to group by
+  """
+  field: AppBskyGraphFollowGroupByField!
+
+  """
+  Date truncation interval (for datetime fields)
+  """
+  interval: DateInterval
+}
+
+"""
+Input type for AppBskyGraphFollowInput
+"""
+input AppBskyGraphFollowInput {
+  """
+  Input field for createdAt
+  """
+  createdAt: String!
+
+  """
+  Input field for subject
+  """
+  subject: String!
+
+  """
+  Input field for via
+  """
+  via: String
+}
+
+"""
+Filter for AppBskyGraphFollow reference fields (presence check only)
+"""
+input AppBskyGraphFollowRefFieldCondition {
+  """
+  Filter for null (true) or non-null (false) values
+  """
+  isNull: Boolean
+}
+
+"""
+Available sort fields for AppBskyGraphFollow
+"""
+enum AppBskyGraphFollowSortField {
+  """
+  Sort by uri
+  """
+  uri
+
+  """
+  Sort by cid
+  """
+  cid
+
+  """
+  Sort by did
+  """
+  did
+
+  """
+  Sort by collection
+  """
+  collection
+
+  """
+  Sort by indexedAt
+  """
+  indexedAt
+
+  """
+  Sort by createdAt
+  """
+  createdAt
+
+  """
+  Sort by subject
+  """
+  subject
+}
+
+"""
+Specifies a field to sort by and its direction for AppBskyGraphFollow
+"""
+input AppBskyGraphFollowSortFieldInput {
+  """
+  Field to sort by
+  """
+  field: AppBskyGraphFollowSortField!
+
+  """
+  Sort direction (ASC or DESC)
+  """
+  direction: SortDirection!
+}
+
+"""
+Filter conditions for AppBskyGraphFollow with nested AND/OR support
+"""
+input AppBskyGraphFollowWhereInput {
+  """
+  Filter by uri
+  """
+  uri: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by cid
+  """
+  cid: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by did
+  """
+  did: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by collection
+  """
+  collection: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by indexedAt
+  """
+  indexedAt: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by actorHandle
+  """
+  actorHandle: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by createdAt
+  """
+  createdAt: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by subject
+  """
+  subject: AppBskyGraphFollowFieldCondition
+
+  """
+  Filter by via
+  """
+  via: AppBskyGraphFollowRefFieldCondition
+
+  """
+  All conditions must match (AND logic)
+  """
+  and: [AppBskyGraphFollowWhereInput!]
+
+  """
+  Any condition must match (OR logic)
+  """
+  or: [AppBskyGraphFollowWhereInput!]
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyRichtextFacet {
+  """
+  Field from object definition
+  """
+  features: [AppBskyRichtextFacetFeaturesUnion!]!
+
+  """
+  Field from object definition
+  """
+  index: AppBskyRichtextFacetByteSlice!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyRichtextFacetByteSlice {
+  """
+  Field from object definition
+  """
+  byteEnd: Int!
+
+  """
+  Field from object definition
+  """
+  byteStart: Int!
+}
+
+union AppBskyRichtextFacetFeaturesUnion =
+  | AppBskyRichtextFacetMention
+  | AppBskyRichtextFacetLink
+  | AppBskyRichtextFacetTag
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyRichtextFacetLink {
+  """
+  Field from object definition
+  """
+  uri: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyRichtextFacetMention {
+  """
+  Field from object definition
+  """
+  did: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type AppBskyRichtextFacetTag {
+  """
+  Field from object definition
+  """
+  tag: String!
+}
+
+"""
+A blob reference with metadata and URL generation
+"""
+type Blob {
+  """
+  CID reference to the blob
+  """
+  ref: String!
+
+  """
+  MIME type of the blob
+  """
+  mimeType: String!
+
+  """
+  Size in bytes
+  """
+  size: Int!
+
+  """
+  Generate CDN URL for the blob with the specified preset (avatar, banner, feed_thumbnail, feed_fullsize)
+  """
+  url(
+    """
+    Image preset: avatar, banner, feed_thumbnail, feed_fullsize
+    """
+    preset: String
+  ): String!
+}
+
+"""
+Input type for blob references
+"""
+input BlobInput {
+  """
+  CID reference to the blob
+  """
+  ref: String!
+
+  """
+  MIME type of the blob
+  """
+  mimeType: String!
+
+  """
+  Size in bytes
+  """
+  size: Int!
+}
+
+"""
+Response from uploading a blob
+"""
+type BlobUploadResponse {
+  """
+  CID reference to the blob
+  """
+  ref: String!
+
+  """
+  MIME type of the blob
+  """
+  mimeType: String!
+
+  """
+  Size in bytes
+  """
+  size: Int!
+}
+
+"""
+Object type from lexicon definition
+"""
+type ComAtprotoLabelDefsSelfLabel {
+  """
+  Field from object definition
+  """
+  val: String!
+}
+
+"""
+Object type from lexicon definition
+"""
+type ComAtprotoLabelDefsSelfLabels {
+  """
+  Field from object definition
+  """
+  values: [ComAtprotoLabelDefsSelfLabel!]!
+}
+
+"""
+Object type from lexicon definition
+"""
+type ComAtprotoRepoStrongRef {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Forward join to referenced record
+  """
+  uriResolved: Record
+}
+
+"""
+Date truncation intervals for aggregation
+"""
+enum DateInterval {
+  """
+  Truncate to hour
+  """
+  HOUR
+
+  """
+  Truncate to day
+  """
+  DAY
+
+  """
+  Truncate to week
+  """
+  WEEK
+
+  """
+  Truncate to month
+  """
+  MONTH
+}
+
+"""
+Result of a delete mutation
+"""
+type DeleteResult {
+  """
+  URI of deleted record
+  """
+  uri: String
+}
+
+"""
+AT Protocol moderation label
+"""
+type Label {
+  """
+  Label ID
+  """
+  id: Int!
+
+  """
+  DID of the label source (labeler)
+  """
+  src: String!
+
+  """
+  AT-URI of the subject
+  """
+  uri: String!
+
+  """
+  Optional CID of the subject
+  """
+  cid: String
+
+  """
+  Label value (e.g., '!takedown', 'porn')
+  """
+  val: String!
+
+  """
+  True if this is a negation of the label
+  """
+  neg: Boolean!
+
+  """
+  Creation timestamp
+  """
+  cts: String!
+
+  """
+  Optional expiration timestamp
+  """
+  exp: String
+}
+
+"""
+User preference for a label type
+"""
+type LabelPreference {
+  """
+  Label value
+  """
+  val: String!
+
+  """
+  Label description
+  """
+  description: String!
+
+  """
+  Label severity (inform, alert, takedown)
+  """
+  severity: LabelSeverity!
+
+  """
+  Default visibility setting
+  """
+  defaultVisibility: LabelVisibility!
+
+  """
+  User's effective visibility setting
+  """
+  visibility: LabelVisibility!
+}
+
+"""
+Severity level of a label
+"""
+enum LabelSeverity {
+  """
+  Informational, client can show indicator
+  """
+  INFORM
+
+  """
+  Client should warn/blur
+  """
+  ALERT
+
+  """
+  Server filters, content not returned
+  """
+  TAKEDOWN
+}
+
+"""
+How to display labeled content
+"""
+enum LabelVisibility {
+  """
+  Show content normally, no indicator
+  """
+  IGNORE
+
+  """
+  Explicitly show (for adult content)
+  """
+  SHOW
+
+  """
+  Blur with click-through warning
+  """
+  WARN
+
+  """
+  Do not show content
+  """
+  HIDE
+}
+
+"""
+Root mutation type
+"""
+type Mutation {
+  """
+  Upload a blob to the PDS
+  """
+  uploadBlob(
+    """
+    Base64 encoded blob data
+    """
+    data: String!
+
+    """
+    MIME type of the blob
+    """
+    mimeType: String!
+  ): BlobUploadResponse!
+
+  """
+  Create a new app.bsky.graph.follow record
+  """
+  createAppBskyGraphFollow(
+    """
+    Record data
+    """
+    input: AppBskyGraphFollowInput!
+
+    """
+    Optional record key (defaults to TID)
+    """
+    rkey: String
+  ): AppBskyGraphFollow
+
+  """
+  Update an existing app.bsky.graph.follow record
+  """
+  updateAppBskyGraphFollow(
+    """
+    Record key to update
+    """
+    rkey: String!
+
+    """
+    Updated record data
+    """
+    input: AppBskyGraphFollowInput!
+  ): AppBskyGraphFollow
+
+  """
+  Delete a app.bsky.graph.follow record
+  """
+  deleteAppBskyGraphFollow(
+    """
+    Record key to delete
+    """
+    rkey: String!
+  ): DeleteResult
+
+  """
+  Create a new app.bsky.feed.postgate record
+  """
+  createAppBskyFeedPostgate(
+    """
+    Record data
+    """
+    input: AppBskyFeedPostgateInput!
+
+    """
+    Optional record key (defaults to TID)
+    """
+    rkey: String
+  ): AppBskyFeedPostgate
+
+  """
+  Update an existing app.bsky.feed.postgate record
+  """
+  updateAppBskyFeedPostgate(
+    """
+    Record key to update
+    """
+    rkey: String!
+
+    """
+    Updated record data
+    """
+    input: AppBskyFeedPostgateInput!
+  ): AppBskyFeedPostgate
+
+  """
+  Delete a app.bsky.feed.postgate record
+  """
+  deleteAppBskyFeedPostgate(
+    """
+    Record key to delete
+    """
+    rkey: String!
+  ): DeleteResult
+
+  """
+  Create a new app.bsky.feed.threadgate record
+  """
+  createAppBskyFeedThreadgate(
+    """
+    Record data
+    """
+    input: AppBskyFeedThreadgateInput!
+
+    """
+    Optional record key (defaults to TID)
+    """
+    rkey: String
+  ): AppBskyFeedThreadgate
+
+  """
+  Update an existing app.bsky.feed.threadgate record
+  """
+  updateAppBskyFeedThreadgate(
+    """
+    Record key to update
+    """
+    rkey: String!
+
+    """
+    Updated record data
+    """
+    input: AppBskyFeedThreadgateInput!
+  ): AppBskyFeedThreadgate
+
+  """
+  Delete a app.bsky.feed.threadgate record
+  """
+  deleteAppBskyFeedThreadgate(
+    """
+    Record key to delete
+    """
+    rkey: String!
+  ): DeleteResult
+
+  """
+  Create a new app.bsky.feed.post record
+  """
+  createAppBskyFeedPost(
+    """
+    Record data
+    """
+    input: AppBskyFeedPostInput!
+
+    """
+    Optional record key (defaults to TID)
+    """
+    rkey: String
+  ): AppBskyFeedPost
+
+  """
+  Update an existing app.bsky.feed.post record
+  """
+  updateAppBskyFeedPost(
+    """
+    Record key to update
+    """
+    rkey: String!
+
+    """
+    Updated record data
+    """
+    input: AppBskyFeedPostInput!
+  ): AppBskyFeedPost
+
+  """
+  Delete a app.bsky.feed.post record
+  """
+  deleteAppBskyFeedPost(
+    """
+    Record key to delete
+    """
+    rkey: String!
+  ): DeleteResult
+
+  """
+  Create a new app.bsky.actor.profile record
+  """
+  createAppBskyActorProfile(
+    """
+    Record data
+    """
+    input: AppBskyActorProfileInput!
+
+    """
+    Optional record key (defaults to TID)
+    """
+    rkey: String
+  ): AppBskyActorProfile
+
+  """
+  Update an existing app.bsky.actor.profile record
+  """
+  updateAppBskyActorProfile(
+    """
+    Record key to update
+    """
+    rkey: String!
+
+    """
+    Updated record data
+    """
+    input: AppBskyActorProfileInput!
+  ): AppBskyActorProfile
+
+  """
+  Delete a app.bsky.actor.profile record
+  """
+  deleteAppBskyActorProfile(
+    """
+    Record key to delete
+    """
+    rkey: String!
+  ): DeleteResult
+
+  """
+  Submit a moderation report for content
+  """
+  createReport(
+    """
+    URI of the content to report (at:// or did:)
+    """
+    subjectUri: String!
+
+    """
+    Type of report
+    """
+    reasonType: ReportReasonType!
+
+    """
+    Optional additional details
+    """
+    reason: String
+  ): Report!
+
+  """
+  Set visibility preference for a label type
+  """
+  setLabelPreference(
+    """
+    Label value
+    """
+    val: String!
+
+    """
+    Visibility setting
+    """
+    visibility: LabelVisibility!
+  ): LabelPreference!
+}
+
+union NotificationRecord =
+  | AppBskyGraphFollow
+  | AppBskyFeedPostgate
+  | AppBskyFeedThreadgate
+  | AppBskyFeedPost
+  | AppBskyActorProfile
+
+"""
+A connection to a list of items for NotificationRecord
+"""
+type NotificationRecordConnection {
+  """
+  A list of edges
+  """
+  edges: [NotificationRecordEdge!]!
+
+  """
+  Information to aid in pagination
+  """
+  pageInfo: PageInfo!
+
+  """
+  Total number of items in the connection
+  """
+  totalCount: Int
+}
+
+"""
+An edge in a connection for NotificationRecord
+"""
+type NotificationRecordEdge {
+  """
+  The item at the end of the edge
+  """
+  node: NotificationRecord!
+
+  """
+  A cursor for use in pagination
+  """
+  cursor: String!
+}
+
+"""
+Information about pagination in a connection
+"""
+type PageInfo {
+  """
+  When paginating forwards, are there more items?
+  """
+  hasNextPage: Boolean!
+
+  """
+  When paginating backwards, are there more items?
+  """
+  hasPreviousPage: Boolean!
+
+  """
+  Cursor corresponding to the first item in the page
+  """
+  startCursor: String
+
+  """
+  Cursor corresponding to the last item in the page
+  """
+  endCursor: String
+}
+
+"""
+Root query type
+"""
+type Query {
+  """
+  Query app.bsky.graph.follow with cursor pagination and sorting
+  """
+  appBskyGraphFollow(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  Query app.bsky.feed.postgate with cursor pagination and sorting
+  """
+  appBskyFeedPostgate(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  Query app.bsky.feed.threadgate with cursor pagination and sorting
+  """
+  appBskyFeedThreadgate(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  Query app.bsky.feed.post with cursor pagination and sorting
+  """
+  appBskyFeedPost(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostWhereInput
+  ): AppBskyFeedPostConnection
+
+  """
+  Query app.bsky.actor.profile with cursor pagination and sorting
+  """
+  appBskyActorProfile(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  Aggregated query for app.bsky.graph.follow
+  """
+  appBskyGraphFollowAggregated(
+    """
+    Fields to group by (required)
+    """
+    groupBy: [AppBskyGraphFollowGroupByFieldInput!]
+
+    """
+    Filter records before aggregation
+    """
+    where: AppBskyGraphFollowWhereInput
+
+    """
+    Order by count (default: desc)
+    """
+    orderBy: AggregationOrderBy
+
+    """
+    Maximum number of results (default 50, max 1000)
+    """
+    limit: Int
+  ): [AppBskyGraphFollowAggregated!]
+
+  """
+  Aggregated query for app.bsky.feed.postgate
+  """
+  appBskyFeedPostgateAggregated(
+    """
+    Fields to group by (required)
+    """
+    groupBy: [AppBskyFeedPostgateGroupByFieldInput!]
+
+    """
+    Filter records before aggregation
+    """
+    where: AppBskyFeedPostgateWhereInput
+
+    """
+    Order by count (default: desc)
+    """
+    orderBy: AggregationOrderBy
+
+    """
+    Maximum number of results (default 50, max 1000)
+    """
+    limit: Int
+  ): [AppBskyFeedPostgateAggregated!]
+
+  """
+  Aggregated query for app.bsky.feed.threadgate
+  """
+  appBskyFeedThreadgateAggregated(
+    """
+    Fields to group by (required)
+    """
+    groupBy: [AppBskyFeedThreadgateGroupByFieldInput!]
+
+    """
+    Filter records before aggregation
+    """
+    where: AppBskyFeedThreadgateWhereInput
+
+    """
+    Order by count (default: desc)
+    """
+    orderBy: AggregationOrderBy
+
+    """
+    Maximum number of results (default 50, max 1000)
+    """
+    limit: Int
+  ): [AppBskyFeedThreadgateAggregated!]
+
+  """
+  Aggregated query for app.bsky.feed.post
+  """
+  appBskyFeedPostAggregated(
+    """
+    Fields to group by (required)
+    """
+    groupBy: [AppBskyFeedPostGroupByFieldInput!]
+
+    """
+    Filter records before aggregation
+    """
+    where: AppBskyFeedPostWhereInput
+
+    """
+    Order by count (default: desc)
+    """
+    orderBy: AggregationOrderBy
+
+    """
+    Maximum number of results (default 50, max 1000)
+    """
+    limit: Int
+  ): [AppBskyFeedPostAggregated!]
+
+  """
+  Aggregated query for app.bsky.actor.profile
+  """
+  appBskyActorProfileAggregated(
+    """
+    Fields to group by (required)
+    """
+    groupBy: [AppBskyActorProfileGroupByFieldInput!]
+
+    """
+    Filter records before aggregation
+    """
+    where: AppBskyActorProfileWhereInput
+
+    """
+    Order by count (default: desc)
+    """
+    orderBy: AggregationOrderBy
+
+    """
+    Maximum number of results (default 50, max 1000)
+    """
+    limit: Int
+  ): [AppBskyActorProfileAggregated!]
+
+  """
+  The currently authenticated user, or null if not authenticated
+  """
+  viewer: Viewer
+
+  """
+  Query notifications for the authenticated user (records mentioning them)
+  """
+  notifications(
+    """
+    Number of notifications to return
+    """
+    first: Int
+
+    """
+    Cursor for pagination
+    """
+    after: String
+
+    """
+    Filter notifications by collection types
+    """
+    collections: [RecordCollection]
+  ): NotificationRecordConnection
+
+  """
+  Get label preferences for the current user (non-system labels only)
+  """
+  viewerLabelPreferences: [LabelPreference!]!
+}
+
+union Record =
+  | AppBskyActorProfile
+  | AppBskyFeedPost
+  | AppBskyFeedPostgate
+  | AppBskyFeedThreadgate
+  | AppBskyGraphFollow
+
+"""
+Available record collection types for notifications
+"""
+enum RecordCollection {
+  """
+  Collection: app.bsky.graph.follow
+  """
+  APP_BSKY_GRAPH_FOLLOW
+
+  """
+  Collection: app.bsky.feed.postgate
+  """
+  APP_BSKY_FEED_POSTGATE
+
+  """
+  Collection: app.bsky.feed.threadgate
+  """
+  APP_BSKY_FEED_THREADGATE
+
+  """
+  Collection: app.bsky.feed.post
+  """
+  APP_BSKY_FEED_POST
+
+  """
+  Collection: app.bsky.actor.profile
+  """
+  APP_BSKY_ACTOR_PROFILE
+}
+
+"""
+User-submitted moderation report
+"""
+type Report {
+  """
+  Report ID
+  """
+  id: Int!
+
+  """
+  DID of reporter
+  """
+  reporterDid: String!
+
+  """
+  Subject URI (at:// or did:)
+  """
+  subjectUri: String!
+
+  """
+  Reason type
+  """
+  reasonType: ReportReasonType!
+
+  """
+  Optional free-text explanation
+  """
+  reason: String
+
+  """
+  Report status
+  """
+  status: ReportStatus!
+
+  """
+  DID of admin who resolved
+  """
+  resolvedBy: String
+
+  """
+  Resolution timestamp
+  """
+  resolvedAt: String
+
+  """
+  Creation timestamp
+  """
+  createdAt: String!
+}
+
+"""
+Reason for submitting a report
+"""
+enum ReportReasonType {
+  """
+  Spam or unwanted content
+  """
+  SPAM
+
+  """
+  Violates terms of service
+  """
+  VIOLATION
+
+  """
+  Misleading or false information
+  """
+  MISLEADING
+
+  """
+  Inappropriate sexual content
+  """
+  SEXUAL
+
+  """
+  Rude or abusive behavior
+  """
+  RUDE
+
+  """
+  Other reason
+  """
+  OTHER
+}
+
+"""
+Status of a moderation report
+"""
+enum ReportStatus {
+  """
+  Awaiting review
+  """
+  PENDING
+
+  """
+  Resolved with action
+  """
+  RESOLVED
+
+  """
+  Dismissed without action
+  """
+  DISMISSED
+}
+
+"""
+Sort direction for query results
+"""
+enum SortDirection {
+  """
+  Ascending order
+  """
+  ASC
+
+  """
+  Descending order
+  """
+  DESC
+}
+
+"""
+GraphQL subscription root
+"""
+type Subscription {
+  """
+  Emitted when a new app.bsky.graph.follow record is created
+  """
+  appBskyGraphFollowCreated: AppBskyGraphFollow!
+
+  """
+  Emitted when a app.bsky.graph.follow record is updated
+  """
+  appBskyGraphFollowUpdated: AppBskyGraphFollow!
+
+  """
+  Emitted when a app.bsky.graph.follow record is deleted
+  """
+  appBskyGraphFollowDeleted: AppBskyGraphFollow!
+
+  """
+  Emitted when a new app.bsky.feed.postgate record is created
+  """
+  appBskyFeedPostgateCreated: AppBskyFeedPostgate!
+
+  """
+  Emitted when a app.bsky.feed.postgate record is updated
+  """
+  appBskyFeedPostgateUpdated: AppBskyFeedPostgate!
+
+  """
+  Emitted when a app.bsky.feed.postgate record is deleted
+  """
+  appBskyFeedPostgateDeleted: AppBskyFeedPostgate!
+
+  """
+  Emitted when a new app.bsky.feed.threadgate record is created
+  """
+  appBskyFeedThreadgateCreated: AppBskyFeedThreadgate!
+
+  """
+  Emitted when a app.bsky.feed.threadgate record is updated
+  """
+  appBskyFeedThreadgateUpdated: AppBskyFeedThreadgate!
+
+  """
+  Emitted when a app.bsky.feed.threadgate record is deleted
+  """
+  appBskyFeedThreadgateDeleted: AppBskyFeedThreadgate!
+
+  """
+  Emitted when a new app.bsky.feed.post record is created
+  """
+  appBskyFeedPostCreated: AppBskyFeedPost!
+
+  """
+  Emitted when a app.bsky.feed.post record is updated
+  """
+  appBskyFeedPostUpdated: AppBskyFeedPost!
+
+  """
+  Emitted when a app.bsky.feed.post record is deleted
+  """
+  appBskyFeedPostDeleted: AppBskyFeedPost!
+
+  """
+  Emitted when a new app.bsky.actor.profile record is created
+  """
+  appBskyActorProfileCreated: AppBskyActorProfile!
+
+  """
+  Emitted when a app.bsky.actor.profile record is updated
+  """
+  appBskyActorProfileUpdated: AppBskyActorProfile!
+
+  """
+  Emitted when a app.bsky.actor.profile record is deleted
+  """
+  appBskyActorProfileDeleted: AppBskyActorProfile!
+
+  """
+  Emitted when a new notification is created for the subscriber
+  """
+  notificationCreated(
+    """
+    DID of the subscriber to receive notifications for
+    """
+    subscriberDid: String!
+
+    """
+    Filter notifications to specific collection types
+    """
+    collections: [RecordCollection]
+  ): NotificationRecord!
+}
+
+"""
+Authenticated user
+"""
+type Viewer {
+  """
+  User DID
+  """
+  did: String!
+
+  """
+  User handle
+  """
+  handle: String
+
+  """
+  DID join: app.bsky.graph.follow records for this user
+  """
+  appBskyGraphFollowByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+
+  """
+  DID join: app.bsky.feed.postgate records for this user
+  """
+  appBskyFeedPostgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  DID join: app.bsky.feed.threadgate records for this user
+  """
+  appBskyFeedThreadgateByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  DID join: app.bsky.feed.post records for this user
+  """
+  appBskyFeedPostByDid(
+    """
+    Returns the first n items from the list
+    """
+    first: Int
+
+    """
+    Returns items after the given cursor
+    """
+    after: String
+
+    """
+    Returns the last n items from the list
+    """
+    last: Int
+
+    """
+    Returns items before the given cursor
+    """
+    before: String
+
+    """
+    Sort order for the connection
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput!]
+
+    """
+    Filter conditions for the query
+    """
+    where: AppBskyFeedPostWhereInput
+  ): AppBskyFeedPostConnection
+
+  """
+  DID join: app.bsky.actor.profile record for this user
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+}

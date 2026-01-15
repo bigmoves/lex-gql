@@ -1,0 +1,17 @@
+{
+  "name": "lex-gql-tap-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Example: lex-gql queries with AT Protocol tap",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "graphql": "^16.8.0",
+    "graphql-http": "^1.22.0",
+    "lex-gql": "workspace:*",
+    "ws": "^8.18.0"
+  }
+}

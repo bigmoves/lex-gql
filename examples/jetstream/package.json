@@ -1,0 +1,18 @@
+{
+  "name": "lex-gql-jetstream-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Example: lex-gql subscriptions with Jetstream",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "graphql-ws": "^5.16.0",
+    "lex-gql": "workspace:*",
+    "ws": "^8.18.0"
+  },
+  "peerDependencies": {
+    "graphql": "^16.0.0"
+  }
+}

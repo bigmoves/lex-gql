@@ -1,0 +1,4144 @@
+"""
+Union of all record types
+"""
+union Record =
+  | AppBskyActorProfile
+  | AppBskyEmbedExternal
+  | AppBskyEmbedImages
+  | AppBskyEmbedRecord
+  | AppBskyEmbedRecordWithMedia
+  | AppBskyEmbedVideo
+  | AppBskyFeedPost
+  | AppBskyFeedPostgate
+  | AppBskyFeedThreadgate
+  | AppBskyGraphFollow
+  | AppBskyRichtextFacet
+  | ComAtprotoRepoStrongRef
+
+"""
+Record type: AppBskyActorProfile
+"""
+type AppBskyActorProfile {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  avatar: Blob
+
+  """
+  Field from lexicon
+  """
+  banner: Blob
+
+  """
+  Field from lexicon
+  """
+  labels: String
+
+  """
+  Field from lexicon
+  """
+  website: String
+
+  """
+  Field from lexicon
+  """
+  pronouns: String
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  pinnedPost: ComAtprotoRepoStrongRef
+
+  """
+  Resolved reference for pinnedPost
+  """
+  pinnedPostResolved: String
+
+  """
+  Field from lexicon
+  """
+  description: String
+
+  """
+  Field from lexicon
+  """
+  displayName: String
+
+  """
+  Field from lexicon
+  """
+  joinedViaStarterPack: ComAtprotoRepoStrongRef
+
+  """
+  Resolved reference for joinedViaStarterPack
+  """
+  joinedViaStarterPackResolved: String
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+
+  """
+  AppBskyFeedPostgate records pointing to this via post
+  """
+  appBskyFeedPostgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedPostgateSortFieldInput]
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  AppBskyFeedThreadgate records pointing to this via post
+  """
+  appBskyFeedThreadgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedThreadgateSortFieldInput]
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  AppBskyGraphFollow records pointing to this via via
+  """
+  appBskyGraphFollowViaVia(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyGraphFollowSortFieldInput]
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+}
+
+"""
+Binary blob reference
+"""
+type Blob {
+  """
+  CID reference to the blob
+  """
+  ref: String!
+
+  """
+  MIME type of the blob
+  """
+  mimeType: String!
+
+  """
+  Size in bytes
+  """
+  size: Int!
+}
+
+"""
+Record type: ComAtprotoRepoStrongRef
+"""
+type ComAtprotoRepoStrongRef {
+  """
+  Field from lexicon
+  """
+  uri: String
+
+  """
+  Field from lexicon
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Resolved reference for uri
+  """
+  uriResolved: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Record type: AppBskyFeedPost
+"""
+type AppBskyFeedPost {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  tags: [String!]
+
+  """
+  Field from lexicon
+  """
+  text: String
+
+  """
+  Field from lexicon
+  """
+  embed: String
+
+  """
+  Field from lexicon
+  """
+  langs: [String!]
+
+  """
+  Field from lexicon
+  """
+  reply: String
+
+  """
+  Field from lexicon
+  """
+  facets: [String!]
+
+  """
+  Field from lexicon
+  """
+  labels: String
+
+  """
+  Field from lexicon
+  """
+  entities: [String!]
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+
+  """
+  AppBskyActorProfile records pointing to this via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyActorProfile records pointing to this via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyFeedPostgate records pointing to this via post
+  """
+  appBskyFeedPostgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedPostgateSortFieldInput]
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  AppBskyFeedThreadgate records pointing to this via post
+  """
+  appBskyFeedThreadgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedThreadgateSortFieldInput]
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  AppBskyGraphFollow records pointing to this via via
+  """
+  appBskyGraphFollowViaVia(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyGraphFollowSortFieldInput]
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+}
+
+"""
+Record type: AppBskyFeedPostgate
+"""
+type AppBskyFeedPostgate {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  post: String
+
+  """
+  Resolved reference for post
+  """
+  postResolved: String
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  embeddingRules: [String!]
+
+  """
+  Field from lexicon
+  """
+  detachedEmbeddingUris: [String!]
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+
+  """
+  AppBskyActorProfile records pointing to this via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyActorProfile records pointing to this via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyFeedThreadgate records pointing to this via post
+  """
+  appBskyFeedThreadgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedThreadgateSortFieldInput]
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  AppBskyGraphFollow records pointing to this via via
+  """
+  appBskyGraphFollowViaVia(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyGraphFollowSortFieldInput]
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+}
+
+"""
+Record type: AppBskyFeedThreadgate
+"""
+type AppBskyFeedThreadgate {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  post: String
+
+  """
+  Resolved reference for post
+  """
+  postResolved: String
+
+  """
+  Field from lexicon
+  """
+  allow: [String!]
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  Field from lexicon
+  """
+  hiddenReplies: [String!]
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+
+  """
+  AppBskyActorProfile records pointing to this via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyActorProfile records pointing to this via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyFeedPostgate records pointing to this via post
+  """
+  appBskyFeedPostgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedPostgateSortFieldInput]
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  AppBskyGraphFollow records pointing to this via via
+  """
+  appBskyGraphFollowViaVia(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyGraphFollowSortFieldInput]
+    where: AppBskyGraphFollowWhereInput
+  ): AppBskyGraphFollowConnection
+}
+
+"""
+Record type: AppBskyGraphFollow
+"""
+type AppBskyGraphFollow {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  via: ComAtprotoRepoStrongRef
+
+  """
+  Resolved reference for via
+  """
+  viaResolved: String
+
+  """
+  Field from lexicon
+  """
+  subject: String
+
+  """
+  Field from lexicon
+  """
+  createdAt: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyActorProfile records pointing to this via pinnedPost
+  """
+  appBskyActorProfileViaPinnedPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyActorProfile records pointing to this via joinedViaStarterPack
+  """
+  appBskyActorProfileViaJoinedViaStarterPack(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyActorProfileSortFieldInput]
+    where: AppBskyActorProfileWhereInput
+  ): AppBskyActorProfileConnection
+
+  """
+  AppBskyFeedPostgate records pointing to this via post
+  """
+  appBskyFeedPostgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedPostgateSortFieldInput]
+    where: AppBskyFeedPostgateWhereInput
+  ): AppBskyFeedPostgateConnection
+
+  """
+  AppBskyFeedThreadgate records pointing to this via post
+  """
+  appBskyFeedThreadgateViaPost(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    sortBy: [AppBskyFeedThreadgateSortFieldInput]
+    where: AppBskyFeedThreadgateWhereInput
+  ): AppBskyFeedThreadgateConnection
+}
+
+type AppBskyActorProfileConnection {
+  edges: [AppBskyActorProfileEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AppBskyActorProfileEdge {
+  node: AppBskyActorProfile
+  cursor: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input AppBskyActorProfileSortFieldInput {
+  field: AppBskyActorProfileSortField!
+  direction: SortDirection
+}
+
+enum AppBskyActorProfileSortField {
+  uri
+  indexedAt
+  website
+  pronouns
+  createdAt
+  description
+  displayName
+}
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input AppBskyActorProfileWhereInput {
+  labels: StringFieldCondition
+  website: StringFieldCondition
+  pronouns: StringFieldCondition
+  createdAt: StringFieldCondition
+  pinnedPost: StringFieldCondition
+  description: StringFieldCondition
+  displayName: StringFieldCondition
+  joinedViaStarterPack: StringFieldCondition
+  AND: [AppBskyActorProfileWhereInput]
+  OR: [AppBskyActorProfileWhereInput]
+}
+
+input StringFieldCondition {
+  eq: String
+  in: [String]
+  contains: String
+  gt: String
+  gte: String
+  lt: String
+  lte: String
+}
+
+type AppBskyFeedPostgateConnection {
+  edges: [AppBskyFeedPostgateEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AppBskyFeedPostgateEdge {
+  node: AppBskyFeedPostgate
+  cursor: String!
+}
+
+input AppBskyFeedPostgateSortFieldInput {
+  field: AppBskyFeedPostgateSortField!
+  direction: SortDirection
+}
+
+enum AppBskyFeedPostgateSortField {
+  uri
+  indexedAt
+  post
+  createdAt
+}
+
+input AppBskyFeedPostgateWhereInput {
+  post: StringFieldCondition
+  createdAt: StringFieldCondition
+  embeddingRules: StringFieldCondition
+  detachedEmbeddingUris: StringFieldCondition
+  AND: [AppBskyFeedPostgateWhereInput]
+  OR: [AppBskyFeedPostgateWhereInput]
+}
+
+type AppBskyFeedThreadgateConnection {
+  edges: [AppBskyFeedThreadgateEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AppBskyFeedThreadgateEdge {
+  node: AppBskyFeedThreadgate
+  cursor: String!
+}
+
+input AppBskyFeedThreadgateSortFieldInput {
+  field: AppBskyFeedThreadgateSortField!
+  direction: SortDirection
+}
+
+enum AppBskyFeedThreadgateSortField {
+  uri
+  indexedAt
+  post
+  createdAt
+}
+
+input AppBskyFeedThreadgateWhereInput {
+  post: StringFieldCondition
+  allow: StringFieldCondition
+  createdAt: StringFieldCondition
+  hiddenReplies: StringFieldCondition
+  AND: [AppBskyFeedThreadgateWhereInput]
+  OR: [AppBskyFeedThreadgateWhereInput]
+}
+
+type AppBskyGraphFollowConnection {
+  edges: [AppBskyGraphFollowEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AppBskyGraphFollowEdge {
+  node: AppBskyGraphFollow
+  cursor: String!
+}
+
+input AppBskyGraphFollowSortFieldInput {
+  field: AppBskyGraphFollowSortField!
+  direction: SortDirection
+}
+
+enum AppBskyGraphFollowSortField {
+  uri
+  indexedAt
+  subject
+  createdAt
+}
+
+input AppBskyGraphFollowWhereInput {
+  via: StringFieldCondition
+  subject: StringFieldCondition
+  createdAt: StringFieldCondition
+  AND: [AppBskyGraphFollowWhereInput]
+  OR: [AppBskyGraphFollowWhereInput]
+}
+
+"""
+Record type: AppBskyEmbedExternal
+"""
+type AppBskyEmbedExternal {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  external: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Record type: AppBskyEmbedImages
+"""
+type AppBskyEmbedImages {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  images: [String!]
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Record type: AppBskyEmbedRecord
+"""
+type AppBskyEmbedRecord {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  record: ComAtprotoRepoStrongRef
+
+  """
+  Resolved reference for record
+  """
+  recordResolved: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Record type: AppBskyEmbedRecordWithMedia
+"""
+type AppBskyEmbedRecordWithMedia {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  media: String
+
+  """
+  Field from lexicon
+  """
+  record: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Record type: AppBskyEmbedVideo
+"""
+type AppBskyEmbedVideo {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  alt: String
+
+  """
+  Field from lexicon
+  """
+  video: Blob
+
+  """
+  Field from lexicon
+  """
+  captions: [String!]
+
+  """
+  Field from lexicon
+  """
+  aspectRatio: String
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Record type: AppBskyRichtextFacet
+"""
+type AppBskyRichtextFacet {
+  """
+  Record URI
+  """
+  uri: String
+
+  """
+  Record CID
+  """
+  cid: String
+
+  """
+  DID of record author
+  """
+  did: String
+
+  """
+  Collection name
+  """
+  collection: String
+
+  """
+  When record was indexed
+  """
+  indexedAt: String
+
+  """
+  Handle of the actor who created this record
+  """
+  actorHandle: String
+
+  """
+  Field from lexicon
+  """
+  index: String
+
+  """
+  Field from lexicon
+  """
+  features: [String!]
+
+  """
+  AppBskyActorProfile for this DID
+  """
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """
+  AppBskyFeedPost records for this DID
+  """
+  appBskyFeedPostByDid: [AppBskyFeedPost]
+
+  """
+  AppBskyFeedPostgate records for this DID
+  """
+  appBskyFeedPostgateByDid: [AppBskyFeedPostgate]
+
+  """
+  AppBskyFeedThreadgate records for this DID
+  """
+  appBskyFeedThreadgateByDid: [AppBskyFeedThreadgate]
+
+  """
+  AppBskyGraphFollow records for this DID
+  """
+  appBskyGraphFollowByDid: [AppBskyGraphFollow]
+}
+
+"""
+Nested type from app.bsky.actor.defs#nux
+"""
+type AppBskyActorDefsNux {
+  """
+  Field from object definition
+  """
+  id: String!
+
+  """
+  Field from object definition
+  """
+  data: String
+
+  """
+  Field from object definition
+  """
+  completed: Boolean!
+
+  """
+  Field from object definition
+  """
+  expiresAt: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#mutedWord
+"""
+type AppBskyActorDefsMutedWord {
+  """
+  Field from object definition
+  """
+  id: String
+
+  """
+  Field from object definition
+  """
+  value: String!
+
+  """
+  Field from object definition
+  """
+  targets: [String!]!
+
+  """
+  Field from object definition
+  """
+  expiresAt: String
+
+  """
+  Field from object definition
+  """
+  actorTarget: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#savedFeed
+"""
+type AppBskyActorDefsSavedFeed {
+  """
+  Field from object definition
+  """
+  id: String!
+
+  """
+  Field from object definition
+  """
+  type: String!
+
+  """
+  Field from object definition
+  """
+  value: String!
+
+  """
+  Field from object definition
+  """
+  pinned: Boolean!
+}
+
+"""
+Nested type from app.bsky.actor.defs#statusView
+"""
+type AppBskyActorDefsStatusView {
+  """
+  Field from object definition
+  """
+  embed: String
+
+  """
+  Field from object definition
+  """
+  record: String!
+
+  """
+  Field from object definition
+  """
+  status: String!
+
+  """
+  Field from object definition
+  """
+  isActive: Boolean
+
+  """
+  Field from object definition
+  """
+  expiresAt: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#profileView
+"""
+type AppBskyActorDefsProfileView {
+  """
+  Field from object definition
+  """
+  did: String!
+
+  """
+  Field from object definition
+  """
+  debug: String
+
+  """
+  Field from object definition
+  """
+  avatar: String
+
+  """
+  Field from object definition
+  """
+  handle: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  status: String
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  pronouns: String
+
+  """
+  Field from object definition
+  """
+  createdAt: String
+
+  """
+  Field from object definition
+  """
+  indexedAt: String
+
+  """
+  Field from object definition
+  """
+  associated: String
+
+  """
+  Field from object definition
+  """
+  description: String
+
+  """
+  Field from object definition
+  """
+  displayName: String
+
+  """
+  Field from object definition
+  """
+  verification: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#viewerState
+"""
+type AppBskyActorDefsViewerState {
+  """
+  Field from object definition
+  """
+  muted: Boolean
+
+  """
+  Field from object definition
+  """
+  blocking: String
+
+  """
+  Field from object definition
+  """
+  blockedBy: Boolean
+
+  """
+  Field from object definition
+  """
+  following: String
+
+  """
+  Field from object definition
+  """
+  followedBy: String
+
+  """
+  Field from object definition
+  """
+  mutedByList: String
+
+  """
+  Field from object definition
+  """
+  blockingByList: String
+
+  """
+  Field from object definition
+  """
+  knownFollowers: String
+
+  """
+  Field from object definition
+  """
+  activitySubscription: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#feedViewPref
+"""
+type AppBskyActorDefsFeedViewPref {
+  """
+  Field from object definition
+  """
+  feed: String!
+
+  """
+  Field from object definition
+  """
+  hideReplies: Boolean
+
+  """
+  Field from object definition
+  """
+  hideReposts: Boolean
+
+  """
+  Field from object definition
+  """
+  hideQuotePosts: Boolean
+
+  """
+  Field from object definition
+  """
+  hideRepliesByLikeCount: Int
+
+  """
+  Field from object definition
+  """
+  hideRepliesByUnfollowed: Boolean
+}
+
+"""
+Nested type from app.bsky.actor.defs#labelersPref
+"""
+type AppBskyActorDefsLabelersPref {
+  """
+  Field from object definition
+  """
+  labelers: [String!]!
+}
+
+"""
+Nested type from app.bsky.actor.defs#interestsPref
+"""
+type AppBskyActorDefsInterestsPref {
+  """
+  Field from object definition
+  """
+  tags: [String!]!
+}
+
+"""
+Nested type from app.bsky.actor.defs#knownFollowers
+"""
+type AppBskyActorDefsKnownFollowers {
+  """
+  Field from object definition
+  """
+  count: Int!
+
+  """
+  Field from object definition
+  """
+  followers: [String!]!
+}
+
+"""
+Nested type from app.bsky.actor.defs#mutedWordsPref
+"""
+type AppBskyActorDefsMutedWordsPref {
+  """
+  Field from object definition
+  """
+  items: [String!]!
+}
+
+"""
+Nested type from app.bsky.actor.defs#savedFeedsPref
+"""
+type AppBskyActorDefsSavedFeedsPref {
+  """
+  Field from object definition
+  """
+  saved: [String!]!
+
+  """
+  Field from object definition
+  """
+  pinned: [String!]!
+
+  """
+  Field from object definition
+  """
+  timelineIndex: Int
+}
+
+"""
+Nested type from app.bsky.actor.defs#threadViewPref
+"""
+type AppBskyActorDefsThreadViewPref {
+  """
+  Field from object definition
+  """
+  sort: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#hiddenPostsPref
+"""
+type AppBskyActorDefsHiddenPostsPref {
+  """
+  Field from object definition
+  """
+  items: [String!]!
+}
+
+"""
+Nested type from app.bsky.actor.defs#labelerPrefItem
+"""
+type AppBskyActorDefsLabelerPrefItem {
+  """
+  Field from object definition
+  """
+  did: String!
+}
+
+"""
+Nested type from app.bsky.actor.defs#adultContentPref
+"""
+type AppBskyActorDefsAdultContentPref {
+  """
+  Field from object definition
+  """
+  enabled: Boolean!
+}
+
+"""
+Nested type from app.bsky.actor.defs#bskyAppStatePref
+"""
+type AppBskyActorDefsBskyAppStatePref {
+  """
+  Field from object definition
+  """
+  nuxs: [String!]
+
+  """
+  Field from object definition
+  """
+  queuedNudges: [String!]
+
+  """
+  Field from object definition
+  """
+  activeProgressGuide: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#contentLabelPref
+"""
+type AppBskyActorDefsContentLabelPref {
+  """
+  Field from object definition
+  """
+  label: String!
+
+  """
+  Field from object definition
+  """
+  labelerDid: String
+
+  """
+  Field from object definition
+  """
+  visibility: String!
+}
+
+"""
+Nested type from app.bsky.actor.defs#profileViewBasic
+"""
+type AppBskyActorDefsProfileViewBasic {
+  """
+  Field from object definition
+  """
+  did: String!
+
+  """
+  Field from object definition
+  """
+  debug: String
+
+  """
+  Field from object definition
+  """
+  avatar: String
+
+  """
+  Field from object definition
+  """
+  handle: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  status: String
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  pronouns: String
+
+  """
+  Field from object definition
+  """
+  createdAt: String
+
+  """
+  Field from object definition
+  """
+  associated: String
+
+  """
+  Field from object definition
+  """
+  displayName: String
+
+  """
+  Field from object definition
+  """
+  verification: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#savedFeedsPrefV2
+"""
+type AppBskyActorDefsSavedFeedsPrefV2 {
+  """
+  Field from object definition
+  """
+  items: [String!]!
+}
+
+"""
+Nested type from app.bsky.actor.defs#verificationView
+"""
+type AppBskyActorDefsVerificationView {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  issuer: String!
+
+  """
+  Field from object definition
+  """
+  isValid: Boolean!
+
+  """
+  Field from object definition
+  """
+  createdAt: String!
+}
+
+"""
+Nested type from app.bsky.actor.defs#profileAssociated
+"""
+type AppBskyActorDefsProfileAssociated {
+  """
+  Field from object definition
+  """
+  chat: String
+
+  """
+  Field from object definition
+  """
+  lists: Int
+
+  """
+  Field from object definition
+  """
+  labeler: Boolean
+
+  """
+  Field from object definition
+  """
+  feedgens: Int
+
+  """
+  Field from object definition
+  """
+  starterPacks: Int
+
+  """
+  Field from object definition
+  """
+  activitySubscription: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#verificationPrefs
+"""
+type AppBskyActorDefsVerificationPrefs {
+  """
+  Field from object definition
+  """
+  hideBadges: Boolean
+}
+
+"""
+Nested type from app.bsky.actor.defs#verificationState
+"""
+type AppBskyActorDefsVerificationState {
+  """
+  Field from object definition
+  """
+  verifications: [String!]!
+
+  """
+  Field from object definition
+  """
+  verifiedStatus: String!
+
+  """
+  Field from object definition
+  """
+  trustedVerifierStatus: String!
+}
+
+"""
+Nested type from app.bsky.actor.defs#personalDetailsPref
+"""
+type AppBskyActorDefsPersonalDetailsPref {
+  """
+  Field from object definition
+  """
+  birthDate: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#profileViewDetailed
+"""
+type AppBskyActorDefsProfileViewDetailed {
+  """
+  Field from object definition
+  """
+  did: String!
+
+  """
+  Field from object definition
+  """
+  debug: String
+
+  """
+  Field from object definition
+  """
+  avatar: String
+
+  """
+  Field from object definition
+  """
+  banner: String
+
+  """
+  Field from object definition
+  """
+  handle: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  status: String
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  website: String
+
+  """
+  Field from object definition
+  """
+  pronouns: String
+
+  """
+  Field from object definition
+  """
+  createdAt: String
+
+  """
+  Field from object definition
+  """
+  indexedAt: String
+
+  """
+  Field from object definition
+  """
+  associated: String
+
+  """
+  Field from object definition
+  """
+  pinnedPost: String
+
+  """
+  Field from object definition
+  """
+  postsCount: Int
+
+  """
+  Field from object definition
+  """
+  description: String
+
+  """
+  Field from object definition
+  """
+  displayName: String
+
+  """
+  Field from object definition
+  """
+  followsCount: Int
+
+  """
+  Field from object definition
+  """
+  verification: String
+
+  """
+  Field from object definition
+  """
+  followersCount: Int
+
+  """
+  Field from object definition
+  """
+  joinedViaStarterPack: String
+}
+
+"""
+Nested type from app.bsky.actor.defs#bskyAppProgressGuide
+"""
+type AppBskyActorDefsBskyAppProgressGuide {
+  """
+  Field from object definition
+  """
+  guide: String!
+}
+
+"""
+Nested type from app.bsky.actor.defs#profileAssociatedChat
+"""
+type AppBskyActorDefsProfileAssociatedChat {
+  """
+  Field from object definition
+  """
+  allowIncoming: String!
+}
+
+"""
+Nested type from app.bsky.actor.defs#postInteractionSettingsPref
+"""
+type AppBskyActorDefsPostInteractionSettingsPref {
+  """
+  Field from object definition
+  """
+  threadgateAllowRules: [String!]
+
+  """
+  Field from object definition
+  """
+  postgateEmbeddingRules: [String!]
+}
+
+"""
+Nested type from app.bsky.actor.defs#profileAssociatedActivitySubscription
+"""
+type AppBskyActorDefsProfileAssociatedActivitySubscription {
+  """
+  Field from object definition
+  """
+  allowSubscriptions: String!
+}
+
+"""
+Nested type from app.bsky.embed.defs#aspectRatio
+"""
+type AppBskyEmbedDefsAspectRatio {
+  """
+  Field from object definition
+  """
+  width: Int!
+
+  """
+  Field from object definition
+  """
+  height: Int!
+}
+
+"""
+Nested type from app.bsky.embed.external#view
+"""
+type AppBskyEmbedExternalView {
+  """
+  Field from object definition
+  """
+  external: String!
+}
+
+"""
+Nested type from app.bsky.embed.external#external
+"""
+type AppBskyEmbedExternalExternal {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  thumb: Blob
+
+  """
+  Field from object definition
+  """
+  title: String!
+
+  """
+  Field from object definition
+  """
+  description: String!
+}
+
+"""
+Nested type from app.bsky.embed.external#viewExternal
+"""
+type AppBskyEmbedExternalViewExternal {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  thumb: String
+
+  """
+  Field from object definition
+  """
+  title: String!
+
+  """
+  Field from object definition
+  """
+  description: String!
+}
+
+"""
+Nested type from app.bsky.embed.images#view
+"""
+type AppBskyEmbedImagesView {
+  """
+  Field from object definition
+  """
+  images: [String!]!
+}
+
+"""
+Nested type from app.bsky.embed.images#image
+"""
+type AppBskyEmbedImagesImage {
+  """
+  Field from object definition
+  """
+  alt: String!
+
+  """
+  Field from object definition
+  """
+  image: Blob!
+
+  """
+  Field from object definition
+  """
+  aspectRatio: String
+}
+
+"""
+Nested type from app.bsky.embed.images#viewImage
+"""
+type AppBskyEmbedImagesViewImage {
+  """
+  Field from object definition
+  """
+  alt: String!
+
+  """
+  Field from object definition
+  """
+  thumb: String!
+
+  """
+  Field from object definition
+  """
+  fullsize: String!
+
+  """
+  Field from object definition
+  """
+  aspectRatio: String
+}
+
+"""
+Nested type from app.bsky.embed.record#view
+"""
+type AppBskyEmbedRecordView {
+  """
+  Field from object definition
+  """
+  record: String!
+}
+
+"""
+Nested type from app.bsky.embed.record#viewRecord
+"""
+type AppBskyEmbedRecordViewRecord {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  value: String!
+
+  """
+  Field from object definition
+  """
+  author: String!
+
+  """
+  Field from object definition
+  """
+  embeds: [String!]
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  likeCount: Int
+
+  """
+  Field from object definition
+  """
+  quoteCount: Int
+
+  """
+  Field from object definition
+  """
+  replyCount: Int
+
+  """
+  Field from object definition
+  """
+  repostCount: Int
+}
+
+"""
+Nested type from app.bsky.embed.record#viewBlocked
+"""
+type AppBskyEmbedRecordViewBlocked {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  author: String!
+
+  """
+  Field from object definition
+  """
+  blocked: Boolean!
+}
+
+"""
+Nested type from app.bsky.embed.record#viewDetached
+"""
+type AppBskyEmbedRecordViewDetached {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  detached: Boolean!
+}
+
+"""
+Nested type from app.bsky.embed.record#viewNotFound
+"""
+type AppBskyEmbedRecordViewNotFound {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  notFound: Boolean!
+}
+
+"""
+Nested type from app.bsky.embed.recordWithMedia#view
+"""
+type AppBskyEmbedRecordWithMediaView {
+  """
+  Field from object definition
+  """
+  media: String!
+
+  """
+  Field from object definition
+  """
+  record: String!
+}
+
+"""
+Nested type from app.bsky.embed.video#view
+"""
+type AppBskyEmbedVideoView {
+  """
+  Field from object definition
+  """
+  alt: String
+
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  playlist: String!
+
+  """
+  Field from object definition
+  """
+  thumbnail: String
+
+  """
+  Field from object definition
+  """
+  aspectRatio: String
+}
+
+"""
+Nested type from app.bsky.embed.video#caption
+"""
+type AppBskyEmbedVideoCaption {
+  """
+  Field from object definition
+  """
+  file: Blob!
+
+  """
+  Field from object definition
+  """
+  lang: String!
+}
+
+"""
+Nested type from app.bsky.feed.defs#postView
+"""
+type AppBskyFeedDefsPostView {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  debug: String
+
+  """
+  Field from object definition
+  """
+  embed: String
+
+  """
+  Field from object definition
+  """
+  author: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  record: String!
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  likeCount: Int
+
+  """
+  Field from object definition
+  """
+  quoteCount: Int
+
+  """
+  Field from object definition
+  """
+  replyCount: Int
+
+  """
+  Field from object definition
+  """
+  threadgate: String
+
+  """
+  Field from object definition
+  """
+  repostCount: Int
+
+  """
+  Field from object definition
+  """
+  bookmarkCount: Int
+}
+
+"""
+Nested type from app.bsky.feed.defs#replyRef
+"""
+type AppBskyFeedDefsReplyRef {
+  """
+  Field from object definition
+  """
+  root: String!
+
+  """
+  Field from object definition
+  """
+  parent: String!
+
+  """
+  Field from object definition
+  """
+  grandparentAuthor: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#reasonPin
+"""
+type AppBskyFeedDefsReasonPin
+
+"""
+Nested type from app.bsky.feed.defs#blockedPost
+"""
+type AppBskyFeedDefsBlockedPost {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  author: String!
+
+  """
+  Field from object definition
+  """
+  blocked: Boolean!
+}
+
+"""
+Nested type from app.bsky.feed.defs#interaction
+"""
+type AppBskyFeedDefsInteraction {
+  """
+  Field from object definition
+  """
+  item: String
+
+  """
+  Field from object definition
+  """
+  event: String
+
+  """
+  Field from object definition
+  """
+  reqId: String
+
+  """
+  Field from object definition
+  """
+  feedContext: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#viewerState
+"""
+type AppBskyFeedDefsViewerState {
+  """
+  Field from object definition
+  """
+  like: String
+
+  """
+  Field from object definition
+  """
+  pinned: Boolean
+
+  """
+  Field from object definition
+  """
+  repost: String
+
+  """
+  Field from object definition
+  """
+  bookmarked: Boolean
+
+  """
+  Field from object definition
+  """
+  threadMuted: Boolean
+
+  """
+  Field from object definition
+  """
+  replyDisabled: Boolean
+
+  """
+  Field from object definition
+  """
+  embeddingDisabled: Boolean
+}
+
+"""
+Nested type from app.bsky.feed.defs#feedViewPost
+"""
+type AppBskyFeedDefsFeedViewPost {
+  """
+  Field from object definition
+  """
+  post: String!
+
+  """
+  Field from object definition
+  """
+  reply: String
+
+  """
+  Field from object definition
+  """
+  reqId: String
+
+  """
+  Field from object definition
+  """
+  reason: String
+
+  """
+  Field from object definition
+  """
+  feedContext: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#notFoundPost
+"""
+type AppBskyFeedDefsNotFoundPost {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  notFound: Boolean!
+}
+
+"""
+Nested type from app.bsky.feed.defs#reasonRepost
+"""
+type AppBskyFeedDefsReasonRepost {
+  """
+  Field from object definition
+  """
+  by: String!
+
+  """
+  Field from object definition
+  """
+  cid: String
+
+  """
+  Field from object definition
+  """
+  uri: String
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+}
+
+"""
+Nested type from app.bsky.feed.defs#blockedAuthor
+"""
+type AppBskyFeedDefsBlockedAuthor {
+  """
+  Field from object definition
+  """
+  did: String!
+
+  """
+  Field from object definition
+  """
+  viewer: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#generatorView
+"""
+type AppBskyFeedDefsGeneratorView {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  did: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  avatar: String
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  creator: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  likeCount: Int
+
+  """
+  Field from object definition
+  """
+  contentMode: String
+
+  """
+  Field from object definition
+  """
+  description: String
+
+  """
+  Field from object definition
+  """
+  displayName: String!
+
+  """
+  Field from object definition
+  """
+  descriptionFacets: [String!]
+
+  """
+  Field from object definition
+  """
+  acceptsInteractions: Boolean
+}
+
+"""
+Nested type from app.bsky.feed.defs#threadContext
+"""
+type AppBskyFeedDefsThreadContext {
+  """
+  Field from object definition
+  """
+  rootAuthorLike: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#threadViewPost
+"""
+type AppBskyFeedDefsThreadViewPost {
+  """
+  Field from object definition
+  """
+  post: String!
+
+  """
+  Field from object definition
+  """
+  parent: String
+
+  """
+  Field from object definition
+  """
+  replies: [String!]
+
+  """
+  Field from object definition
+  """
+  threadContext: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#threadgateView
+"""
+type AppBskyFeedDefsThreadgateView {
+  """
+  Field from object definition
+  """
+  cid: String
+
+  """
+  Field from object definition
+  """
+  uri: String
+
+  """
+  Field from object definition
+  """
+  lists: [String!]
+
+  """
+  Field from object definition
+  """
+  record: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#skeletonFeedPost
+"""
+type AppBskyFeedDefsSkeletonFeedPost {
+  """
+  Field from object definition
+  """
+  post: String!
+
+  """
+  Field from object definition
+  """
+  reason: String
+
+  """
+  Field from object definition
+  """
+  feedContext: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#skeletonReasonPin
+"""
+type AppBskyFeedDefsSkeletonReasonPin
+
+"""
+Nested type from app.bsky.feed.defs#generatorViewerState
+"""
+type AppBskyFeedDefsGeneratorViewerState {
+  """
+  Field from object definition
+  """
+  like: String
+}
+
+"""
+Nested type from app.bsky.feed.defs#skeletonReasonRepost
+"""
+type AppBskyFeedDefsSkeletonReasonRepost {
+  """
+  Field from object definition
+  """
+  repost: String!
+}
+
+"""
+Nested type from app.bsky.feed.post#entity
+"""
+type AppBskyFeedPostEntity {
+  """
+  Field from object definition
+  """
+  type: String!
+
+  """
+  Field from object definition
+  """
+  index: String!
+
+  """
+  Field from object definition
+  """
+  value: String!
+}
+
+"""
+Nested type from app.bsky.feed.post#replyRef
+"""
+type AppBskyFeedPostReplyRef {
+  """
+  Field from object definition
+  """
+  root: String!
+
+  """
+  Field from object definition
+  """
+  parent: String!
+}
+
+"""
+Nested type from app.bsky.feed.post#textSlice
+"""
+type AppBskyFeedPostTextSlice {
+  """
+  Field from object definition
+  """
+  end: Int!
+
+  """
+  Field from object definition
+  """
+  start: Int!
+}
+
+"""
+Nested type from app.bsky.feed.postgate#disableRule
+"""
+type AppBskyFeedPostgateDisableRule
+
+"""
+Nested type from app.bsky.feed.threadgate#listRule
+"""
+type AppBskyFeedThreadgateListRule {
+  """
+  Field from object definition
+  """
+  list: String!
+}
+
+"""
+Nested type from app.bsky.feed.threadgate#mentionRule
+"""
+type AppBskyFeedThreadgateMentionRule
+
+"""
+Nested type from app.bsky.feed.threadgate#followerRule
+"""
+type AppBskyFeedThreadgateFollowerRule
+
+"""
+Nested type from app.bsky.feed.threadgate#followingRule
+"""
+type AppBskyFeedThreadgateFollowingRule
+
+"""
+Nested type from app.bsky.graph.defs#listView
+"""
+type AppBskyGraphDefsListView {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  name: String!
+
+  """
+  Field from object definition
+  """
+  avatar: String
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  creator: String!
+
+  """
+  Field from object definition
+  """
+  purpose: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  description: String
+
+  """
+  Field from object definition
+  """
+  listItemCount: Int
+
+  """
+  Field from object definition
+  """
+  descriptionFacets: [String!]
+}
+
+"""
+Nested type from app.bsky.graph.defs#listItemView
+"""
+type AppBskyGraphDefsListItemView {
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  subject: String!
+}
+
+"""
+Nested type from app.bsky.graph.defs#relationship
+"""
+type AppBskyGraphDefsRelationship {
+  """
+  Field from object definition
+  """
+  did: String!
+
+  """
+  Field from object definition
+  """
+  following: String
+
+  """
+  Field from object definition
+  """
+  followedBy: String
+}
+
+"""
+Nested type from app.bsky.graph.defs#listViewBasic
+"""
+type AppBskyGraphDefsListViewBasic {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  name: String!
+
+  """
+  Field from object definition
+  """
+  avatar: String
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  purpose: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String
+
+  """
+  Field from object definition
+  """
+  listItemCount: Int
+}
+
+"""
+Nested type from app.bsky.graph.defs#notFoundActor
+"""
+type AppBskyGraphDefsNotFoundActor {
+  """
+  Field from object definition
+  """
+  actor: String!
+
+  """
+  Field from object definition
+  """
+  notFound: Boolean!
+}
+
+"""
+Nested type from app.bsky.graph.defs#listViewerState
+"""
+type AppBskyGraphDefsListViewerState {
+  """
+  Field from object definition
+  """
+  muted: Boolean
+
+  """
+  Field from object definition
+  """
+  blocked: String
+}
+
+"""
+Nested type from app.bsky.graph.defs#starterPackView
+"""
+type AppBskyGraphDefsStarterPackView {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  list: String
+
+  """
+  Field from object definition
+  """
+  feeds: [String!]
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  record: String!
+
+  """
+  Field from object definition
+  """
+  creator: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  joinedWeekCount: Int
+
+  """
+  Field from object definition
+  """
+  listItemsSample: [String!]
+
+  """
+  Field from object definition
+  """
+  joinedAllTimeCount: Int
+}
+
+"""
+Nested type from app.bsky.graph.defs#starterPackViewBasic
+"""
+type AppBskyGraphDefsStarterPackViewBasic {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  record: String!
+
+  """
+  Field from object definition
+  """
+  creator: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  listItemCount: Int
+
+  """
+  Field from object definition
+  """
+  joinedWeekCount: Int
+
+  """
+  Field from object definition
+  """
+  joinedAllTimeCount: Int
+}
+
+"""
+Nested type from app.bsky.labeler.defs#labelerView
+"""
+type AppBskyLabelerDefsLabelerView {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  creator: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  likeCount: Int
+}
+
+"""
+Nested type from app.bsky.labeler.defs#labelerPolicies
+"""
+type AppBskyLabelerDefsLabelerPolicies {
+  """
+  Field from object definition
+  """
+  labelValues: [String!]!
+
+  """
+  Field from object definition
+  """
+  labelValueDefinitions: [String!]
+}
+
+"""
+Nested type from app.bsky.labeler.defs#labelerViewerState
+"""
+type AppBskyLabelerDefsLabelerViewerState {
+  """
+  Field from object definition
+  """
+  like: String
+}
+
+"""
+Nested type from app.bsky.labeler.defs#labelerViewDetailed
+"""
+type AppBskyLabelerDefsLabelerViewDetailed {
+  """
+  Field from object definition
+  """
+  cid: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  labels: [String!]
+
+  """
+  Field from object definition
+  """
+  viewer: String
+
+  """
+  Field from object definition
+  """
+  creator: String!
+
+  """
+  Field from object definition
+  """
+  policies: String!
+
+  """
+  Field from object definition
+  """
+  indexedAt: String!
+
+  """
+  Field from object definition
+  """
+  likeCount: Int
+
+  """
+  Field from object definition
+  """
+  reasonTypes: [String!]
+
+  """
+  Field from object definition
+  """
+  subjectTypes: [String!]
+
+  """
+  Field from object definition
+  """
+  subjectCollections: [String!]
+}
+
+"""
+Nested type from app.bsky.notification.defs#preference
+"""
+type AppBskyNotificationDefsPreference {
+  """
+  Field from object definition
+  """
+  list: Boolean!
+
+  """
+  Field from object definition
+  """
+  push: Boolean!
+}
+
+"""
+Nested type from app.bsky.notification.defs#preferences
+"""
+type AppBskyNotificationDefsPreferences {
+  """
+  Field from object definition
+  """
+  chat: String!
+
+  """
+  Field from object definition
+  """
+  like: String!
+
+  """
+  Field from object definition
+  """
+  quote: String!
+
+  """
+  Field from object definition
+  """
+  reply: String!
+
+  """
+  Field from object definition
+  """
+  follow: String!
+
+  """
+  Field from object definition
+  """
+  repost: String!
+
+  """
+  Field from object definition
+  """
+  mention: String!
+
+  """
+  Field from object definition
+  """
+  verified: String!
+
+  """
+  Field from object definition
+  """
+  unverified: String!
+
+  """
+  Field from object definition
+  """
+  likeViaRepost: String!
+
+  """
+  Field from object definition
+  """
+  subscribedPost: String!
+
+  """
+  Field from object definition
+  """
+  repostViaRepost: String!
+
+  """
+  Field from object definition
+  """
+  starterpackJoined: String!
+}
+
+"""
+Nested type from app.bsky.notification.defs#recordDeleted
+"""
+type AppBskyNotificationDefsRecordDeleted
+
+"""
+Nested type from app.bsky.notification.defs#chatPreference
+"""
+type AppBskyNotificationDefsChatPreference {
+  """
+  Field from object definition
+  """
+  push: Boolean!
+
+  """
+  Field from object definition
+  """
+  include: String!
+}
+
+"""
+Nested type from app.bsky.notification.defs#activitySubscription
+"""
+type AppBskyNotificationDefsActivitySubscription {
+  """
+  Field from object definition
+  """
+  post: Boolean!
+
+  """
+  Field from object definition
+  """
+  reply: Boolean!
+}
+
+"""
+Nested type from app.bsky.notification.defs#filterablePreference
+"""
+type AppBskyNotificationDefsFilterablePreference {
+  """
+  Field from object definition
+  """
+  list: Boolean!
+
+  """
+  Field from object definition
+  """
+  push: Boolean!
+
+  """
+  Field from object definition
+  """
+  include: String!
+}
+
+"""
+Nested type from app.bsky.notification.defs#subjectActivitySubscription
+"""
+type AppBskyNotificationDefsSubjectActivitySubscription {
+  """
+  Field from object definition
+  """
+  subject: String!
+
+  """
+  Field from object definition
+  """
+  activitySubscription: String!
+}
+
+"""
+Nested type from app.bsky.richtext.facet#tag
+"""
+type AppBskyRichtextFacetTag {
+  """
+  Field from object definition
+  """
+  tag: String!
+}
+
+"""
+Nested type from app.bsky.richtext.facet#link
+"""
+type AppBskyRichtextFacetLink {
+  """
+  Field from object definition
+  """
+  uri: String!
+}
+
+"""
+Nested type from app.bsky.richtext.facet#mention
+"""
+type AppBskyRichtextFacetMention {
+  """
+  Field from object definition
+  """
+  did: String!
+}
+
+"""
+Nested type from app.bsky.richtext.facet#byteSlice
+"""
+type AppBskyRichtextFacetByteSlice {
+  """
+  Field from object definition
+  """
+  byteEnd: Int!
+
+  """
+  Field from object definition
+  """
+  byteStart: Int!
+}
+
+"""
+Nested type from com.atproto.label.defs#label
+"""
+type ComAtprotoLabelDefsLabel {
+  """
+  Field from object definition
+  """
+  cid: String
+
+  """
+  Field from object definition
+  """
+  cts: String!
+
+  """
+  Field from object definition
+  """
+  exp: String
+
+  """
+  Field from object definition
+  """
+  neg: Boolean
+
+  """
+  Field from object definition
+  """
+  sig: String
+
+  """
+  Field from object definition
+  """
+  src: String!
+
+  """
+  Field from object definition
+  """
+  uri: String!
+
+  """
+  Field from object definition
+  """
+  val: String!
+
+  """
+  Field from object definition
+  """
+  ver: Int
+}
+
+"""
+Nested type from com.atproto.label.defs#selfLabel
+"""
+type ComAtprotoLabelDefsSelfLabel {
+  """
+  Field from object definition
+  """
+  val: String!
+}
+
+"""
+Nested type from com.atproto.label.defs#selfLabels
+"""
+type ComAtprotoLabelDefsSelfLabels {
+  """
+  Field from object definition
+  """
+  values: [String!]!
+}
+
+"""
+Nested type from com.atproto.label.defs#labelValueDefinition
+"""
+type ComAtprotoLabelDefsLabelValueDefinition {
+  """
+  Field from object definition
+  """
+  blurs: String!
+
+  """
+  Field from object definition
+  """
+  locales: [String!]!
+
+  """
+  Field from object definition
+  """
+  severity: String!
+
+  """
+  Field from object definition
+  """
+  adultOnly: Boolean
+
+  """
+  Field from object definition
+  """
+  identifier: String!
+
+  """
+  Field from object definition
+  """
+  defaultSetting: String
+}
+
+"""
+Nested type from com.atproto.label.defs#labelValueDefinitionStrings
+"""
+type ComAtprotoLabelDefsLabelValueDefinitionStrings {
+  """
+  Field from object definition
+  """
+  lang: String!
+
+  """
+  Field from object definition
+  """
+  name: String!
+
+  """
+  Field from object definition
+  """
+  description: String!
+}
+
+type AppBskyActorProfileAggregated {
+  count: Int
+  groups: [AppBskyActorProfileAggregateGroup]
+}
+
+type AppBskyActorProfileAggregateGroup {
+  count: Int
+  website: String
+  pronouns: String
+  createdAt: String
+  description: String
+  displayName: String
+}
+
+type AppBskyFeedPostAggregated {
+  count: Int
+  groups: [AppBskyFeedPostAggregateGroup]
+}
+
+type AppBskyFeedPostAggregateGroup {
+  count: Int
+  text: String
+  createdAt: String
+}
+
+type AppBskyFeedPostgateAggregated {
+  count: Int
+  groups: [AppBskyFeedPostgateAggregateGroup]
+}
+
+type AppBskyFeedPostgateAggregateGroup {
+  count: Int
+  post: String
+  createdAt: String
+}
+
+type AppBskyFeedThreadgateAggregated {
+  count: Int
+  groups: [AppBskyFeedThreadgateAggregateGroup]
+}
+
+type AppBskyFeedThreadgateAggregateGroup {
+  count: Int
+  post: String
+  createdAt: String
+}
+
+type AppBskyGraphFollowAggregated {
+  count: Int
+  groups: [AppBskyGraphFollowAggregateGroup]
+}
+
+type AppBskyGraphFollowAggregateGroup {
+  count: Int
+  subject: String
+  createdAt: String
+}
+
+enum AppBskyActorProfileGroupByField {
+  website
+  pronouns
+  createdAt
+  description
+  displayName
+  createdAt_day
+  createdAt_week
+  createdAt_month
+}
+
+enum AppBskyFeedPostGroupByField {
+  text
+  createdAt
+  createdAt_day
+  createdAt_week
+  createdAt_month
+}
+
+enum AppBskyFeedPostgateGroupByField {
+  post
+  createdAt
+  createdAt_day
+  createdAt_week
+  createdAt_month
+}
+
+enum AppBskyFeedThreadgateGroupByField {
+  post
+  createdAt
+  createdAt_day
+  createdAt_week
+  createdAt_month
+}
+
+enum AppBskyGraphFollowGroupByField {
+  subject
+  createdAt
+  createdAt_day
+  createdAt_week
+  createdAt_month
+}
+
+input AppBskyActorProfileFieldCondition {
+  labels: String
+  website: String
+  pronouns: String
+  createdAt: String
+  pinnedPost: String
+  description: String
+  displayName: String
+  joinedViaStarterPack: String
+  AND: [AppBskyActorProfileFieldCondition]
+  OR: [AppBskyActorProfileFieldCondition]
+}
+
+input AppBskyFeedPostFieldCondition {
+  tags: String
+  text: String
+  embed: String
+  langs: String
+  reply: String
+  facets: String
+  labels: String
+  entities: String
+  createdAt: String
+  AND: [AppBskyFeedPostFieldCondition]
+  OR: [AppBskyFeedPostFieldCondition]
+}
+
+input AppBskyFeedPostgateFieldCondition {
+  post: String
+  createdAt: String
+  embeddingRules: String
+  detachedEmbeddingUris: String
+  AND: [AppBskyFeedPostgateFieldCondition]
+  OR: [AppBskyFeedPostgateFieldCondition]
+}
+
+input AppBskyFeedThreadgateFieldCondition {
+  post: String
+  allow: String
+  createdAt: String
+  hiddenReplies: String
+  AND: [AppBskyFeedThreadgateFieldCondition]
+  OR: [AppBskyFeedThreadgateFieldCondition]
+}
+
+input AppBskyGraphFollowFieldCondition {
+  via: String
+  subject: String
+  createdAt: String
+  AND: [AppBskyGraphFollowFieldCondition]
+  OR: [AppBskyGraphFollowFieldCondition]
+}
+
+"""
+Root query type
+"""
+type Query {
+  """
+  Query app.bsky.actor.profile
+  """
+  appBskyActorProfile(
+    """
+    Number of items to return
+    """
+    first: Int
+
+    """
+    Cursor to start after
+    """
+    after: String
+
+    """
+    Number of items from the end
+    """
+    last: Int
+
+    """
+    Cursor to end before
+    """
+    before: String
+
+    """
+    Filter conditions
+    """
+    where: AppBskyActorProfileWhereInput
+
+    """
+    Sort order
+    """
+    sortBy: [AppBskyActorProfileSortFieldInput]
+  ): AppBskyActorProfileConnection
+
+  """
+  Query app.bsky.feed.post
+  """
+  appBskyFeedPost(
+    """
+    Number of items to return
+    """
+    first: Int
+
+    """
+    Cursor to start after
+    """
+    after: String
+
+    """
+    Number of items from the end
+    """
+    last: Int
+
+    """
+    Cursor to end before
+    """
+    before: String
+
+    """
+    Filter conditions
+    """
+    where: AppBskyFeedPostWhereInput
+
+    """
+    Sort order
+    """
+    sortBy: [AppBskyFeedPostSortFieldInput]
+  ): AppBskyFeedPostConnection
+
+  """
+  Query app.bsky.feed.postgate
+  """
+  appBskyFeedPostgate(
+    """
+    Number of items to return
+    """
+    first: Int
+
+    """
+    Cursor to start after
+    """
+    after: String
+
+    """
+    Number of items from the end
+    """
+    last: Int
+
+    """
+    Cursor to end before
+    """
+    before: String
+
+    """
+    Filter conditions
+    """
+    where: AppBskyFeedPostgateWhereInput
+
+    """
+    Sort order
+    """
+    sortBy: [AppBskyFeedPostgateSortFieldInput]
+  ): AppBskyFeedPostgateConnection
+
+  """
+  Query app.bsky.feed.threadgate
+  """
+  appBskyFeedThreadgate(
+    """
+    Number of items to return
+    """
+    first: Int
+
+    """
+    Cursor to start after
+    """
+    after: String
+
+    """
+    Number of items from the end
+    """
+    last: Int
+
+    """
+    Cursor to end before
+    """
+    before: String
+
+    """
+    Filter conditions
+    """
+    where: AppBskyFeedThreadgateWhereInput
+
+    """
+    Sort order
+    """
+    sortBy: [AppBskyFeedThreadgateSortFieldInput]
+  ): AppBskyFeedThreadgateConnection
+
+  """
+  Query app.bsky.graph.follow
+  """
+  appBskyGraphFollow(
+    """
+    Number of items to return
+    """
+    first: Int
+
+    """
+    Cursor to start after
+    """
+    after: String
+
+    """
+    Number of items from the end
+    """
+    last: Int
+
+    """
+    Cursor to end before
+    """
+    before: String
+
+    """
+    Filter conditions
+    """
+    where: AppBskyGraphFollowWhereInput
+
+    """
+    Sort order
+    """
+    sortBy: [AppBskyGraphFollowSortFieldInput]
+  ): AppBskyGraphFollowConnection
+}
+
+type AppBskyFeedPostConnection {
+  edges: [AppBskyFeedPostEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AppBskyFeedPostEdge {
+  node: AppBskyFeedPost
+  cursor: String!
+}
+
+input AppBskyFeedPostWhereInput {
+  tags: StringFieldCondition
+  text: StringFieldCondition
+  embed: StringFieldCondition
+  langs: StringFieldCondition
+  reply: StringFieldCondition
+  facets: StringFieldCondition
+  labels: StringFieldCondition
+  entities: StringFieldCondition
+  createdAt: StringFieldCondition
+  AND: [AppBskyFeedPostWhereInput]
+  OR: [AppBskyFeedPostWhereInput]
+}
+
+input AppBskyFeedPostSortFieldInput {
+  field: AppBskyFeedPostSortField!
+  direction: SortDirection
+}
+
+enum AppBskyFeedPostSortField {
+  uri
+  indexedAt
+  text
+  createdAt
+}
+
+type Mutation {
+  createAppBskyActorProfile(input: AppBskyActorProfileInput!, rkey: String): AppBskyActorProfile
+  updateAppBskyActorProfile(rkey: String!, input: AppBskyActorProfileInput!): AppBskyActorProfile
+  deleteAppBskyActorProfile(rkey: String!): DeleteResult
+  createAppBskyFeedPost(input: AppBskyFeedPostInput!, rkey: String): AppBskyFeedPost
+  updateAppBskyFeedPost(rkey: String!, input: AppBskyFeedPostInput!): AppBskyFeedPost
+  deleteAppBskyFeedPost(rkey: String!): DeleteResult
+  createAppBskyFeedPostgate(input: AppBskyFeedPostgateInput!, rkey: String): AppBskyFeedPostgate
+  updateAppBskyFeedPostgate(rkey: String!, input: AppBskyFeedPostgateInput!): AppBskyFeedPostgate
+  deleteAppBskyFeedPostgate(rkey: String!): DeleteResult
+  createAppBskyFeedThreadgate(
+    input: AppBskyFeedThreadgateInput!
+    rkey: String
+  ): AppBskyFeedThreadgate
+  updateAppBskyFeedThreadgate(
+    rkey: String!
+    input: AppBskyFeedThreadgateInput!
+  ): AppBskyFeedThreadgate
+  deleteAppBskyFeedThreadgate(rkey: String!): DeleteResult
+  createAppBskyGraphFollow(input: AppBskyGraphFollowInput!, rkey: String): AppBskyGraphFollow
+  updateAppBskyGraphFollow(rkey: String!, input: AppBskyGraphFollowInput!): AppBskyGraphFollow
+  deleteAppBskyGraphFollow(rkey: String!): DeleteResult
+}
+
+input AppBskyActorProfileInput {
+  avatar: String
+  banner: String
+  labels: String
+  website: String
+  pronouns: String
+  createdAt: String
+  pinnedPost: String
+  description: String
+  displayName: String
+  joinedViaStarterPack: String
+}
+
+type DeleteResult {
+  """
+  URI of deleted record
+  """
+  uri: String
+}
+
+input AppBskyFeedPostInput {
+  tags: String
+  text: String!
+  embed: String
+  langs: String
+  reply: String
+  facets: String
+  labels: String
+  entities: String
+  createdAt: String!
+}
+
+input AppBskyFeedPostgateInput {
+  post: String!
+  createdAt: String!
+  embeddingRules: String
+  detachedEmbeddingUris: String
+}
+
+input AppBskyFeedThreadgateInput {
+  post: String!
+  allow: String
+  createdAt: String!
+  hiddenReplies: String
+}
+
+input AppBskyGraphFollowInput {
+  via: String
+  subject: String!
+  createdAt: String!
+}
