@@ -1280,6 +1280,8 @@ function createRecordType(
  * @param {Record<string, GraphQLObjectType>} recordTypes
  * @param {GraphQLObjectType} resolvedRecordType
  * @param {JoinCollector} joinCollector
+ * @param {GraphQLObjectType} blobType
+ * @param {Function} queryFn
  * @returns {GraphQLObjectType}
  */
 function createRecordTypeWithResolvers(
@@ -1290,6 +1292,8 @@ function createRecordTypeWithResolvers(
   recordTypes,
   resolvedRecordType,
   joinCollector,
+  blobType,
+  queryFn,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -1315,7 +1319,7 @@ function createRecordTypeWithResolvers(
       // Add lexicon properties
       for (const prop of recordDef.properties) {
         fields[prop.name] = {
-          type: getGraphQLType(prop),
+          type: getGraphQLType(prop, blobType),
           description: `Field from lexicon`,
         };
 
@@ -1342,17 +1346,41 @@ function createRecordTypeWithResolvers(
         const fieldName = `${nsidToFieldName(otherLexicon.id)}ByDid`;
         const isUnique = otherLexicon.defs.main.key === 'literal:self';
 
+        const otherCollection = otherLexicon.id; // Use full NSID as collection name
+
         if (isUnique) {
           // Return single object for literal:self collections
           fields[fieldName] = {
             type: recordTypes[otherLexicon.id],
             description: `${otherTypeName} for this DID`,
+            resolve: async (parent) => {
+              const did = parent.did;
+              if (!did) return null;
+              const result = await queryFn({
+                type: 'findMany',
+                collection: otherCollection,
+                where: [{ field: 'did', op: 'eq', value: did }],
+                pagination: { first: 1 },
+              });
+              return result.rows?.[0] || null;
+            },
           };
         } else {
           // Return list for multi-record collections
           fields[fieldName] = {
             type: new GraphQLList(recordTypes[otherLexicon.id]),
             description: `${otherTypeName} records for this DID`,
+            resolve: async (parent) => {
+              const did = parent.did;
+              if (!did) return [];
+              const result = await queryFn({
+                type: 'findMany',
+                collection: otherCollection,
+                where: [{ field: 'did', op: 'eq', value: did }],
+                pagination: { first: 100 },
+              });
+              return result.rows || [];
+            },
           };
         }
       }
@@ -1571,6 +1599,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   const sortDirectionEnum = createSortDirectionEnum();
   const deleteResultType = createDeleteResultType();
   const resolvedRecordType = createResolvedRecordType();
+  const blobType = createBlobType();
 
   // Create join collector for batching
   const joinCollector = new JoinCollector(queryFn);
@@ -1590,6 +1619,8 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         recordTypes,
         resolvedRecordType,
         joinCollector,
+        blobType,
+        queryFn,
       );
       // Create where input type (keyed by typeName for self-reference lookup)
       whereInputTypes[typeName] = createWhereInputType(

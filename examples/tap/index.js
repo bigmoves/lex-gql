@@ -9,10 +9,18 @@
  *   2. This server connects to tap's websocket and stores records locally
  *   3. lex-gql provides GraphQL queries over the stored records
  *
+ * Collections synced:
+ *   - xyz.statusphere.status (emoji statuses)
+ *   - app.bsky.actor.profile (user profiles with avatar/banner blobs)
+ *
  * Prerequisites:
  *   docker compose up -d   # Start tap server
  *   pnpm install
  *   node index.js
+ *
+ * Tap configuration for this example:
+ *   TAP_SIGNAL_COLLECTION=xyz.statusphere.status
+ *   TAP_COLLECTION_FILTERS=xyz.statusphere.status,app.bsky.actor.profile
  */
 
 import { createServer } from 'node:http';
@@ -21,7 +29,7 @@ import { createHandler } from 'graphql-http/lib/use/node';
 import { createAdapter, parseLexicon } from 'lex-gql';
 import WebSocket from 'ws';
 
-// 1. Define lexicon for xyz.statusphere.status
+// 1. Define lexicons
 const lexicons = [
   parseLexicon({
     lexicon: 1,
@@ -46,7 +54,30 @@ const lexicons = [
       },
     },
   }),
+  parseLexicon({
+    lexicon: 1,
+    id: 'app.bsky.actor.profile',
+    defs: {
+      main: {
+        type: 'record',
+        key: 'literal:self',
+        record: {
+          type: 'object',
+          properties: {
+            displayName: { type: 'string', maxGraphemes: 64, maxLength: 640 },
+            description: { type: 'string', maxGraphemes: 256, maxLength: 2560 },
+            avatar: { type: 'blob', accept: ['image/png', 'image/jpeg'], maxSize: 1000000 },
+            banner: { type: 'blob', accept: ['image/png', 'image/jpeg'], maxSize: 1000000 },
+            createdAt: { type: 'string', format: 'datetime' },
+          },
+        },
+      },
+    },
+  }),
 ];
+
+// Collections we want to sync from tap
+const SYNC_COLLECTIONS = ['xyz.statusphere.status', 'app.bsky.actor.profile'];
 
 // 2. Create local SQLite database for storing records from tap
 const dbPath = './data/records.db';
@@ -118,8 +149,8 @@ function connectToTap() {
       if (event.type === 'record' && event.record) {
         const { did, collection, rkey, cid, action, record } = event.record;
 
-        // Only store records for our collection
-        if (collection !== 'xyz.statusphere.status') {
+        // Only store records for our collections
+        if (!SYNC_COLLECTIONS.includes(collection)) {
           return;
         }
 
@@ -164,6 +195,33 @@ function scheduleReconnect() {
 // Start websocket connection
 connectToTap();
 
+// Helper to inject did into blob fields for URL resolution
+function injectDidIntoBlobs(obj, did) {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  // Check if this is a blob (has ref and mimeType)
+  if (obj.$type === 'blob' || (obj.ref && obj.mimeType && obj.size)) {
+    return {
+      ...obj,
+      ref: obj.ref?.$link || obj.ref, // Handle { $link: "..." } format
+      did,
+    };
+  }
+
+  // Recurse into object properties
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (Array.isArray(value)) {
+      result[key] = value.map((item) => injectDidIntoBlobs(item, did));
+    } else if (typeof value === 'object') {
+      result[key] = injectDidIntoBlobs(value, did);
+    } else {
+      result[key] = value;
+    }
+  }
+  return result;
+}
+
 // 4. Query adapter: translates lex-gql operations to SQLite queries
 async function query(op) {
   if (op.type === 'findMany') {
@@ -183,40 +241,49 @@ function findMany(op) {
   const conditions = ['r.collection = ?'];
   const params = [collection];
 
+  // System fields that are columns, not in JSON
+  const systemFields = {
+    did: 'r.did',
+    uri: 'r.uri',
+    collection: 'r.collection',
+    cid: 'r.cid',
+    indexedAt: 'r.indexed_at',
+  };
+
   for (const clause of where) {
     const { field, op: operator, value } = clause;
-    // Map field to JSON path in record blob
-    const jsonPath = `json_extract(r.record, '$.${field}')`;
+    // Map field to column or JSON path
+    const fieldPath = systemFields[field] || `json_extract(r.record, '$.${field}')`;
 
     switch (operator) {
       case 'eq':
-        conditions.push(`${jsonPath} = ?`);
+        conditions.push(`${fieldPath} = ?`);
         params.push(value);
         break;
       case 'contains':
-        conditions.push(`${jsonPath} LIKE ?`);
+        conditions.push(`${fieldPath} LIKE ?`);
         params.push(`%${value}%`);
         break;
       case 'gt':
-        conditions.push(`${jsonPath} > ?`);
+        conditions.push(`${fieldPath} > ?`);
         params.push(value);
         break;
       case 'gte':
-        conditions.push(`${jsonPath} >= ?`);
+        conditions.push(`${fieldPath} >= ?`);
         params.push(value);
         break;
       case 'lt':
-        conditions.push(`${jsonPath} < ?`);
+        conditions.push(`${fieldPath} < ?`);
         params.push(value);
         break;
       case 'lte':
-        conditions.push(`${jsonPath} <= ?`);
+        conditions.push(`${fieldPath} <= ?`);
         params.push(value);
         break;
       case 'in':
         if (Array.isArray(value) && value.length > 0) {
           const placeholders = value.map(() => '?').join(', ');
-          conditions.push(`${jsonPath} IN (${placeholders})`);
+          conditions.push(`${fieldPath} IN (${placeholders})`);
           params.push(...value);
         }
         break;
@@ -256,6 +323,7 @@ function findMany(op) {
   // Transform rows to lex-gql format
   const transformed = rows.map((row) => {
     const record = JSON.parse(row.record);
+    const withBlobs = injectDidIntoBlobs(record, row.did);
     return {
       uri: `at://${row.did}/${row.collection}/${row.rkey}`,
       cid: row.cid,
@@ -263,7 +331,7 @@ function findMany(op) {
       collection: row.collection,
       indexedAt: row.indexed_at,
       actorHandle: row.handle || null,
-      ...record,
+      ...withBlobs,
       _id: row.id, // For cursor
     };
   });
@@ -359,21 +427,23 @@ const graphiqlHtml = `<!DOCTYPE html>
       const defaultQuery = \`# Welcome to Tap GraphQL
 #
 # Query AT Protocol records synced by tap.
-# This example tracks xyz.statusphere.status records.
+# This example tracks xyz.statusphere.status and app.bsky.actor.profile records.
 
-query {
+# Query statuses with author profiles (DID join)
+query StatusesWithProfiles {
   xyzStatusphereStatus(first: 10) {
     edges {
       node {
-        uri
-        did
         status
         createdAt
-        indexedAt
+        actorHandle
+        appBskyActorProfileByDid {
+          displayName
+          avatar {
+            url(preset: "avatar")
+          }
+        }
       }
-    }
-    pageInfo {
-      hasNextPage
     }
   }
 }

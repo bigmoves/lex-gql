@@ -10,4 +10,4 @@ services:
       TAP_DATABASE_URL: sqlite:///data/tap.db
       TAP_RELAY_URL: https://relay1.us-east.bsky.network
       TAP_SIGNAL_COLLECTION: xyz.statusphere.status
-      TAP_COLLECTION_FILTERS: xyz.statusphere.status
+      TAP_COLLECTION_FILTERS: xyz.statusphere.status,app.bsky.actor.profile
