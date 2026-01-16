@@ -19,13 +19,13 @@
   "keywords": ["graphql", "atproto", "lexicon", "sqlite", "adapter"],
   "license": "MIT",
   "peerDependencies": {
-    "better-sqlite3": ">=9.0.0",
+    "better-sqlite3": ">=11.0.0",
     "lex-gql": ">=0.1.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.0",
-    "better-sqlite3": "^11.8.1",
+    "better-sqlite3": "^12.6.0",
     "lex-gql": "workspace:*",
     "typescript": "^5.7.2",
     "vitest": "^1.6.1"
