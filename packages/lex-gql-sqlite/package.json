@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "description": "SQLite adapter for lex-gql",
   "type": "module",
-  "main": "lex-gql-sqlite.js",
-  "types": "lex-gql-sqlite.d.ts",
+  "main": "src/lex-gql-sqlite.js",
+  "types": "src/lex-gql-sqlite.d.ts",
   "exports": {
     ".": {
-      "types": "./lex-gql-sqlite.d.ts",
-      "default": "./lex-gql-sqlite.js"
+      "types": "./src/lex-gql-sqlite.d.ts",
+      "default": "./src/lex-gql-sqlite.js"
     }
   },
   "scripts": {

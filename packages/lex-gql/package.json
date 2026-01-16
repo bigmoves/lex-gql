@@ -4,11 +4,11 @@
   "description": "Generate a complete GraphQL API from AT Protocol lexicons",
   "license": "MIT",
   "type": "module",
-  "main": "lex-gql.js",
-  "types": "lex-gql.d.ts",
+  "main": "src/lex-gql.js",
+  "types": "src/lex-gql.d.ts",
   "files": [
-    "lex-gql.js",
-    "lex-gql.d.ts"
+    "src/lex-gql.js",
+    "src/lex-gql.d.ts"
   ],
   "keywords": [
     "graphql",

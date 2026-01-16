@@ -19,7 +19,7 @@ import {
   parseRefUri,
   refToTypeName,
   resolveRefKey,
-} from './lex-gql.js';
+} from '../src/lex-gql.js';
 
 // Load all lexicon files recursively
 function loadLexicons(dir) {
@@ -37,7 +37,7 @@ function loadLexicons(dir) {
   return lexicons;
 }
 
-const LEXICONS_DIR = new URL('./test/lexicons', import.meta.url).pathname;
+const LEXICONS_DIR = new URL('./lexicons', import.meta.url).pathname;
 const realLexicons = loadLexicons(LEXICONS_DIR);
 
 describe('NSID utilities', () => {
@@ -2399,7 +2399,7 @@ describe('Schema Comparison', () => {
 
   it('compares generated schema against oracle', () => {
     const oracleSchema = readFileSync(
-      new URL('./test/schema.graphql', import.meta.url).pathname,
+      new URL('./schema.graphql', import.meta.url).pathname,
       'utf-8',
     );
 
@@ -2455,7 +2455,7 @@ describe('Schema Comparison', () => {
 
   it('achieves target type coverage against oracle', () => {
     const oracleSchema = readFileSync(
-      new URL('./test/schema.graphql', import.meta.url).pathname,
+      new URL('./schema.graphql', import.meta.url).pathname,
       'utf-8',
     );
     const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
@@ -2486,17 +2486,17 @@ describe('Schema Comparison', () => {
 
 describe('Public API', () => {
   it('exports createAdapter as main entry point', async () => {
-    const { createAdapter } = await import('./lex-gql.js');
+    const { createAdapter } = await import('../src/lex-gql.js');
     expect(typeof createAdapter).toBe('function');
   });
 
   it('exports parseLexicon for parsing lexicon JSON', async () => {
-    const { parseLexicon } = await import('./lex-gql.js');
+    const { parseLexicon } = await import('../src/lex-gql.js');
     expect(typeof parseLexicon).toBe('function');
   });
 
   it('exports buildSchema for schema-only use cases', async () => {
-    const { buildSchema } = await import('./lex-gql.js');
+    const { buildSchema } = await import('../src/lex-gql.js');
     expect(typeof buildSchema).toBe('function');
   });
 
@@ -2508,7 +2508,7 @@ describe('Public API', () => {
       parseRefUri,
       refToTypeName,
       mapLexiconType,
-    } = await import('./lex-gql.js');
+    } = await import('../src/lex-gql.js');
 
     expect(typeof nsidToTypeName).toBe('function');
     expect(typeof nsidToFieldName).toBe('function');
@@ -2519,7 +2519,7 @@ describe('Public API', () => {
   });
 
   it('exports error types', async () => {
-    const { LexGqlError, ErrorCodes } = await import('./lex-gql.js');
+    const { LexGqlError, ErrorCodes } = await import('../src/lex-gql.js');
     expect(LexGqlError).toBeDefined();
     expect(ErrorCodes).toBeDefined();
   });

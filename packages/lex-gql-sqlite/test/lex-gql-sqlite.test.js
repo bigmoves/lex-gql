@@ -6,7 +6,7 @@ import {
   createSqliteAdapter,
   createWriter,
   setupSchema,
-} from './lex-gql-sqlite.js';
+} from '../src/lex-gql-sqlite.js';
 
 describe('setupSchema', () => {
   let db;

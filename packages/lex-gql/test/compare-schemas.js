@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { printSchema } from 'graphql';
-import { buildSchema, parseLexicon } from '../lex-gql.js';
+import { buildSchema, parseLexicon } from '../src/lex-gql.js';
 
 // Load all lexicon files recursively
 function loadLexicons(dir) {
@@ -54,7 +54,7 @@ function parseTypes(sdl) {
 
 // Main comparison
 console.log('Loading lexicons...');
-const lexicons = loadLexicons('./test/lexicons');
+const lexicons = loadLexicons('./lexicons');
 console.log(`Loaded ${lexicons.length} lexicons`);
 
 console.log('\nParsing lexicons...');
@@ -65,10 +65,10 @@ const schema = buildSchema(parsedLexicons);
 const generatedSdl = printSchema(schema);
 
 console.log('Loading oracle schema...');
-const oracleSdl = readFileSync('./test/schema.graphql', 'utf-8');
+const oracleSdl = readFileSync('./schema.graphql', 'utf-8');
 
 // Write generated schema for manual comparison
-writeFileSync('./test/generated-schema.graphql', generatedSdl);
+writeFileSync('./generated-schema.graphql', generatedSdl);
 console.log('Written generated-schema.graphql');
 
 // Parse types
