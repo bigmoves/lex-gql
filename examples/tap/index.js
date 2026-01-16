@@ -25,7 +25,7 @@
 
 import { createServer } from 'node:http';
 import Database from 'better-sqlite3';
-import { createHandler } from 'graphql-http/lib/use/node';
+import { createHandler } from 'graphql-http/lib/use/http';
 import { createAdapter, parseLexicon } from 'lex-gql';
 import { createSqliteAdapter, createWriter, setupSchema } from 'lex-gql-sqlite';
 import WebSocket from 'ws';
