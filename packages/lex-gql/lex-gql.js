@@ -540,20 +540,35 @@ function createBlobType() {
  * Create ComAtprotoRepoStrongRef type for strong references
  * @returns {GraphQLObjectType}
  */
-function createStrongRefType() {
+/**
+ * @param {() => GraphQLUnionType | null} [getRecordUnionType] - Getter for Record union type (for forward joins)
+ */
+function createStrongRefType(getRecordUnionType) {
   return new GraphQLObjectType({
     name: 'ComAtprotoRepoStrongRef',
     description: 'Strong reference to another record',
-    fields: () => ({
-      cid: {
-        type: new GraphQLNonNull(GraphQLString),
-        description: 'CID of the referenced record',
-      },
-      uri: {
-        type: new GraphQLNonNull(GraphQLString),
-        description: 'AT URI of the referenced record',
-      },
-    }),
+    fields: () => {
+      /** @type {Record<string, import('graphql').GraphQLFieldConfig<*, *>>} */
+      const fields = {
+        cid: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'CID of the referenced record',
+        },
+        uri: {
+          type: new GraphQLNonNull(GraphQLString),
+          description: 'AT URI of the referenced record',
+        },
+      };
+      // Add forward join field for uri
+      const recordUnionType = getRecordUnionType ? getRecordUnionType() : null;
+      if (recordUnionType) {
+        fields.uriResolved = {
+          type: recordUnionType,
+          description: 'Forward join to referenced record',
+        };
+      }
+      return fields;
+    },
   });
 }
 
@@ -863,9 +878,10 @@ function createAggregateGroupByEnum(typeName, recordDef) {
  * @param {RecordDef} def - The definition
  * @param {GraphQLObjectType} blobType
  * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Type registry for ref resolution
+ * @param {() => GraphQLUnionType | null} [getRecordUnionType] - Getter for Record union type (for forward joins)
  * @returns {GraphQLObjectType}
  */
-function createNestedObjectType(lexiconId, defName, def, blobType, typeRegistry) {
+function createNestedObjectType(lexiconId, defName, def, blobType, typeRegistry, getRecordUnionType) {
   const typeName = nsidToTypeName(lexiconId) + defName.charAt(0).toUpperCase() + defName.slice(1);
 
   return new GraphQLObjectType({
@@ -882,6 +898,9 @@ function createNestedObjectType(lexiconId, defName, def, blobType, typeRegistry)
           description: 'Field from object definition',
         };
       }
+      // Add forward join fields for strongRef references
+      const recordUnionType = getRecordUnionType ? getRecordUnionType() : null;
+      addForwardJoinFields(fields, def.properties || [], recordUnionType);
       return fields;
     },
   });
@@ -1268,6 +1287,25 @@ function isForwardJoinField(prop) {
 }
 
 /**
+ * Add forward join fields for strongRef references
+ * @param {Record<string, import('graphql').GraphQLFieldConfig<*, *>>} fields
+ * @param {Property[]} properties
+ * @param {GraphQLUnionType | null} recordUnionType
+ */
+function addForwardJoinFields(fields, properties, recordUnionType) {
+  if (!recordUnionType) return;
+
+  for (const prop of properties) {
+    if (isForwardJoinField(prop)) {
+      fields[`${prop.name}Resolved`] = {
+        type: recordUnionType,
+        description: 'Forward join to referenced record',
+      };
+    }
+  }
+}
+
+/**
  * Discover reverse joins by scanning lexicons for refs pointing to each type
  * @param {Lexicon[]} lexicons
  * @returns {Map<string, Array<{fromLexicon: string, fieldName: string}>>}
@@ -1590,9 +1628,15 @@ export function buildSchema(lexicons) {
   const deleteResultType = createDeleteResultType();
   const blobType = createBlobType();
 
+  // Holder for recordUnionType - will be set after all record types are created
+  // Using a holder object allows field thunks to access it later
+  /** @type {{ value: GraphQLUnionType | null }} */
+  const recordUnionTypeHolder = { value: null };
+  const getRecordUnionType = () => recordUnionTypeHolder.value;
+
   // Only create strongRefType if the lexicon doesn't already define it
   const hasStrongRefLexicon = lexicons.some((l) => l.id === 'com.atproto.repo.strongRef');
-  const strongRefType = hasStrongRefLexicon ? null : createStrongRefType();
+  const strongRefType = hasStrongRefLexicon ? null : createStrongRefType(getRecordUnionType);
 
   // Discover reverse joins before building types
   const reverseJoinMap = discoverReverseJoins(lexicons);
@@ -1617,7 +1661,7 @@ export function buildSchema(lexicons) {
       for (const [defName, def] of Object.entries(lexicon.defs.others)) {
         if (def.type === 'object' && def.properties) {
           const refKey = `${lexicon.id}#${defName}`;
-          const nestedType = createNestedObjectType(lexicon.id, defName, def, blobType, typeRegistry);
+          const nestedType = createNestedObjectType(lexicon.id, defName, def, blobType, typeRegistry, getRecordUnionType);
           nestedTypes[refKey] = nestedType;
           typeRegistry[refKey] = nestedType;
         }
@@ -1644,6 +1688,8 @@ export function buildSchema(lexicons) {
               description: 'Field from object definition',
             };
           }
+          // Add forward join fields for strongRef references
+          addForwardJoinFields(fields, lexicon.defs.main.properties || [], getRecordUnionType());
           return fields;
         },
       });
@@ -1769,6 +1815,8 @@ export function buildSchema(lexicons) {
 
   // Create Record union type (after all record types exist)
   const recordUnionType = createRecordUnionType(recordTypes);
+  // Set the holder so nested type field thunks can access it
+  recordUnionTypeHolder.value = recordUnionType;
 
   // Include Record union, nested types, aggregate types, groupBy enums, field conditions, and union types so they appear in the schema
   const types = [

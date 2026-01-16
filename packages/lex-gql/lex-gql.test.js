@@ -2259,6 +2259,27 @@ describe('Error Handling', () => {
   });
 });
 
+describe('Forward Joins on Nested Types', () => {
+  it('adds forward join fields to nested types with strongRef', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // AppBskyFeedPostReplyRef should have parentResolved and rootResolved
+    expect(sdl).toMatch(/type AppBskyFeedPostReplyRef \{[\s\S]*?parentResolved: Record/);
+    expect(sdl).toMatch(/type AppBskyFeedPostReplyRef \{[\s\S]*?rootResolved: Record/);
+  });
+
+  it('adds forward join to ComAtprotoRepoStrongRef', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // ComAtprotoRepoStrongRef should have uriResolved
+    expect(sdl).toMatch(/type ComAtprotoRepoStrongRef \{[\s\S]*?uriResolved: Record/);
+  });
+});
+
 describe('Union Type Resolution', () => {
   it('creates union type for fields with refs array', () => {
     const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
