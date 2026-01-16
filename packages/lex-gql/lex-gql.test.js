@@ -1046,6 +1046,29 @@ describe('Schema Builder', () => {
     expect(sdl).toContain('avatar: Blob');
   });
 
+  it('generates url field on Blob type with preset argument', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const sdl = printSchema(schema);
+
+    expect(sdl).toContain('url(');
+    expect(sdl).toContain('preset: String');
+    expect(sdl).toContain('): String!');
+  });
+
   it('generates ComAtprotoRepoStrongRef type for strongRef refs', () => {
     const lexicons = [
       {
@@ -2363,5 +2386,216 @@ describe('Public API', () => {
     const { LexGqlError, ErrorCodes } = await import('./lex-gql.js');
     expect(LexGqlError).toBeDefined();
     expect(ErrorCodes).toBeDefined();
+  });
+});
+
+describe('Blob URL resolver', () => {
+  it('generates CDN URL with default preset', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      ref: 'bafyreiabc123',
+      mimeType: 'image/jpeg',
+      size: 12345,
+      did: 'did:plc:user123',
+    };
+
+    const result = urlField.resolve(blob, {});
+    expect(result).toBe('https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:user123/bafyreiabc123@jpeg');
+  });
+
+  it('generates CDN URL with avatar preset', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      ref: 'bafyreiabc123',
+      mimeType: 'image/jpeg',
+      size: 12345,
+      did: 'did:plc:user123',
+    };
+
+    const result = urlField.resolve(blob, { preset: 'avatar' });
+    expect(result).toBe('https://cdn.bsky.app/img/avatar/plain/did:plc:user123/bafyreiabc123@jpeg');
+  });
+
+  it('generates CDN URL with banner preset', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'banner', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      ref: 'bafyreiabc456',
+      mimeType: 'image/jpeg',
+      size: 54321,
+      did: 'did:plc:banner123',
+    };
+
+    const result = urlField.resolve(blob, { preset: 'banner' });
+    expect(result).toBe('https://cdn.bsky.app/img/banner/plain/did:plc:banner123/bafyreiabc456@jpeg');
+  });
+
+  it('generates CDN URL with feed_thumbnail preset', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      ref: 'bafyreiathumbnail',
+      mimeType: 'image/jpeg',
+      size: 9999,
+      did: 'did:plc:thumb456',
+    };
+
+    const result = urlField.resolve(blob, { preset: 'feed_thumbnail' });
+    expect(result).toBe('https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:thumb456/bafyreiathumbnail@jpeg');
+  });
+
+  it('throws error when did is missing from blob', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      ref: 'bafyreiabc123',
+      mimeType: 'image/jpeg',
+      size: 12345,
+      // did is missing
+    };
+
+    expect(() => urlField.resolve(blob, {})).toThrow('Blob missing required did or ref for URL generation');
+  });
+
+  it('throws error when ref is missing from blob', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      // ref is missing
+      mimeType: 'image/jpeg',
+      size: 12345,
+      did: 'did:plc:user123',
+    };
+
+    expect(() => urlField.resolve(blob, {})).toThrow('Blob missing required did or ref for URL generation');
+  });
+
+  it('throws error for invalid preset', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'avatar', type: 'blob', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const blobType = schema.getType('Blob');
+    const urlField = blobType.getFields().url;
+
+    const blob = {
+      ref: 'bafyreiabc123',
+      mimeType: 'image/jpeg',
+      size: 12345,
+      did: 'did:plc:user123',
+    };
+
+    expect(() => urlField.resolve(blob, { preset: 'invalid_preset' })).toThrow(
+      'Invalid blob preset: invalid_preset. Valid presets: avatar, banner, feed_thumbnail, feed_fullsize'
+    );
   });
 });

@@ -382,8 +382,12 @@ function createDeleteResultType() {
   });
 }
 
+const VALID_BLOB_PRESETS = ['avatar', 'banner', 'feed_thumbnail', 'feed_fullsize'];
+
 /**
  * Create Blob object type for blob fields
+ * NOTE: The url resolver requires 'did' to be injected into blob objects
+ * by the data layer (from parent record).
  * @returns {GraphQLObjectType}
  */
 function createBlobType() {
@@ -402,6 +406,27 @@ function createBlobType() {
       size: {
         type: new GraphQLNonNull(GraphQLInt),
         description: 'Size in bytes',
+      },
+      url: {
+        type: new GraphQLNonNull(GraphQLString),
+        description:
+          'Generate CDN URL for the blob with the specified preset (avatar, banner, feed_thumbnail, feed_fullsize)',
+        args: {
+          preset: {
+            type: GraphQLString,
+            description: 'Image preset: avatar, banner, feed_thumbnail, feed_fullsize',
+          },
+        },
+        resolve: (blob, { preset = 'feed_fullsize' }) => {
+          const { ref, did } = blob;
+          if (!did || !ref) {
+            throw new Error('Blob missing required did or ref for URL generation');
+          }
+          if (!VALID_BLOB_PRESETS.includes(preset)) {
+            throw new Error(`Invalid blob preset: ${preset}. Valid presets: ${VALID_BLOB_PRESETS.join(', ')}`);
+          }
+          return `https://cdn.bsky.app/img/${preset}/plain/${did}/${ref}@jpeg`;
+        },
       },
     },
   });
