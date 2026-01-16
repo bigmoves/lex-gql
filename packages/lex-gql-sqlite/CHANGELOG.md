@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+- `createWriter(db)` helper with prepared statements for efficient writes
+  - `insertRecord({ uri, did, collection, rkey, cid?, record, indexedAt? })`
+  - `deleteRecord(uri)`
+  - `upsertActor(did, handle)`
+- `totalCount` field in findMany query results
+
+### Changed
+
+- AND/OR conditions format: `{ op: 'and', conditions: [...] }` instead of `{ field: 'AND', op: 'and', value: [...] }`
+
 ## [0.1.0] - 2026-01-15
 
 ### Added
