@@ -38,7 +38,7 @@ Creates the required database tables and indexes.
 
 ### `createSqliteAdapter(db)`
 
-Returns a query function compatible with lex-gql's adapter interface.
+Returns a query function compatible with lex-gql's adapter interface. Supports cross-collection URI resolution (`collection: '*'`) for forward join batching.
 
 ### `buildWhere(where)`
 

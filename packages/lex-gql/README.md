@@ -158,6 +158,22 @@ type SortClause = { field: string; dir: 'asc' | 'desc' }
 type Pagination = { first?: number; after?: string; last?: number; before?: string }
 ```
 
+### Cross-Collection URI Resolution
+
+For batched forward join resolution, lex-gql issues `findMany` operations with `collection: '*'`. This special value means "query across all collections by URI":
+
+```typescript
+// Forward join batch request
+{
+  type: 'findMany',
+  collection: '*',  // Special: resolve by URI, ignore collection filter
+  where: [{ field: 'uri', op: 'in', value: ['at://did1/...', 'at://did2/...'] }],
+  pagination: {}
+}
+```
+
+Adapters **must** handle this case by omitting the collection filter and returning records matching the URIs. The returned records must include a `collection` field for union type resolution.
+
 ### Response Format
 
 ```typescript

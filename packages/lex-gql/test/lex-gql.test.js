@@ -1515,7 +1515,12 @@ describe('Query Compiler', () => {
             rows: uris.map((uri) => {
               if (uri.includes('profile')) {
                 const did = uri.split('/')[2];
-                return { uri, displayName: `User ${did}`, did };
+                return {
+                  uri,
+                  displayName: `User ${did}`,
+                  did,
+                  collection: 'app.bsky.actor.profile',
+                };
               }
               return { uri };
             }),
@@ -1535,8 +1540,10 @@ describe('Query Compiler', () => {
               uri
               text
               authorResolved {
-                uri
-                displayName
+                ... on AppBskyActorProfile {
+                  uri
+                  displayName
+                }
               }
             }
           }

@@ -238,10 +238,10 @@ function findMany(db, op) {
   const { first = 20, after, last, before } = pagination;
 
   // Build WHERE clause
-  const { sql: whereSql, params: whereParams } = buildWhere([
-    { field: 'collection', op: 'eq', value: collection },
-    ...where,
-  ]);
+  // Special case: collection '*' means query across all collections (for URI resolution)
+  const collectionFilter =
+    collection === '*' ? [] : [{ field: 'collection', op: 'eq', value: collection }];
+  const { sql: whereSql, params: whereParams } = buildWhere([...collectionFilter, ...where]);
 
   // Handle cursor pagination
   const cursorConditions = [];

@@ -4,6 +4,10 @@
 
 ### Added
 
+- **Forward join resolution to Record union** - `{field}Resolved` fields now return the `Record` union type
+  - Enables inline fragment queries: `postResolved { ... on AppBskyFeedPost { text } }`
+  - Works for both at-uri string fields (e.g., `post: String` with `format: at-uri`) and StrongRef fields
+  - Uses `collection` field from resolved record for type discrimination
 - **Union type support** for lexicon fields with multiple `ref` options
   - Type registry infrastructure for ref resolution
   - `resolveRefKey` helper to resolve `ref` URIs to GraphQL type names

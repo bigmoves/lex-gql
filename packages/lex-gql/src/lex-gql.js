@@ -589,26 +589,6 @@ function createStrongRefType(getRecordUnionType) {
   });
 }
 
-/**
- * Create a generic ResolvedRecord type for forward joins
- * @returns {GraphQLObjectType}
- */
-function createResolvedRecordType() {
-  return new GraphQLObjectType({
-    name: 'ResolvedRecord',
-    description: 'A resolved record reference',
-    fields: {
-      uri: { type: GraphQLString },
-      cid: { type: GraphQLString },
-      did: { type: GraphQLString },
-      collection: { type: GraphQLString },
-      displayName: { type: GraphQLString },
-      text: { type: GraphQLString },
-      indexedAt: { type: GraphQLString },
-    },
-  });
-}
-
 // ============================================================================
 // GRAPHQL TYPE CREATORS - Field Conditions
 // ============================================================================
@@ -1553,7 +1533,7 @@ function createRecordType(
  * @param {string} lexiconId
  * @param {Lexicon[]} allLexicons
  * @param {Record<string, GraphQLObjectType>} recordTypes
- * @param {GraphQLObjectType} resolvedRecordType
+ * @param {() => GraphQLUnionType | null} getRecordUnionType
  * @param {JoinCollector} joinCollector
  * @param {GraphQLObjectType} blobType
  * @param {Function} queryFn
@@ -1568,7 +1548,7 @@ function createRecordTypeWithResolvers(
   lexiconId,
   allLexicons,
   recordTypes,
-  resolvedRecordType,
+  getRecordUnionType,
   joinCollector,
   blobType,
   queryFn,
@@ -1614,15 +1594,18 @@ function createRecordTypeWithResolvers(
 
         // Add forward join field with resolver
         if (isForwardJoinField(prop)) {
-          fields[`${prop.name}Resolved`] = {
-            type: resolvedRecordType,
-            description: `Resolved reference for ${prop.name}`,
-            resolve: async (parent) => {
-              const uri = parent[prop.name];
-              if (!uri) return null;
-              return joinCollector.load(uri);
-            },
-          };
+          const recordUnionType = getRecordUnionType();
+          if (recordUnionType) {
+            fields[`${prop.name}Resolved`] = {
+              type: recordUnionType,
+              description: `Resolved reference for ${prop.name}`,
+              resolve: async (parent) => {
+                const uri = parent[prop.name];
+                if (!uri) return null;
+                return joinCollector.load(uri);
+              },
+            };
+          }
         }
       }
 
@@ -1961,7 +1944,6 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   const fieldConditionTypes = createFieldConditionTypes();
   const sortDirectionEnum = createSortDirectionEnum();
   const deleteResultType = createDeleteResultType();
-  const resolvedRecordType = createResolvedRecordType();
   const blobType = createBlobType();
 
   // Holder for recordUnionType - used by strongRef uriResolved field
@@ -2010,7 +1992,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         lexicon.id,
         lexicons,
         recordTypes,
-        resolvedRecordType,
+        getRecordUnionType,
         joinCollector,
         blobType,
         queryFn,

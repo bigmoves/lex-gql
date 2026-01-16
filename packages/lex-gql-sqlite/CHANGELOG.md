@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Cross-collection URI resolution support (`collection: '*'`) for forward join batching
+
 ### Changed
 
 - `insertRecord` now parses `did`, `collection`, and `rkey` from the URI automatically

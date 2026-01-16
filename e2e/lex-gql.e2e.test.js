@@ -634,6 +634,274 @@ describe('lex-gql e2e with real lexicons', () => {
     });
   });
 
+  describe('at-uri forward joins', () => {
+    it('resolves postgate.post to the referenced post via postResolved', async () => {
+      // Create a post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/abc123',
+        cid: 'bafypost',
+        record: {
+          text: 'Original post for postgate test',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      // Create a postgate referencing that post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.postgate/abc123',
+        cid: 'bafypostgate',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/abc123',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostgate(first: 10) {
+            edges {
+              node {
+                post
+                postResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                    uri
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostgate.edges).toHaveLength(1);
+
+      const postgate = result.data.appBskyFeedPostgate.edges[0].node;
+      expect(postgate.post).toBe('at://did:plc:alice/app.bsky.feed.post/abc123');
+      expect(postgate.postResolved).not.toBeNull();
+      expect(postgate.postResolved.text).toBe('Original post for postgate test');
+      expect(postgate.postResolved.uri).toBe('at://did:plc:alice/app.bsky.feed.post/abc123');
+    });
+
+    it('resolves threadgate.post to the referenced post via postResolved', async () => {
+      // Create a post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/thread123',
+        cid: 'bafythread',
+        record: {
+          text: 'Thread root post',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      // Create a threadgate for that post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.threadgate/thread123',
+        cid: 'bafythreadgate',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/thread123',
+          createdAt: '2024-01-15T10:00:00.000Z',
+          allow: [],
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedThreadgate(first: 10) {
+            edges {
+              node {
+                post
+                postResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedThreadgate.edges).toHaveLength(1);
+
+      const threadgate = result.data.appBskyFeedThreadgate.edges[0].node;
+      expect(threadgate.post).toBe('at://did:plc:alice/app.bsky.feed.post/thread123');
+      expect(threadgate.postResolved).not.toBeNull();
+      expect(threadgate.postResolved.text).toBe('Thread root post');
+    });
+
+    it('returns null for postResolved when referenced post does not exist', async () => {
+      // Create a postgate referencing a non-existent post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.postgate/orphan',
+        cid: 'bafyorphan',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/nonexistent',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostgate(first: 10) {
+            edges {
+              node {
+                post
+                postResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const postgate = result.data.appBskyFeedPostgate.edges[0].node;
+      expect(postgate.post).toBe('at://did:plc:alice/app.bsky.feed.post/nonexistent');
+      expect(postgate.postResolved).toBeNull();
+    });
+  });
+
+  describe('StrongRef forward joins', () => {
+    it('resolves reply.parent via uriResolved to the parent post', async () => {
+      // Create parent post
+      writer.insertRecord({
+        uri: 'at://did:plc:bob/app.bsky.feed.post/parent',
+        cid: 'bafyparent',
+        record: {
+          text: 'I am the parent post',
+          createdAt: '2024-01-15T09:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T09:00:00.000Z',
+      });
+
+      // Create reply with StrongRef
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/reply',
+        cid: 'bafyreply',
+        record: {
+          text: 'This is my reply',
+          createdAt: '2024-01-15T10:00:00.000Z',
+          reply: {
+            root: {
+              uri: 'at://did:plc:bob/app.bsky.feed.post/parent',
+              cid: 'bafyparent',
+            },
+            parent: {
+              uri: 'at://did:plc:bob/app.bsky.feed.post/parent',
+              cid: 'bafyparent',
+            },
+          },
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPost(first: 10, where: { did: { eq: "did:plc:alice" } }) {
+            edges {
+              node {
+                text
+                reply {
+                  parent {
+                    uri
+                    cid
+                    uriResolved {
+                      ... on AppBskyFeedPost {
+                        text
+                      }
+                    }
+                  }
+                  root {
+                    uri
+                    uriResolved {
+                      ... on AppBskyFeedPost {
+                        text
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const post = result.data.appBskyFeedPost.edges[0].node;
+      expect(post.text).toBe('This is my reply');
+      expect(post.reply.parent.uri).toBe('at://did:plc:bob/app.bsky.feed.post/parent');
+      expect(post.reply.parent.uriResolved).not.toBeNull();
+      expect(post.reply.parent.uriResolved.text).toBe('I am the parent post');
+      expect(post.reply.root.uriResolved.text).toBe('I am the parent post');
+    });
+
+    it('resolves profile.pinnedPost via uriResolved', async () => {
+      // Create the post to be pinned
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/pinned',
+        cid: 'bafypinned',
+        record: {
+          text: 'This is my pinned post!',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      // Create profile with pinnedPost StrongRef
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.actor.profile/self',
+        cid: 'bafyprofile',
+        record: {
+          displayName: 'Alice',
+          pinnedPost: {
+            uri: 'at://did:plc:alice/app.bsky.feed.post/pinned',
+            cid: 'bafypinned',
+          },
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyActorProfile(first: 10) {
+            edges {
+              node {
+                displayName
+                pinnedPost {
+                  uri
+                  cid
+                  uriResolved {
+                    ... on AppBskyFeedPost {
+                      text
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const profile = result.data.appBskyActorProfile.edges[0].node;
+      expect(profile.displayName).toBe('Alice');
+      expect(profile.pinnedPost.uri).toBe('at://did:plc:alice/app.bsky.feed.post/pinned');
+      expect(profile.pinnedPost.uriResolved).not.toBeNull();
+      expect(profile.pinnedPost.uriResolved.text).toBe('This is my pinned post!');
+    });
+  });
+
   describe('ByDid resolvers', () => {
     beforeEach(() => {
       // Create profile for Alice
