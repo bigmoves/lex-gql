@@ -2259,6 +2259,30 @@ describe('Error Handling', () => {
   });
 });
 
+describe('Union Type Resolution', () => {
+  it('creates union type for fields with refs array', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // embed field should be a union type, not String
+    expect(sdl).toMatch(/embed: AppBskyFeedPostEmbed/);
+    // The union type should be defined
+    expect(sdl).toMatch(/union AppBskyFeedPostEmbed/);
+  });
+
+  it('union type contains all referenced types', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // AppBskyFeedPostEmbed should include embed types
+    expect(sdl).toMatch(/union AppBskyFeedPostEmbed\s*=.*AppBskyEmbedImages/);
+    expect(sdl).toMatch(/union AppBskyFeedPostEmbed\s*=.*AppBskyEmbedVideo/);
+    expect(sdl).toMatch(/union AppBskyFeedPostEmbed\s*=.*AppBskyEmbedExternal/);
+  });
+});
+
 describe('Ref Field Resolution', () => {
   it('resolves ref field to actual GraphQL type', () => {
     const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));

@@ -1141,11 +1141,55 @@ function createSubscriptionTypeWithResolvers(lexicons, recordTypes, subscribeFn)
  * @param {Property} prop
  * @param {GraphQLObjectType} [blobType] - Blob type if available
  * @param {GraphQLObjectType | null} [strongRefType] - StrongRef type if available
- * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Unified type registry for ref resolution
+ * @param {Record<string, GraphQLObjectType | GraphQLUnionType>} [typeRegistry] - Unified type registry for ref resolution
  * @param {string} [parentLexiconId] - Parent lexicon ID for resolving local refs
+ * @param {Record<string, GraphQLUnionType>} [unionRegistry] - Registry for union types
+ * @param {string} [parentTypeName] - Parent type name for creating union type names
  * @returns {import('graphql').GraphQLOutputType}
  */
-function getGraphQLType(prop, blobType, strongRefType, typeRegistry, parentLexiconId) {
+function getGraphQLType(prop, blobType, strongRefType, typeRegistry, parentLexiconId, unionRegistry, parentTypeName) {
+  // Handle union type with refs array - create a union type
+  if (prop.type === 'union' && prop.refs && typeRegistry && parentLexiconId && unionRegistry && parentTypeName) {
+    // Create a unique union type name based on parent type and field name
+    const unionTypeName = `${parentTypeName}${prop.name.charAt(0).toUpperCase()}${prop.name.slice(1)}`;
+
+    // Check if we already created this union type
+    if (unionRegistry[unionTypeName]) {
+      return unionRegistry[unionTypeName];
+    }
+
+    // Resolve all refs to their actual types
+    const memberTypes = [];
+    for (const ref of prop.refs) {
+      const refKey = resolveRefKey(ref, parentLexiconId);
+      const resolvedType = typeRegistry[refKey];
+      if (resolvedType && resolvedType instanceof GraphQLObjectType) {
+        memberTypes.push(resolvedType);
+      }
+    }
+
+    // Only create union if we have at least one member type
+    if (memberTypes.length > 0) {
+      const unionType = new GraphQLUnionType({
+        name: unionTypeName,
+        description: `Union type for ${parentTypeName}.${prop.name}`,
+        types: memberTypes,
+        resolveType: (value) => {
+          // Use $type field to determine the actual type
+          if (value?.$type) {
+            return refToTypeName(value.$type);
+          }
+          return undefined;
+        },
+      });
+      unionRegistry[unionTypeName] = unionType;
+      return unionType;
+    }
+
+    // Fallback to String if no member types found
+    return GraphQLString;
+  }
+
   // Handle ref type - resolve to actual type from registry
   if (prop.type === 'ref' && prop.ref && typeRegistry && parentLexiconId) {
     // Special case for strongRef
@@ -1283,6 +1327,7 @@ function discoverReverseJoins(lexicons) {
  * @param {Record<string, GraphQLInputObjectType>} sortInputTypes
  * @param {Record<string, GraphQLInputObjectType>} whereInputTypes
  * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Unified type registry for ref resolution
+ * @param {Record<string, GraphQLUnionType>} [unionRegistry] - Registry for union types
  * @returns {GraphQLObjectType}
  */
 function createRecordType(
@@ -1298,6 +1343,7 @@ function createRecordType(
   sortInputTypes,
   whereInputTypes,
   typeRegistry,
+  unionRegistry,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -1323,7 +1369,7 @@ function createRecordType(
       // Add lexicon properties
       for (const prop of recordDef.properties) {
         fields[prop.name] = {
-          type: getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexiconId),
+          type: getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexiconId, unionRegistry, typeName),
           description: `Field from lexicon`,
         };
 
@@ -1610,6 +1656,9 @@ export function buildSchema(lexicons) {
   // ============================================================================
   // Phase 2: Create record types (they can now use typeRegistry for ref resolution)
   // ============================================================================
+  /** @type {Record<string, GraphQLUnionType>} */
+  const unionRegistry = {};
+
   for (const lexicon of lexicons) {
     if (lexicon.defs.main?.type === 'record') {
       const typeName = nsidToTypeName(lexicon.id);
@@ -1626,6 +1675,7 @@ export function buildSchema(lexicons) {
         sortInputTypes,
         whereInputTypes,
         typeRegistry,
+        unionRegistry,
       );
       // Also add record types to the registry for cross-type ref resolution
       typeRegistry[lexicon.id] = recordTypes[lexicon.id];
@@ -1720,13 +1770,14 @@ export function buildSchema(lexicons) {
   // Create Record union type (after all record types exist)
   const recordUnionType = createRecordUnionType(recordTypes);
 
-  // Include Record union, nested types, aggregate types, groupBy enums, and field conditions so they appear in the schema
+  // Include Record union, nested types, aggregate types, groupBy enums, field conditions, and union types so they appear in the schema
   const types = [
     ...(recordUnionType ? [recordUnionType] : []),
     ...Object.values(nestedTypes),
     ...Object.values(aggregateTypes),
     ...Object.values(groupByEnums),
     ...Object.values(fieldConditionInputTypes),
+    ...Object.values(unionRegistry),
   ];
 
   // Create Subscription type
