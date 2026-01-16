@@ -2292,6 +2292,20 @@ describe('Union Type Resolution', () => {
     expect(sdl).toMatch(/union AppBskyFeedPostEmbed/);
   });
 
+  it('union type resolveType function uses $type field', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+
+    // Get the AppBskyFeedPostEmbed union type
+    const embedUnion = schema.getType('AppBskyFeedPostEmbed');
+    expect(embedUnion).toBeDefined();
+
+    // Test resolveType function with $type field
+    const testValue = { $type: 'app.bsky.embed.images', images: [] };
+    const resolvedTypeName = embedUnion.resolveType(testValue, {}, {}, {});
+    expect(resolvedTypeName).toBe('AppBskyEmbedImages');
+  });
+
   it('union type contains all referenced types', () => {
     const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
     const schema = buildSchema(parsedLexicons);
