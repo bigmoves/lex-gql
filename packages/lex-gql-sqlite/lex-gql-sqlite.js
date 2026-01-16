@@ -2,6 +2,8 @@
  * SQLite adapter for lex-gql
  */
 
+import { hydrateRecord } from 'lex-gql';
+
 /**
  * SQL schema for lex-gql records
  */
@@ -142,6 +144,89 @@ export function buildOrderBy(sort) {
  */
 export function createSqliteAdapter(db) {
   return async function query(op) {
+    if (op.type === 'findMany') {
+      return findMany(db, op);
+    }
     throw new Error(`Not implemented: ${op.type}`);
+  };
+}
+
+function findMany(db, op) {
+  const { collection, where = [], sort = [], pagination = {} } = op;
+  const { first = 20, after, last, before } = pagination;
+
+  // Build WHERE clause
+  const { sql: whereSql, params: whereParams } = buildWhere([
+    { field: 'collection', op: 'eq', value: collection },
+    ...where,
+  ]);
+
+  // Handle cursor pagination
+  const cursorConditions = [];
+  const cursorParams = [];
+
+  if (after) {
+    try {
+      const cursor = JSON.parse(Buffer.from(after, 'base64').toString());
+      if (cursor.id) {
+        cursorConditions.push('r.id < ?');
+        cursorParams.push(cursor.id);
+      }
+    } catch {}
+  }
+
+  if (before) {
+    try {
+      const cursor = JSON.parse(Buffer.from(before, 'base64').toString());
+      if (cursor.id) {
+        cursorConditions.push('r.id > ?');
+        cursorParams.push(cursor.id);
+      }
+    } catch {}
+  }
+
+  const fullWhere = cursorConditions.length > 0
+    ? `${whereSql} AND ${cursorConditions.join(' AND ')}`
+    : whereSql;
+
+  const allParams = [...whereParams, ...cursorParams];
+
+  // Build ORDER BY
+  const orderBy = buildOrderBy(sort);
+
+  // Build query
+  const limit = (first || last || 20) + 1;
+  const sql = `
+    SELECT r.id, r.uri, r.did, r.collection, r.rkey, r.cid, r.record, r.indexed_at, a.handle
+    FROM records r
+    LEFT JOIN actors a ON r.did = a.did
+    WHERE ${fullWhere}
+    ORDER BY ${orderBy}
+    LIMIT ?
+  `;
+  allParams.push(limit);
+
+  const rawRows = db.prepare(sql).all(...allParams);
+  const hasMore = rawRows.length > (first || last || 20);
+  const rows = hasMore ? rawRows.slice(0, -1) : rawRows;
+
+  // Transform rows
+  const transformed = rows.map((row) => ({
+    ...hydrateRecord({
+      uri: row.uri,
+      did: row.did,
+      collection: row.collection,
+      cid: row.cid,
+      record: row.record,
+      indexed_at: row.indexed_at,
+      handle: row.handle,
+    }),
+    _id: row.id,
+  }));
+
+  return {
+    rows: transformed,
+    hasNext: first ? hasMore : !!before,
+    hasPrev: !!after || (last ? hasMore : false),
   };
 }

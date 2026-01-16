@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { setupSchema, buildWhere, buildOrderBy } from './lex-gql-sqlite.js';
+import { setupSchema, buildWhere, buildOrderBy, createSqliteAdapter } from './lex-gql-sqlite.js';
 
 describe('setupSchema', () => {
   let db;
@@ -149,5 +149,154 @@ describe('buildOrderBy', () => {
   it('defaults to asc when dir not specified', () => {
     const sql = buildOrderBy([{ field: 'name' }]);
     expect(sql).toBe("json_extract(r.record, '$.name') ASC");
+  });
+});
+
+describe('findMany', () => {
+  let db;
+  let query;
+
+  beforeEach(() => {
+    db = new Database(':memory:');
+    setupSchema(db);
+    query = createSqliteAdapter(db);
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('returns empty result for empty table', async () => {
+    const result = await query({
+      type: 'findMany',
+      collection: 'app.bsky.feed.post',
+      where: [],
+      pagination: { first: 10 },
+    });
+    expect(result.rows).toEqual([]);
+    expect(result.hasNext).toBe(false);
+    expect(result.hasPrev).toBe(false);
+  });
+
+  it('returns records for collection', async () => {
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/app.bsky.feed.post/123',
+      'did:plc:abc',
+      'app.bsky.feed.post',
+      '123',
+      JSON.stringify({ text: 'hello' }),
+      '2024-01-01T00:00:00Z'
+    );
+
+    const result = await query({
+      type: 'findMany',
+      collection: 'app.bsky.feed.post',
+      where: [],
+      pagination: { first: 10 },
+    });
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].text).toBe('hello');
+    expect(result.rows[0].uri).toBe('at://did:plc:abc/app.bsky.feed.post/123');
+  });
+
+  it('respects first limit', async () => {
+    for (let i = 0; i < 5; i++) {
+      db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+        `at://did:plc:abc/col/${i}`, 'did:plc:abc', 'col', `${i}`, '{}', '2024-01-01T00:00:00Z'
+      );
+    }
+
+    const result = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      pagination: { first: 3 },
+    });
+
+    expect(result.rows).toHaveLength(3);
+    expect(result.hasNext).toBe(true);
+  });
+
+  it('handles cursor pagination with after', async () => {
+    for (let i = 0; i < 5; i++) {
+      db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+        `at://did:plc:abc/col/${i}`, 'did:plc:abc', 'col', `${i}`, '{}', '2024-01-01T00:00:00Z'
+      );
+    }
+
+    const first = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      pagination: { first: 2 },
+    });
+
+    const cursor = Buffer.from(JSON.stringify({ id: first.rows[1]._id })).toString('base64');
+
+    const second = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      pagination: { first: 2, after: cursor },
+    });
+
+    expect(second.rows).toHaveLength(2);
+    expect(second.hasPrev).toBe(true);
+  });
+
+  it('filters with where clause', async () => {
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/1', 'did:plc:abc', 'col', '1', JSON.stringify({ status: 'active' }), '2024-01-01T00:00:00Z'
+    );
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/2', 'did:plc:abc', 'col', '2', JSON.stringify({ status: 'inactive' }), '2024-01-01T00:00:00Z'
+    );
+
+    const result = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [{ field: 'status', op: 'eq', value: 'active' }],
+      pagination: { first: 10 },
+    });
+
+    expect(result.rows).toHaveLength(1);
+    expect(result.rows[0].status).toBe('active');
+  });
+
+  it('sorts results', async () => {
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/1', 'did:plc:abc', 'col', '1', JSON.stringify({ name: 'banana' }), '2024-01-01T00:00:00Z'
+    );
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/2', 'did:plc:abc', 'col', '2', JSON.stringify({ name: 'apple' }), '2024-01-01T00:00:00Z'
+    );
+
+    const result = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      sort: [{ field: 'name', dir: 'asc' }],
+      pagination: { first: 10 },
+    });
+
+    expect(result.rows[0].name).toBe('apple');
+    expect(result.rows[1].name).toBe('banana');
+  });
+
+  it('joins actor handle', async () => {
+    db.prepare(`INSERT INTO actors (did, handle) VALUES (?, ?)`).run('did:plc:abc', 'alice.test');
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/1', 'did:plc:abc', 'col', '1', '{}', '2024-01-01T00:00:00Z'
+    );
+
+    const result = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      pagination: { first: 10 },
+    });
+
+    expect(result.rows[0].actorHandle).toBe('alice.test');
   });
 });
