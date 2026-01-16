@@ -147,6 +147,9 @@ export function createSqliteAdapter(db) {
     if (op.type === 'findMany') {
       return findMany(db, op);
     }
+    if (op.type === 'aggregate') {
+      return aggregate(db, op);
+    }
     throw new Error(`Not implemented: ${op.type}`);
   };
 }
@@ -229,4 +232,42 @@ function findMany(db, op) {
     hasNext: first ? hasMore : !!before,
     hasPrev: !!after || (last ? hasMore : false),
   };
+}
+
+function aggregate(db, op) {
+  const { collection, where = [], groupBy = [] } = op;
+
+  const { sql: whereSql, params } = buildWhere([
+    { field: 'collection', op: 'eq', value: collection },
+    ...where,
+  ]);
+
+  if (groupBy.length === 0) {
+    const sql = `SELECT COUNT(*) as count FROM records r WHERE ${whereSql}`;
+    const result = db.prepare(sql).get(...params);
+    return { count: result.count, groups: [] };
+  }
+
+  const groupFields = groupBy.map((f) => {
+    const fieldPath = SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
+    return `${fieldPath} as ${f}`;
+  }).join(', ');
+
+  const groupByClause = groupBy.map((f) => {
+    return SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
+  }).join(', ');
+
+  const sql = `
+    SELECT ${groupFields}, COUNT(*) as count
+    FROM records r
+    WHERE ${whereSql}
+    GROUP BY ${groupByClause}
+    ORDER BY count DESC
+    LIMIT 100
+  `;
+
+  const groups = db.prepare(sql).all(...params);
+  const count = groups.reduce((sum, g) => sum + g.count, 0);
+
+  return { count, groups };
 }

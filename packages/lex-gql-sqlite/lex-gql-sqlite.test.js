@@ -300,3 +300,85 @@ describe('findMany', () => {
     expect(result.rows[0].actorHandle).toBe('alice.test');
   });
 });
+
+describe('aggregate', () => {
+  let db;
+  let query;
+
+  beforeEach(() => {
+    db = new Database(':memory:');
+    setupSchema(db);
+    query = createSqliteAdapter(db);
+  });
+
+  afterEach(() => {
+    db.close();
+  });
+
+  it('returns count for empty table', async () => {
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+    });
+    expect(result.count).toBe(0);
+    expect(result.groups).toEqual([]);
+  });
+
+  it('returns count for collection', async () => {
+    for (let i = 0; i < 5; i++) {
+      db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+        `at://did:plc:abc/col/${i}`, 'did:plc:abc', 'col', `${i}`, '{}', '2024-01-01T00:00:00Z'
+      );
+    }
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+    });
+
+    expect(result.count).toBe(5);
+  });
+
+  it('respects where clause', async () => {
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/1', 'did:plc:abc', 'col', '1', JSON.stringify({ status: 'active' }), '2024-01-01T00:00:00Z'
+    );
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/2', 'did:plc:abc', 'col', '2', JSON.stringify({ status: 'inactive' }), '2024-01-01T00:00:00Z'
+    );
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [{ field: 'status', op: 'eq', value: 'active' }],
+    });
+
+    expect(result.count).toBe(1);
+  });
+
+  it('groups by field', async () => {
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/1', 'did:plc:abc', 'col', '1', JSON.stringify({ status: 'active' }), '2024-01-01T00:00:00Z'
+    );
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/2', 'did:plc:abc', 'col', '2', JSON.stringify({ status: 'active' }), '2024-01-01T00:00:00Z'
+    );
+    db.prepare(`INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`).run(
+      'at://did:plc:abc/col/3', 'did:plc:abc', 'col', '3', JSON.stringify({ status: 'inactive' }), '2024-01-01T00:00:00Z'
+    );
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+      groupBy: ['status'],
+    });
+
+    expect(result.count).toBe(3);
+    expect(result.groups).toHaveLength(2);
+    expect(result.groups.find((g) => g.status === 'active').count).toBe(2);
+    expect(result.groups.find((g) => g.status === 'inactive').count).toBe(1);
+  });
+});
