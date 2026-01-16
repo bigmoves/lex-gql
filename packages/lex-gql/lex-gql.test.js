@@ -2259,6 +2259,35 @@ describe('Error Handling', () => {
   });
 });
 
+describe('Ref Field Resolution', () => {
+  it('resolves ref field to actual GraphQL type', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // reply field should be AppBskyFeedPostReplyRef, not String
+    expect(sdl).toMatch(/reply: AppBskyFeedPostReplyRef/);
+  });
+
+  it('resolves array of refs to list of actual types', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // images field in AppBskyEmbedImages should be [AppBskyEmbedImagesImage!]!
+    expect(sdl).toMatch(/images: \[AppBskyEmbedImagesImage!\]!/);
+  });
+
+  it('resolves cross-lexicon refs', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // aspectRatio should be AppBskyEmbedDefsAspectRatio
+    expect(sdl).toMatch(/aspectRatio: AppBskyEmbedDefsAspectRatio/);
+  });
+});
+
 describe('Type Registry', () => {
   it('creates types for main object defs (not just records)', () => {
     const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));

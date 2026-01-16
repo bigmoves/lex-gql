@@ -862,9 +862,10 @@ function createAggregateGroupByEnum(typeName, recordDef) {
  * @param {string} defName - Definition name (e.g., 'byteSlice')
  * @param {RecordDef} def - The definition
  * @param {GraphQLObjectType} blobType
+ * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Type registry for ref resolution
  * @returns {GraphQLObjectType}
  */
-function createNestedObjectType(lexiconId, defName, def, blobType) {
+function createNestedObjectType(lexiconId, defName, def, blobType, typeRegistry) {
   const typeName = nsidToTypeName(lexiconId) + defName.charAt(0).toUpperCase() + defName.slice(1);
 
   return new GraphQLObjectType({
@@ -876,8 +877,8 @@ function createNestedObjectType(lexiconId, defName, def, blobType) {
       for (const prop of def.properties || []) {
         fields[prop.name] = {
           type: prop.required
-            ? new GraphQLNonNull(getGraphQLType(prop, blobType, undefined, undefined))
-            : getGraphQLType(prop, blobType, undefined, undefined),
+            ? new GraphQLNonNull(getGraphQLType(prop, blobType, undefined, typeRegistry, lexiconId))
+            : getGraphQLType(prop, blobType, undefined, typeRegistry, lexiconId),
           description: 'Field from object definition',
         };
       }
@@ -1140,14 +1141,31 @@ function createSubscriptionTypeWithResolvers(lexicons, recordTypes, subscribeFn)
  * @param {Property} prop
  * @param {GraphQLObjectType} [blobType] - Blob type if available
  * @param {GraphQLObjectType | null} [strongRefType] - StrongRef type if available
- * @param {Record<string, GraphQLObjectType>} [recordTypes] - Map of lexicon id to record types
+ * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Unified type registry for ref resolution
+ * @param {string} [parentLexiconId] - Parent lexicon ID for resolving local refs
  * @returns {import('graphql').GraphQLOutputType}
  */
-function getGraphQLType(prop, blobType, strongRefType, recordTypes) {
-  // Check for strongRef reference
-  if (prop.type === 'ref' && prop.ref === 'com.atproto.repo.strongRef') {
-    // Use provided strongRefType, or look up from recordTypes, or fall back to String
-    return strongRefType || recordTypes?.['com.atproto.repo.strongRef'] || GraphQLString;
+function getGraphQLType(prop, blobType, strongRefType, typeRegistry, parentLexiconId) {
+  // Handle ref type - resolve to actual type from registry
+  if (prop.type === 'ref' && prop.ref && typeRegistry && parentLexiconId) {
+    // Special case for strongRef
+    if (prop.ref === 'com.atproto.repo.strongRef') {
+      return strongRefType || typeRegistry['com.atproto.repo.strongRef'] || GraphQLString;
+    }
+    const refKey = resolveRefKey(prop.ref, parentLexiconId);
+    const resolvedType = typeRegistry[refKey];
+    if (resolvedType) {
+      return resolvedType;
+    }
+    // Fallback to String if type not found
+    return GraphQLString;
+  }
+
+  // Handle array with ref items
+  if (prop.type === 'array' && prop.items?.ref && typeRegistry && parentLexiconId) {
+    const refKey = resolveRefKey(prop.items.ref, parentLexiconId);
+    const itemType = typeRegistry[refKey] || GraphQLString;
+    return new GraphQLList(new GraphQLNonNull(itemType));
   }
 
   /** @type {Record<string, import('graphql').GraphQLOutputType>} */
@@ -1264,6 +1282,7 @@ function discoverReverseJoins(lexicons) {
  * @param {GraphQLObjectType | null} strongRefType
  * @param {Record<string, GraphQLInputObjectType>} sortInputTypes
  * @param {Record<string, GraphQLInputObjectType>} whereInputTypes
+ * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Unified type registry for ref resolution
  * @returns {GraphQLObjectType}
  */
 function createRecordType(
@@ -1278,6 +1297,7 @@ function createRecordType(
   strongRefType,
   sortInputTypes,
   whereInputTypes,
+  typeRegistry,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -1303,7 +1323,7 @@ function createRecordType(
       // Add lexicon properties
       for (const prop of recordDef.properties) {
         fields[prop.name] = {
-          type: getGraphQLType(prop, blobType, strongRefType, recordTypes),
+          type: getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexiconId),
           description: `Field from lexicon`,
         };
 
@@ -1531,12 +1551,67 @@ export function buildSchema(lexicons) {
   // Discover reverse joins before building types
   const reverseJoinMap = discoverReverseJoins(lexicons);
 
-  // First pass: create all record types (need thunks for circular refs)
+  // ============================================================================
+  // Phase 1: Build unified type registry (all object types)
+  // This must happen BEFORE creating record types so refs can be resolved
+  // ============================================================================
+  /** @type {Record<string, GraphQLObjectType>} */
+  const typeRegistry = {};
+
+  // Add strongRef type to registry if we created one
+  if (strongRefType) {
+    typeRegistry['com.atproto.repo.strongRef'] = strongRefType;
+  }
+
+  // First, create nested types from others defs (they need to exist for ref resolution)
+  /** @type {Record<string, GraphQLObjectType>} */
+  const nestedTypes = {};
   for (const lexicon of lexicons) {
-    if (
-      lexicon.defs.main &&
-      (lexicon.defs.main.type === 'record' || lexicon.defs.main.type === 'object')
-    ) {
+    if (lexicon.defs.others) {
+      for (const [defName, def] of Object.entries(lexicon.defs.others)) {
+        if (def.type === 'object' && def.properties) {
+          const refKey = `${lexicon.id}#${defName}`;
+          const nestedType = createNestedObjectType(lexicon.id, defName, def, blobType, typeRegistry);
+          nestedTypes[refKey] = nestedType;
+          typeRegistry[refKey] = nestedType;
+        }
+      }
+    }
+  }
+
+  // Add main object types (type: 'object', not 'record') to registry
+  for (const lexicon of lexicons) {
+    if (lexicon.defs.main?.type === 'object' && lexicon.defs.main.properties) {
+      // Create a simple object type for main defs that are objects (not records)
+      const typeName = nsidToTypeName(lexicon.id);
+      const mainObjectType = new GraphQLObjectType({
+        name: typeName,
+        description: `Object type from ${lexicon.id}`,
+        fields: () => {
+          /** @type {Record<string, import('graphql').GraphQLFieldConfig<*, *>>} */
+          const fields = {};
+          for (const prop of lexicon.defs.main.properties || []) {
+            fields[prop.name] = {
+              type: prop.required
+                ? new GraphQLNonNull(getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexicon.id))
+                : getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexicon.id),
+              description: 'Field from object definition',
+            };
+          }
+          return fields;
+        },
+      });
+      typeRegistry[lexicon.id] = mainObjectType;
+      // Also add to recordTypes so it's included in the schema
+      recordTypes[lexicon.id] = mainObjectType;
+    }
+  }
+
+  // ============================================================================
+  // Phase 2: Create record types (they can now use typeRegistry for ref resolution)
+  // ============================================================================
+  for (const lexicon of lexicons) {
+    if (lexicon.defs.main?.type === 'record') {
       const typeName = nsidToTypeName(lexicon.id);
       recordTypes[lexicon.id] = createRecordType(
         typeName,
@@ -1550,7 +1625,10 @@ export function buildSchema(lexicons) {
         strongRefType,
         sortInputTypes,
         whereInputTypes,
+        typeRegistry,
       );
+      // Also add record types to the registry for cross-type ref resolution
+      typeRegistry[lexicon.id] = recordTypes[lexicon.id];
       // Create where input type
       whereInputTypes[typeName] = createWhereInputType(
         typeName,
@@ -1563,20 +1641,6 @@ export function buildSchema(lexicons) {
       sortInputTypes[typeName] = createSortInputType(typeName, sortFieldEnum, sortDirectionEnum);
       // Create input type for mutations
       inputTypes[lexicon.id] = createInputType(typeName, lexicon.defs.main);
-    }
-  }
-
-  // Generate nested types from others defs
-  /** @type {Record<string, GraphQLObjectType>} */
-  const nestedTypes = {};
-  for (const lexicon of lexicons) {
-    if (lexicon.defs.others) {
-      for (const [defName, def] of Object.entries(lexicon.defs.others)) {
-        if (def.type === 'object' && def.properties) {
-          const nestedType = createNestedObjectType(lexicon.id, defName, def, blobType);
-          nestedTypes[`${lexicon.id}#${defName}`] = nestedType;
-        }
-      }
     }
   }
 
