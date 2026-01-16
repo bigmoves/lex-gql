@@ -12,7 +12,7 @@ importers:
         specifier: ^2.3.11
         version: 2.3.11
 
-  examples/jetstream-subscriptions:
+  examples/jetstream:
     dependencies:
       graphql:
         specifier: ^16.0.0
@@ -58,6 +58,18 @@ importers:
         version: 5.9.3
       vitest:
         specifier: ^1.0.0
+        version: 1.6.1(@types/node@25.0.9)
+
+  packages/lex-gql-sqlite:
+    devDependencies:
+      better-sqlite3:
+        specifier: ^11.8.1
+        version: 11.10.0
+      lex-gql:
+        specifier: workspace:*
+        version: link:../lex-gql
+      vitest:
+        specifier: ^1.6.1
         version: 1.6.1(@types/node@25.0.9)
 
 packages:
