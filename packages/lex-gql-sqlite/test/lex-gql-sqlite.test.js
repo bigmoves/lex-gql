@@ -501,4 +501,121 @@ describe('aggregate', () => {
     expect(result.groups.find((g) => g.status === 'active').count).toBe(2);
     expect(result.groups.find((g) => g.status === 'inactive').count).toBe(1);
   });
+
+  it('groups by day interval', async () => {
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/1',
+      record: { playedTime: '2024-01-15T10:00:00Z' },
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/2',
+      record: { playedTime: '2024-01-15T22:00:00Z' },
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/3',
+      record: { playedTime: '2024-01-16T08:00:00Z' },
+    });
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+      groupBy: ['playedTime_day'],
+    });
+
+    expect(result.count).toBe(3);
+    expect(result.groups).toHaveLength(2);
+    expect(result.groups.find((g) => g.playedTime_day === '2024-01-15').count).toBe(2);
+    expect(result.groups.find((g) => g.playedTime_day === '2024-01-16').count).toBe(1);
+  });
+
+  it('groups by week interval', async () => {
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/1',
+      record: { playedTime: '2024-01-01T10:00:00Z' }, // Week 01
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/2',
+      record: { playedTime: '2024-01-03T10:00:00Z' }, // Week 01
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/3',
+      record: { playedTime: '2024-01-08T10:00:00Z' }, // Week 02
+    });
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+      groupBy: ['playedTime_week'],
+    });
+
+    expect(result.count).toBe(3);
+    expect(result.groups).toHaveLength(2);
+  });
+
+  it('groups by month interval', async () => {
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/1',
+      record: { playedTime: '2024-01-15T10:00:00Z' },
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/2',
+      record: { playedTime: '2024-01-20T10:00:00Z' },
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:alice/col/3',
+      record: { playedTime: '2024-02-05T10:00:00Z' },
+    });
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+      groupBy: ['playedTime_month'],
+    });
+
+    expect(result.count).toBe(3);
+    expect(result.groups).toHaveLength(2);
+    expect(result.groups.find((g) => g.playedTime_month === '2024-01').count).toBe(2);
+    expect(result.groups.find((g) => g.playedTime_month === '2024-02').count).toBe(1);
+  });
+
+  it('respects custom limit', async () => {
+    // Create 5 distinct groups
+    for (let i = 0; i < 5; i++) {
+      writer.insertRecord({
+        uri: `at://did:plc:alice/col/${i}`,
+        record: { category: `cat${i}` },
+      });
+    }
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+      groupBy: ['category'],
+      limit: 3,
+    });
+
+    expect(result.groups).toHaveLength(3);
+  });
+
+  it('supports ascending count order', async () => {
+    writer.insertRecord({ uri: 'at://did:plc:alice/col/1', record: { cat: 'a' } });
+    writer.insertRecord({ uri: 'at://did:plc:alice/col/2', record: { cat: 'a' } });
+    writer.insertRecord({ uri: 'at://did:plc:alice/col/3', record: { cat: 'a' } });
+    writer.insertRecord({ uri: 'at://did:plc:alice/col/4', record: { cat: 'b' } });
+
+    const result = await query({
+      type: 'aggregate',
+      collection: 'col',
+      where: [],
+      groupBy: ['cat'],
+      orderBy: 'COUNT_ASC',
+    });
+
+    expect(result.groups[0].cat).toBe('b'); // count 1 first
+    expect(result.groups[1].cat).toBe('a'); // count 3 second
+  });
 });

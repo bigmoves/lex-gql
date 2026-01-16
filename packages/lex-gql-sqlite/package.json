@@ -12,9 +12,10 @@
     }
   },
   "scripts": {
+    "build": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc"
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "graphql",

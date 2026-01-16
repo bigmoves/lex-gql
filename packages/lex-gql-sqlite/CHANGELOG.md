@@ -5,6 +5,12 @@
 ### Added
 
 - Cross-collection URI resolution support (`collection: '*'`) for forward join batching
+- **Date interval grouping** for aggregates - use `_day`, `_week`, `_month` suffixes on datetime fields
+  - `groupBy: ['createdAt_day']` → groups by `date(createdAt)`
+  - `groupBy: ['createdAt_week']` → groups by `strftime('%Y-%W', createdAt)`
+  - `groupBy: ['createdAt_month']` → groups by `strftime('%Y-%m', createdAt)`
+- **Configurable limit** for aggregate queries (default: 50, max: 1000)
+- **Configurable orderBy** for aggregate queries (`COUNT_ASC`, `COUNT_DESC`, default: `COUNT_DESC`)
 
 ### Changed
 

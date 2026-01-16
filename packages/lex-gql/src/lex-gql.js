@@ -73,6 +73,8 @@ import {
  * @property {string} [rkey]
  * @property {string[]} [groupBy]
  * @property {Aggregate[]} [aggregates]
+ * @property {number} [limit]
+ * @property {'COUNT_ASC'|'COUNT_DESC'} [orderBy]
  */
 
 /**
@@ -482,6 +484,21 @@ function createSortDirectionEnum() {
 }
 
 /**
+ * Create AggregateOrderBy enum for aggregate query ordering
+ * @returns {GraphQLEnumType}
+ */
+function createAggregateOrderByEnum() {
+  return new GraphQLEnumType({
+    name: 'AggregateOrderBy',
+    description: 'Order direction for aggregate count',
+    values: {
+      COUNT_ASC: { value: 'COUNT_ASC', description: 'Ascending by count' },
+      COUNT_DESC: { value: 'COUNT_DESC', description: 'Descending by count (default)' },
+    },
+  });
+}
+
+/**
  * Create DeleteResult type
  * @returns {GraphQLObjectType}
  */
@@ -834,6 +851,13 @@ function createAggregateResultType(typeName, recordDef) {
       for (const prop of recordDef.properties) {
         if (['string', 'integer', 'number', 'boolean'].includes(prop.type)) {
           fields[prop.name] = { type: getGraphQLType(prop) };
+
+          // Add date interval fields for datetime properties
+          if (prop.format === 'datetime') {
+            fields[`${prop.name}_day`] = { type: GraphQLString };
+            fields[`${prop.name}_week`] = { type: GraphQLString };
+            fields[`${prop.name}_month`] = { type: GraphQLString };
+          }
         }
       }
 
@@ -1689,6 +1713,7 @@ export function buildSchema(lexicons) {
   const pageInfoType = createPageInfoType();
   const fieldConditionTypes = createFieldConditionTypes();
   const sortDirectionEnum = createSortDirectionEnum();
+  const aggregateOrderByEnum = createAggregateOrderByEnum();
   const deleteResultType = createDeleteResultType();
   const blobType = createBlobType();
 
@@ -1876,6 +1901,19 @@ export function buildSchema(lexicons) {
           },
         },
       };
+
+      // Add aggregate query field
+      const aggregateFieldName = `${fieldName}Aggregate`;
+      queryFields[aggregateFieldName] = {
+        type: aggregateTypes[lexicon.id],
+        description: `Aggregate ${lexicon.id}`,
+        args: {
+          where: { type: whereInputTypes[typeName] },
+          groupBy: { type: new GraphQLList(groupByEnums[lexicon.id]) },
+          limit: { type: GraphQLInt, description: 'Maximum number of groups (default: 50, max: 1000)' },
+          orderBy: { type: aggregateOrderByEnum, description: 'Order by count (default: COUNT_DESC)' },
+        },
+      };
     }
   }
 
@@ -1893,7 +1931,7 @@ export function buildSchema(lexicons) {
   // Set the holder so nested type field thunks can access it
   recordUnionTypeHolder.value = recordUnionType;
 
-  // Include Record union, nested types, aggregate types, groupBy enums, field conditions, and union types so they appear in the schema
+  // Include Record union, nested types, aggregate types, groupBy enums, field conditions, union types, and aggregate orderBy enum so they appear in the schema
   const types = [
     ...(recordUnionType ? [recordUnionType] : []),
     ...Object.values(nestedTypes),
@@ -1901,6 +1939,7 @@ export function buildSchema(lexicons) {
     ...Object.values(groupByEnums),
     ...Object.values(fieldConditionInputTypes),
     ...Object.values(unionRegistry),
+    aggregateOrderByEnum,
   ];
 
   // Create Subscription type
@@ -1943,6 +1982,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   const pageInfoType = createPageInfoType();
   const fieldConditionTypes = createFieldConditionTypes();
   const sortDirectionEnum = createSortDirectionEnum();
+  const aggregateOrderByEnum = createAggregateOrderByEnum();
   const deleteResultType = createDeleteResultType();
   const blobType = createBlobType();
 
@@ -2097,6 +2137,8 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
       args: {
         where: { type: whereInputTypes[typeName] },
         groupBy: { type: new GraphQLList(groupByEnum) },
+        limit: { type: GraphQLInt, description: 'Maximum number of groups (default: 50, max: 1000)' },
+        orderBy: { type: aggregateOrderByEnum, description: 'Order by count (default: COUNT_DESC)' },
       },
       resolve: async (_, args) => {
         /** @type {Operation} */
@@ -2105,6 +2147,8 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
           collection: lexicon.id,
           where: compileWhere(args.where),
           groupBy: args.groupBy || [],
+          limit: args.limit,
+          orderBy: args.orderBy,
         };
         return await queryFn(operation);
       },

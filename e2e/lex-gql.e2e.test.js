@@ -632,6 +632,235 @@ describe('lex-gql e2e with real lexicons', () => {
       expect(aliceGroup.count).toBe(3);
       expect(bobGroup.count).toBe(2);
     });
+
+    it('groups by day interval', async () => {
+      // Clear and add posts with different dates
+      db.exec('DELETE FROM records');
+
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/day1a',
+        record: { text: 'Post 1', createdAt: '2024-01-15T10:00:00.000Z' },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/day1b',
+        record: { text: 'Post 2', createdAt: '2024-01-15T22:00:00.000Z' },
+        indexedAt: '2024-01-15T22:00:00.000Z',
+      });
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/day2',
+        record: { text: 'Post 3', createdAt: '2024-01-16T08:00:00.000Z' },
+        indexedAt: '2024-01-16T08:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostAggregate(groupBy: [createdAt_day]) {
+            count
+            groups {
+              createdAt_day
+              count
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostAggregate.count).toBe(3);
+      expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(2);
+
+      const jan15 = result.data.appBskyFeedPostAggregate.groups.find(
+        (g) => g.createdAt_day === '2024-01-15',
+      );
+      const jan16 = result.data.appBskyFeedPostAggregate.groups.find(
+        (g) => g.createdAt_day === '2024-01-16',
+      );
+      expect(jan15.count).toBe(2);
+      expect(jan16.count).toBe(1);
+    });
+
+    it('groups by week interval', async () => {
+      db.exec('DELETE FROM records');
+
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/week1a',
+        record: { text: 'Week 1 post 1', createdAt: '2024-01-01T10:00:00.000Z' }, // Week 01
+        indexedAt: '2024-01-01T10:00:00.000Z',
+      });
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/week1b',
+        record: { text: 'Week 1 post 2', createdAt: '2024-01-03T10:00:00.000Z' }, // Week 01
+        indexedAt: '2024-01-03T10:00:00.000Z',
+      });
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/week2',
+        record: { text: 'Week 2 post', createdAt: '2024-01-08T10:00:00.000Z' }, // Week 02
+        indexedAt: '2024-01-08T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostAggregate(groupBy: [createdAt_week]) {
+            count
+            groups {
+              createdAt_week
+              count
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostAggregate.count).toBe(3);
+      expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(2);
+    });
+
+    it('groups by month interval', async () => {
+      db.exec('DELETE FROM records');
+
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/jan1',
+        record: { text: 'January post 1', createdAt: '2024-01-15T10:00:00.000Z' },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/jan2',
+        record: { text: 'January post 2', createdAt: '2024-01-20T10:00:00.000Z' },
+        indexedAt: '2024-01-20T10:00:00.000Z',
+      });
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/feb1',
+        record: { text: 'February post', createdAt: '2024-02-05T10:00:00.000Z' },
+        indexedAt: '2024-02-05T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostAggregate(groupBy: [createdAt_month]) {
+            count
+            groups {
+              createdAt_month
+              count
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(2);
+
+      const jan = result.data.appBskyFeedPostAggregate.groups.find(
+        (g) => g.createdAt_month === '2024-01',
+      );
+      const feb = result.data.appBskyFeedPostAggregate.groups.find(
+        (g) => g.createdAt_month === '2024-02',
+      );
+      expect(jan.count).toBe(2);
+      expect(feb.count).toBe(1);
+    });
+
+    it('respects custom limit', async () => {
+      db.exec('DELETE FROM records');
+
+      // Create 5 users with different post counts
+      for (let i = 0; i < 5; i++) {
+        writer.insertRecord({
+          uri: `at://did:plc:user${i}/app.bsky.feed.post/1`,
+          record: { text: `User ${i} post`, createdAt: '2024-01-15T00:00:00.000Z' },
+          indexedAt: '2024-01-15T00:00:00.000Z',
+        });
+      }
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostAggregate(groupBy: [did], limit: 3) {
+            groups {
+              did
+              count
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(3);
+    });
+
+    it('supports ascending count order', async () => {
+      db.exec('DELETE FROM records');
+
+      // Alice: 3 posts
+      for (let i = 1; i <= 3; i++) {
+        writer.insertRecord({
+          uri: `at://did:plc:alice/app.bsky.feed.post/${i}`,
+          record: { text: `Alice post ${i}`, createdAt: '2024-01-15T00:00:00.000Z' },
+          indexedAt: '2024-01-15T00:00:00.000Z',
+        });
+      }
+      // Bob: 1 post
+      writer.insertRecord({
+        uri: 'at://did:plc:bob/app.bsky.feed.post/1',
+        record: { text: 'Bob post', createdAt: '2024-01-15T00:00:00.000Z' },
+        indexedAt: '2024-01-15T00:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostAggregate(groupBy: [did], orderBy: COUNT_ASC) {
+            groups {
+              did
+              count
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(2);
+      // Bob (1 post) should come first in ascending order
+      expect(result.data.appBskyFeedPostAggregate.groups[0].did).toBe('did:plc:bob');
+      expect(result.data.appBskyFeedPostAggregate.groups[0].count).toBe(1);
+      expect(result.data.appBskyFeedPostAggregate.groups[1].did).toBe('did:plc:alice');
+      expect(result.data.appBskyFeedPostAggregate.groups[1].count).toBe(3);
+    });
+
+    it('supports descending count order (default)', async () => {
+      db.exec('DELETE FROM records');
+
+      // Alice: 3 posts
+      for (let i = 1; i <= 3; i++) {
+        writer.insertRecord({
+          uri: `at://did:plc:alice/app.bsky.feed.post/${i}`,
+          record: { text: `Alice post ${i}`, createdAt: '2024-01-15T00:00:00.000Z' },
+          indexedAt: '2024-01-15T00:00:00.000Z',
+        });
+      }
+      // Bob: 1 post
+      writer.insertRecord({
+        uri: 'at://did:plc:bob/app.bsky.feed.post/1',
+        record: { text: 'Bob post', createdAt: '2024-01-15T00:00:00.000Z' },
+        indexedAt: '2024-01-15T00:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostAggregate(groupBy: [did], orderBy: COUNT_DESC) {
+            groups {
+              did
+              count
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(2);
+      // Alice (3 posts) should come first in descending order
+      expect(result.data.appBskyFeedPostAggregate.groups[0].did).toBe('did:plc:alice');
+      expect(result.data.appBskyFeedPostAggregate.groups[0].count).toBe(3);
+      expect(result.data.appBskyFeedPostAggregate.groups[1].did).toBe('did:plc:bob');
+      expect(result.data.appBskyFeedPostAggregate.groups[1].count).toBe(1);
+    });
   });
 
   describe('at-uri forward joins', () => {

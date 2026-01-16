@@ -216,6 +216,8 @@ export type Operation = {
     rkey?: string | undefined;
     groupBy?: string[] | undefined;
     aggregates?: Aggregate[] | undefined;
+    limit?: number | undefined;
+    orderBy?: "COUNT_ASC" | "COUNT_DESC" | undefined;
 };
 export type AdapterOptions = {
     query: (op: Operation) => Promise<any>;

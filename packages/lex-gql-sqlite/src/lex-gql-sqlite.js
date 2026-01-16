@@ -319,11 +319,45 @@ function findMany(db, op) {
 }
 
 /**
+ * Get SQL expression for a groupBy field, handling date interval suffixes
+ * @param {string} field
+ * @returns {{ expr: string, alias: string }}
+ */
+function getGroupByExpression(field) {
+  const dayMatch = field.match(/^(.+)_day$/);
+  const weekMatch = field.match(/^(.+)_week$/);
+  const monthMatch = field.match(/^(.+)_month$/);
+
+  if (dayMatch) {
+    const base = dayMatch[1];
+    const path = SYSTEM_FIELDS[base] || `json_extract(r.record, '$.${base}')`;
+    return { expr: `date(${path})`, alias: field };
+  }
+  if (weekMatch) {
+    const base = weekMatch[1];
+    const path = SYSTEM_FIELDS[base] || `json_extract(r.record, '$.${base}')`;
+    return { expr: `strftime('%Y-%W', ${path})`, alias: field };
+  }
+  if (monthMatch) {
+    const base = monthMatch[1];
+    const path = SYSTEM_FIELDS[base] || `json_extract(r.record, '$.${base}')`;
+    return { expr: `strftime('%Y-%m', ${path})`, alias: field };
+  }
+
+  const expr = SYSTEM_FIELDS[field] || `json_extract(r.record, '$.${field}')`;
+  return { expr, alias: field };
+}
+
+/**
  * @param {import('better-sqlite3').Database} db
  * @param {any} op
  */
 function aggregate(db, op) {
-  const { collection, where = [], groupBy = [] } = op;
+  const { collection, where = [], groupBy = [], limit = 50, orderBy = 'COUNT_DESC' } = op;
+
+  // Cap limit at 1000
+  const effectiveLimit = Math.min(limit, 1000);
+  const orderDirection = orderBy === 'COUNT_ASC' ? 'ASC' : 'DESC';
 
   const { sql: whereSql, params } = buildWhere([
     { field: 'collection', op: 'eq', value: collection },
@@ -337,17 +371,14 @@ function aggregate(db, op) {
     return { count: result.count, groups: [] };
   }
 
-  const groupFields = groupBy
-    .map((/** @type {string} */ f) => {
-      const fieldPath = SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
-      return `${fieldPath} as ${f}`;
-    })
+  const groupExpressions = groupBy.map((/** @type {string} */ f) => getGroupByExpression(f));
+
+  const groupFields = groupExpressions
+    .map((/** @type {{ expr: string, alias: string }} */ { expr, alias }) => `${expr} as ${alias}`)
     .join(', ');
 
-  const groupByClause = groupBy
-    .map((/** @type {string} */ f) => {
-      return SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
-    })
+  const groupByClause = groupExpressions
+    .map((/** @type {{ expr: string }} */ { expr }) => expr)
     .join(', ');
 
   const sql = `
@@ -355,12 +386,12 @@ function aggregate(db, op) {
     FROM records r
     WHERE ${whereSql}
     GROUP BY ${groupByClause}
-    ORDER BY count DESC
-    LIMIT 100
+    ORDER BY count ${orderDirection}
+    LIMIT ?
   `;
 
   /** @type {Array<{count: number, [key: string]: any}>} */
-  const groups = /** @type {any} */ (db.prepare(sql).all(...params));
+  const groups = /** @type {any} */ (db.prepare(sql).all(...params, effectiveLimit));
   const count = groups.reduce((sum, g) => sum + g.count, 0);
 
   return { count, groups };

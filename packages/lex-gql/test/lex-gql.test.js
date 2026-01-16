@@ -1298,6 +1298,31 @@ describe('Schema Builder', () => {
     expect(sdl).toContain('enum AppBskyActorProfileGroupByField');
   });
 
+  it('aggregate queries include limit and orderBy args', () => {
+    const lexicons = [
+      {
+        id: 'app.bsky.actor.profile',
+        defs: {
+          main: {
+            type: 'record',
+            key: 'literal:self',
+            properties: [{ name: 'displayName', type: 'string', required: false }],
+          },
+          others: {},
+        },
+      },
+    ];
+
+    const schema = buildSchema(lexicons);
+    const sdl = printSchema(schema);
+
+    expect(sdl).toContain('limit: Int');
+    expect(sdl).toContain('orderBy: AggregateOrderBy');
+    expect(sdl).toContain('enum AggregateOrderBy');
+    expect(sdl).toContain('COUNT_ASC');
+    expect(sdl).toContain('COUNT_DESC');
+  });
+
   it('generates per-type FieldCondition input types', () => {
     const lexicons = [
       {

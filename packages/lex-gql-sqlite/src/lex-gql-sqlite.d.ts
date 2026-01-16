@@ -58,7 +58,7 @@ export type RecordInput = {
     /**
      * - Record CID
      */
-    cid?: string;
+    cid?: string | undefined;
     /**
      * - Record data (will be JSON stringified)
      */
@@ -66,7 +66,7 @@ export type RecordInput = {
     /**
      * - Timestamp (defaults to now)
      */
-    indexedAt?: string;
+    indexedAt?: string | undefined;
 };
 export type Writer = {
     /**

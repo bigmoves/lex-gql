@@ -4,6 +4,11 @@
 
 ### Added
 
+- **Aggregate query enhancements**
+  - `limit: Int` argument - maximum number of groups to return (default: 50, max: 1000)
+  - `orderBy: AggregateOrderBy` argument - sort by count (`COUNT_ASC`, `COUNT_DESC`, default: `COUNT_DESC`)
+  - Date interval fields in `AggregateGroup` types for datetime properties (`{field}_day`, `{field}_week`, `{field}_month`)
+  - `AggregateOrderBy` enum type
 - **Forward join resolution to Record union** - `{field}Resolved` fields now return the `Record` union type
   - Enables inline fragment queries: `postResolved { ... on AppBskyFeedPost { text } }`
   - Works for both at-uri string fields (e.g., `post: String` with `format: at-uri`) and StrongRef fields
