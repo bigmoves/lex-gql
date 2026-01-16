@@ -260,11 +260,13 @@ describe('buildOrderBy', () => {
 describe('findMany', () => {
   let db;
   let query;
+  let writer;
 
   beforeEach(() => {
     db = new Database(':memory:');
     setupSchema(db);
     query = createSqliteAdapter(db);
+    writer = createWriter(db);
   });
 
   afterEach(() => {
@@ -284,16 +286,14 @@ describe('findMany', () => {
   });
 
   it('returns records for collection', async () => {
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/app.bsky.feed.post/123',
-      'did:plc:abc',
-      'app.bsky.feed.post',
-      '123',
-      JSON.stringify({ text: 'hello' }),
-      '2024-01-01T00:00:00Z',
-    );
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/app.bsky.feed.post/123',
+      did: 'did:plc:abc',
+      collection: 'app.bsky.feed.post',
+      rkey: '123',
+      record: { text: 'hello' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
 
     const result = await query({
       type: 'findMany',
@@ -309,16 +309,14 @@ describe('findMany', () => {
 
   it('respects first limit', async () => {
     for (let i = 0; i < 5; i++) {
-      db.prepare(
-        `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      ).run(
-        `at://did:plc:abc/col/${i}`,
-        'did:plc:abc',
-        'col',
-        `${i}`,
-        '{}',
-        '2024-01-01T00:00:00Z',
-      );
+      writer.insertRecord({
+        uri: `at://did:plc:abc/col/${i}`,
+        did: 'did:plc:abc',
+        collection: 'col',
+        rkey: `${i}`,
+        record: {},
+        indexedAt: '2024-01-01T00:00:00Z',
+      });
     }
 
     const result = await query({
@@ -334,16 +332,14 @@ describe('findMany', () => {
 
   it('handles cursor pagination with after', async () => {
     for (let i = 0; i < 5; i++) {
-      db.prepare(
-        `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      ).run(
-        `at://did:plc:abc/col/${i}`,
-        'did:plc:abc',
-        'col',
-        `${i}`,
-        '{}',
-        '2024-01-01T00:00:00Z',
-      );
+      writer.insertRecord({
+        uri: `at://did:plc:abc/col/${i}`,
+        did: 'did:plc:abc',
+        collection: 'col',
+        rkey: `${i}`,
+        record: {},
+        indexedAt: '2024-01-01T00:00:00Z',
+      });
     }
 
     const first = await query({
@@ -367,26 +363,22 @@ describe('findMany', () => {
   });
 
   it('filters with where clause', async () => {
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/1',
-      'did:plc:abc',
-      'col',
-      '1',
-      JSON.stringify({ status: 'active' }),
-      '2024-01-01T00:00:00Z',
-    );
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/2',
-      'did:plc:abc',
-      'col',
-      '2',
-      JSON.stringify({ status: 'inactive' }),
-      '2024-01-01T00:00:00Z',
-    );
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/1',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '1',
+      record: { status: 'active' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/2',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '2',
+      record: { status: 'inactive' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
 
     const result = await query({
       type: 'findMany',
@@ -400,26 +392,22 @@ describe('findMany', () => {
   });
 
   it('sorts results', async () => {
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/1',
-      'did:plc:abc',
-      'col',
-      '1',
-      JSON.stringify({ name: 'banana' }),
-      '2024-01-01T00:00:00Z',
-    );
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/2',
-      'did:plc:abc',
-      'col',
-      '2',
-      JSON.stringify({ name: 'apple' }),
-      '2024-01-01T00:00:00Z',
-    );
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/1',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '1',
+      record: { name: 'banana' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/2',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '2',
+      record: { name: 'apple' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
 
     const result = await query({
       type: 'findMany',
@@ -434,10 +422,15 @@ describe('findMany', () => {
   });
 
   it('joins actor handle', async () => {
-    db.prepare(`INSERT INTO actors (did, handle) VALUES (?, ?)`).run('did:plc:abc', 'alice.test');
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run('at://did:plc:abc/col/1', 'did:plc:abc', 'col', '1', '{}', '2024-01-01T00:00:00Z');
+    writer.upsertActor('did:plc:abc', 'alice.test');
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/1',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '1',
+      record: {},
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
 
     const result = await query({
       type: 'findMany',
@@ -453,11 +446,13 @@ describe('findMany', () => {
 describe('aggregate', () => {
   let db;
   let query;
+  let writer;
 
   beforeEach(() => {
     db = new Database(':memory:');
     setupSchema(db);
     query = createSqliteAdapter(db);
+    writer = createWriter(db);
   });
 
   afterEach(() => {
@@ -476,16 +471,14 @@ describe('aggregate', () => {
 
   it('returns count for collection', async () => {
     for (let i = 0; i < 5; i++) {
-      db.prepare(
-        `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-      ).run(
-        `at://did:plc:abc/col/${i}`,
-        'did:plc:abc',
-        'col',
-        `${i}`,
-        '{}',
-        '2024-01-01T00:00:00Z',
-      );
+      writer.insertRecord({
+        uri: `at://did:plc:abc/col/${i}`,
+        did: 'did:plc:abc',
+        collection: 'col',
+        rkey: `${i}`,
+        record: {},
+        indexedAt: '2024-01-01T00:00:00Z',
+      });
     }
 
     const result = await query({
@@ -498,26 +491,22 @@ describe('aggregate', () => {
   });
 
   it('respects where clause', async () => {
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/1',
-      'did:plc:abc',
-      'col',
-      '1',
-      JSON.stringify({ status: 'active' }),
-      '2024-01-01T00:00:00Z',
-    );
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/2',
-      'did:plc:abc',
-      'col',
-      '2',
-      JSON.stringify({ status: 'inactive' }),
-      '2024-01-01T00:00:00Z',
-    );
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/1',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '1',
+      record: { status: 'active' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/2',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '2',
+      record: { status: 'inactive' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
 
     const result = await query({
       type: 'aggregate',
@@ -529,36 +518,30 @@ describe('aggregate', () => {
   });
 
   it('groups by field', async () => {
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/1',
-      'did:plc:abc',
-      'col',
-      '1',
-      JSON.stringify({ status: 'active' }),
-      '2024-01-01T00:00:00Z',
-    );
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/2',
-      'did:plc:abc',
-      'col',
-      '2',
-      JSON.stringify({ status: 'active' }),
-      '2024-01-01T00:00:00Z',
-    );
-    db.prepare(
-      `INSERT INTO records (uri, did, collection, rkey, record, indexed_at) VALUES (?, ?, ?, ?, ?, ?)`,
-    ).run(
-      'at://did:plc:abc/col/3',
-      'did:plc:abc',
-      'col',
-      '3',
-      JSON.stringify({ status: 'inactive' }),
-      '2024-01-01T00:00:00Z',
-    );
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/1',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '1',
+      record: { status: 'active' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/2',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '2',
+      record: { status: 'active' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
+    writer.insertRecord({
+      uri: 'at://did:plc:abc/col/3',
+      did: 'did:plc:abc',
+      collection: 'col',
+      rkey: '3',
+      record: { status: 'inactive' },
+      indexedAt: '2024-01-01T00:00:00Z',
+    });
 
     const result = await query({
       type: 'aggregate',
