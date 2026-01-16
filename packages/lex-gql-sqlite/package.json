@@ -1,0 +1,30 @@
+{
+  "name": "lex-gql-sqlite",
+  "version": "0.1.0",
+  "description": "SQLite adapter for lex-gql",
+  "type": "module",
+  "main": "lex-gql-sqlite.js",
+  "types": "lex-gql-sqlite.d.ts",
+  "exports": {
+    ".": {
+      "types": "./lex-gql-sqlite.d.ts",
+      "default": "./lex-gql-sqlite.js"
+    }
+  },
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc"
+  },
+  "keywords": ["graphql", "atproto", "lexicon", "sqlite", "adapter"],
+  "license": "MIT",
+  "peerDependencies": {
+    "better-sqlite3": ">=9.0.0",
+    "lex-gql": ">=0.1.0"
+  },
+  "devDependencies": {
+    "better-sqlite3": "^11.8.1",
+    "lex-gql": "workspace:*",
+    "vitest": "^1.6.1"
+  }
+}

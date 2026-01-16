@@ -1,0 +1,12 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "allowJs": true,
+    "checkJs": true,
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "types": ["node"]
+  },
+  "include": ["lex-gql-sqlite.js"],
+  "exclude": ["node_modules"]
+}
