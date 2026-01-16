@@ -18,6 +18,7 @@ import {
   parseLexicon,
   parseRefUri,
   refToTypeName,
+  resolveRefKey,
 } from './lex-gql.js';
 
 // Load all lexicon files recursively
@@ -417,6 +418,20 @@ describe('Ref URI Parser', () => {
       nsid: null,
       fragment: 'mention',
     });
+  });
+});
+
+describe('resolveRefKey', () => {
+  it('resolves local ref to full key', () => {
+    expect(resolveRefKey('#replyRef', 'app.bsky.feed.post')).toBe('app.bsky.feed.post#replyRef');
+  });
+
+  it('resolves external ref without fragment', () => {
+    expect(resolveRefKey('com.atproto.repo.strongRef', 'app.bsky.feed.post')).toBe('com.atproto.repo.strongRef');
+  });
+
+  it('resolves external ref with fragment', () => {
+    expect(resolveRefKey('app.bsky.embed.defs#aspectRatio', 'app.bsky.embed.images')).toBe('app.bsky.embed.defs#aspectRatio');
   });
 });
 
@@ -2241,6 +2256,33 @@ describe('Error Handling', () => {
     expect(ErrorCodes.UNSUPPORTED_VERSION).toBe('UNSUPPORTED_VERSION');
     expect(ErrorCodes.QUERY_FAILED).toBe('QUERY_FAILED');
     expect(ErrorCodes.VALIDATION_FAILED).toBe('VALIDATION_FAILED');
+  });
+});
+
+describe('Type Registry', () => {
+  it('creates types for main object defs (not just records)', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // Main object types from embed lexicons
+    expect(sdl).toContain('type AppBskyEmbedImages');
+    expect(sdl).toContain('type AppBskyEmbedVideo');
+    expect(sdl).toContain('type AppBskyEmbedExternal');
+    expect(sdl).toContain('type AppBskyEmbedRecord');
+    expect(sdl).toContain('type AppBskyEmbedRecordWithMedia');
+  });
+
+  it('creates types for nested object defs (others)', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // Nested types from others defs
+    expect(sdl).toContain('type AppBskyFeedPostReplyRef');
+    expect(sdl).toContain('type AppBskyEmbedImagesImage');
+    expect(sdl).toContain('type AppBskyEmbedDefsAspectRatio');
+    expect(sdl).toContain('type ComAtprotoRepoStrongRef');
   });
 });
 

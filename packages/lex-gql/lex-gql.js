@@ -233,6 +233,21 @@ export function parseRefUri(refUri) {
 }
 
 /**
+ * Resolve a ref string to a full registry key
+ * @param {string} ref - The ref string (e.g., "#replyRef" or "app.bsky.embed.images")
+ * @param {string} parentLexiconId - The lexicon ID containing this ref
+ * @returns {string} Full registry key
+ */
+export function resolveRefKey(ref, parentLexiconId) {
+  if (ref.startsWith('#')) {
+    // Local ref: #replyRef -> app.bsky.feed.post#replyRef
+    return `${parentLexiconId}${ref}`;
+  }
+  // External ref: already fully qualified
+  return ref;
+}
+
+/**
  * Convert a ref URI to a GraphQL type name
  * @param {string} refUri - e.g. "fm.teal.alpha.feed.defs#artist"
  * @returns {string} - e.g. "FmTealAlphaFeedDefsArtist"
