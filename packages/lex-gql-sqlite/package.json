@@ -16,7 +16,13 @@
     "test:watch": "vitest",
     "typecheck": "tsc"
   },
-  "keywords": ["graphql", "atproto", "lexicon", "sqlite", "adapter"],
+  "keywords": [
+    "graphql",
+    "atproto",
+    "lexicon",
+    "sqlite",
+    "adapter"
+  ],
   "license": "MIT",
   "peerDependencies": {
     "better-sqlite3": ">=11.0.0",

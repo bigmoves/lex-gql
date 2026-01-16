@@ -6,10 +6,10 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import Database from 'better-sqlite3';
 import { createAdapter, parseLexicon } from 'lex-gql';
 import { createSqliteAdapter, setupSchema } from 'lex-gql-sqlite';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 // Load all lexicon files recursively
 function loadLexicons(dir) {
@@ -75,7 +75,7 @@ describe('lex-gql e2e with real lexicons', () => {
           createdAt: '2024-01-15T10:30:00.000Z',
           langs: ['en'],
         }),
-        '2024-01-15T10:30:00.000Z'
+        '2024-01-15T10:30:00.000Z',
       );
       insertActor.run('did:plc:alice', 'alice.bsky.social');
 
@@ -137,7 +137,7 @@ describe('lex-gql e2e with real lexicons', () => {
             ],
           },
         }),
-        '2024-01-15T11:00:00.000Z'
+        '2024-01-15T11:00:00.000Z',
       );
 
       const result = await adapter.execute(`
@@ -156,7 +156,7 @@ describe('lex-gql e2e with real lexicons', () => {
                         height
                       }
                       image {
-                        cid
+                        ref
                         mimeType
                         size
                       }
@@ -175,7 +175,7 @@ describe('lex-gql e2e with real lexicons', () => {
       expect(post.embed.__typename).toBe('AppBskyEmbedImages');
       expect(post.embed.images).toHaveLength(1);
       expect(post.embed.images[0].alt).toBe('A beautiful sunset');
-      expect(post.embed.images[0].image.cid).toBe('bafyimage123');
+      expect(post.embed.images[0].image.ref).toBe('bafyimage123');
     });
 
     it('queries posts with reply reference', async () => {
@@ -190,7 +190,7 @@ describe('lex-gql e2e with real lexicons', () => {
           text: 'Original post',
           createdAt: '2024-01-15T09:00:00.000Z',
         }),
-        '2024-01-15T09:00:00.000Z'
+        '2024-01-15T09:00:00.000Z',
       );
 
       // Reply
@@ -214,7 +214,7 @@ describe('lex-gql e2e with real lexicons', () => {
             },
           },
         }),
-        '2024-01-15T10:00:00.000Z'
+        '2024-01-15T10:00:00.000Z',
       );
 
       const result = await adapter.execute(`
@@ -266,7 +266,7 @@ describe('lex-gql e2e with real lexicons', () => {
           },
           createdAt: '2024-01-01T00:00:00.000Z',
         }),
-        '2024-01-01T00:00:00.000Z'
+        '2024-01-01T00:00:00.000Z',
       );
       insertActor.run('did:plc:alice', 'alice.bsky.social');
 
@@ -278,10 +278,9 @@ describe('lex-gql e2e with real lexicons', () => {
                 displayName
                 description
                 avatar {
-                  cid
+                  ref
                   mimeType
                   size
-                  url(preset: "avatar")
                 }
                 actorHandle
               }
@@ -294,10 +293,8 @@ describe('lex-gql e2e with real lexicons', () => {
       const profile = result.data.appBskyActorProfile.edges[0].node;
       expect(profile.displayName).toBe('Alice');
       expect(profile.description).toBe('Hello, I am Alice!');
-      expect(profile.avatar.cid).toBe('bafyavatar');
+      expect(profile.avatar.ref).toBe('bafyavatar');
       expect(profile.avatar.mimeType).toBe('image/jpeg');
-      expect(profile.avatar.url).toContain('bafyavatar');
-      expect(profile.avatar.url).toContain('avatar');
       expect(profile.actorHandle).toBe('alice.bsky.social');
     });
   });
@@ -314,7 +311,7 @@ describe('lex-gql e2e with real lexicons', () => {
           subject: 'did:plc:bob',
           createdAt: '2024-01-10T00:00:00.000Z',
         }),
-        '2024-01-10T00:00:00.000Z'
+        '2024-01-10T00:00:00.000Z',
       );
 
       const result = await adapter.execute(`
@@ -349,7 +346,7 @@ describe('lex-gql e2e with real lexicons', () => {
           `${i}`,
           null,
           JSON.stringify({ text: `Post number ${i}`, createdAt: '2024-01-15T00:00:00.000Z' }),
-          `2024-01-15T00:00:${i.toString().padStart(2, '0')}.000Z`
+          `2024-01-15T00:00:${i.toString().padStart(2, '0')}.000Z`,
         );
       }
     });
@@ -360,7 +357,8 @@ describe('lex-gql e2e with real lexicons', () => {
 
       // Fetch all pages
       for (let page = 0; page < 5; page++) {
-        const result = await adapter.execute(`
+        const result = await adapter.execute(
+          `
           query ($cursor: String) {
             appBskyFeedPost(first: 10, after: $cursor) {
               edges {
@@ -374,10 +372,12 @@ describe('lex-gql e2e with real lexicons', () => {
               }
             }
           }
-        `, { cursor });
+        `,
+          { cursor },
+        );
 
         expect(result.errors).toBeUndefined();
-        allPosts.push(...result.data.appBskyFeedPost.edges.map(e => e.node.text));
+        allPosts.push(...result.data.appBskyFeedPost.edges.map((e) => e.node.text));
 
         if (!result.data.appBskyFeedPost.pageInfo.hasNextPage) break;
         cursor = result.data.appBskyFeedPost.pageInfo.endCursor;
@@ -412,8 +412,12 @@ describe('lex-gql e2e with real lexicons', () => {
         'app.bsky.feed.post',
         '1',
         null,
-        JSON.stringify({ text: 'Hello world', createdAt: '2024-01-15T00:00:00.000Z', langs: ['en'] }),
-        '2024-01-15T00:00:00.000Z'
+        JSON.stringify({
+          text: 'Hello world',
+          createdAt: '2024-01-15T00:00:00.000Z',
+          langs: ['en'],
+        }),
+        '2024-01-15T00:00:00.000Z',
       );
       insertRecord.run(
         'at://did:plc:bob/app.bsky.feed.post/2',
@@ -421,8 +425,12 @@ describe('lex-gql e2e with real lexicons', () => {
         'app.bsky.feed.post',
         '2',
         null,
-        JSON.stringify({ text: 'Hola mundo', createdAt: '2024-01-16T00:00:00.000Z', langs: ['es'] }),
-        '2024-01-16T00:00:00.000Z'
+        JSON.stringify({
+          text: 'Hola mundo',
+          createdAt: '2024-01-16T00:00:00.000Z',
+          langs: ['es'],
+        }),
+        '2024-01-16T00:00:00.000Z',
       );
       insertRecord.run(
         'at://did:plc:carol/app.bsky.feed.post/3',
@@ -430,8 +438,12 @@ describe('lex-gql e2e with real lexicons', () => {
         'app.bsky.feed.post',
         '3',
         null,
-        JSON.stringify({ text: 'Hello from Carol', createdAt: '2024-01-17T00:00:00.000Z', langs: ['en'] }),
-        '2024-01-17T00:00:00.000Z'
+        JSON.stringify({
+          text: 'Hello from Carol',
+          createdAt: '2024-01-17T00:00:00.000Z',
+          langs: ['en'],
+        }),
+        '2024-01-17T00:00:00.000Z',
       );
     });
 
@@ -532,7 +544,7 @@ describe('lex-gql e2e with real lexicons', () => {
         '1',
         null,
         JSON.stringify({ text: 'B post', createdAt: '2024-01-15T00:00:00.000Z' }),
-        '2024-01-15T00:00:00.000Z'
+        '2024-01-15T00:00:00.000Z',
       );
       insertRecord.run(
         'at://did:plc:bob/app.bsky.feed.post/2',
@@ -541,7 +553,7 @@ describe('lex-gql e2e with real lexicons', () => {
         '2',
         null,
         JSON.stringify({ text: 'A post', createdAt: '2024-01-14T00:00:00.000Z' }),
-        '2024-01-14T00:00:00.000Z'
+        '2024-01-14T00:00:00.000Z',
       );
       insertRecord.run(
         'at://did:plc:carol/app.bsky.feed.post/3',
@@ -550,14 +562,14 @@ describe('lex-gql e2e with real lexicons', () => {
         '3',
         null,
         JSON.stringify({ text: 'C post', createdAt: '2024-01-16T00:00:00.000Z' }),
-        '2024-01-16T00:00:00.000Z'
+        '2024-01-16T00:00:00.000Z',
       );
     });
 
     it('sorts by record field ascending', async () => {
       const result = await adapter.execute(`
         query {
-          appBskyFeedPost(first: 10, sort: [{ field: "text", direction: ASC }]) {
+          appBskyFeedPost(first: 10, sortBy: [{ field: text, direction: ASC }]) {
             edges {
               node { text }
             }
@@ -566,14 +578,14 @@ describe('lex-gql e2e with real lexicons', () => {
       `);
 
       expect(result.errors).toBeUndefined();
-      const texts = result.data.appBskyFeedPost.edges.map(e => e.node.text);
+      const texts = result.data.appBskyFeedPost.edges.map((e) => e.node.text);
       expect(texts).toEqual(['A post', 'B post', 'C post']);
     });
 
     it('sorts by createdAt descending', async () => {
       const result = await adapter.execute(`
         query {
-          appBskyFeedPost(first: 10, sort: [{ field: "createdAt", direction: DESC }]) {
+          appBskyFeedPost(first: 10, sortBy: [{ field: createdAt, direction: DESC }]) {
             edges {
               node { text createdAt }
             }
@@ -582,14 +594,14 @@ describe('lex-gql e2e with real lexicons', () => {
       `);
 
       expect(result.errors).toBeUndefined();
-      const texts = result.data.appBskyFeedPost.edges.map(e => e.node.text);
+      const texts = result.data.appBskyFeedPost.edges.map((e) => e.node.text);
       expect(texts).toEqual(['C post', 'B post', 'A post']);
     });
 
     it('sorts by system field (indexedAt)', async () => {
       const result = await adapter.execute(`
         query {
-          appBskyFeedPost(first: 10, sort: [{ field: "indexedAt", direction: ASC }]) {
+          appBskyFeedPost(first: 10, sortBy: [{ field: indexedAt, direction: ASC }]) {
             edges {
               node { text }
             }
@@ -598,7 +610,7 @@ describe('lex-gql e2e with real lexicons', () => {
       `);
 
       expect(result.errors).toBeUndefined();
-      const texts = result.data.appBskyFeedPost.edges.map(e => e.node.text);
+      const texts = result.data.appBskyFeedPost.edges.map((e) => e.node.text);
       expect(texts).toEqual(['A post', 'B post', 'C post']);
     });
   });
@@ -614,7 +626,7 @@ describe('lex-gql e2e with real lexicons', () => {
           `${i}`,
           null,
           JSON.stringify({ text: `Alice post ${i}`, createdAt: '2024-01-15T00:00:00.000Z' }),
-          '2024-01-15T00:00:00.000Z'
+          '2024-01-15T00:00:00.000Z',
         );
       }
       // Bob: 2 posts
@@ -626,7 +638,7 @@ describe('lex-gql e2e with real lexicons', () => {
           `${i}`,
           null,
           JSON.stringify({ text: `Bob post ${i}`, createdAt: '2024-01-15T00:00:00.000Z' }),
-          '2024-01-15T00:00:00.000Z'
+          '2024-01-15T00:00:00.000Z',
         );
       }
     });
@@ -660,7 +672,7 @@ describe('lex-gql e2e with real lexicons', () => {
     it('groups by did', async () => {
       const result = await adapter.execute(`
         query {
-          appBskyFeedPostAggregate(groupBy: ["did"]) {
+          appBskyFeedPostAggregate(groupBy: [did]) {
             count
             groups {
               did
@@ -674,8 +686,12 @@ describe('lex-gql e2e with real lexicons', () => {
       expect(result.data.appBskyFeedPostAggregate.count).toBe(5);
       expect(result.data.appBskyFeedPostAggregate.groups).toHaveLength(2);
 
-      const aliceGroup = result.data.appBskyFeedPostAggregate.groups.find(g => g.did === 'did:plc:alice');
-      const bobGroup = result.data.appBskyFeedPostAggregate.groups.find(g => g.did === 'did:plc:bob');
+      const aliceGroup = result.data.appBskyFeedPostAggregate.groups.find(
+        (g) => g.did === 'did:plc:alice',
+      );
+      const bobGroup = result.data.appBskyFeedPostAggregate.groups.find(
+        (g) => g.did === 'did:plc:bob',
+      );
       expect(aliceGroup.count).toBe(3);
       expect(bobGroup.count).toBe(2);
     });
@@ -691,7 +707,7 @@ describe('lex-gql e2e with real lexicons', () => {
         'self',
         null,
         JSON.stringify({ displayName: 'Alice', description: 'Test user Alice' }),
-        '2024-01-01T00:00:00.000Z'
+        '2024-01-01T00:00:00.000Z',
       );
       insertActor.run('did:plc:alice', 'alice.bsky.social');
 
@@ -703,7 +719,7 @@ describe('lex-gql e2e with real lexicons', () => {
         '1',
         null,
         JSON.stringify({ text: 'Hello from Alice', createdAt: '2024-01-15T00:00:00.000Z' }),
-        '2024-01-15T00:00:00.000Z'
+        '2024-01-15T00:00:00.000Z',
       );
 
       // Create post by Bob (no profile)
@@ -714,7 +730,7 @@ describe('lex-gql e2e with real lexicons', () => {
         '1',
         null,
         JSON.stringify({ text: 'Hello from Bob', createdAt: '2024-01-15T00:00:00.000Z' }),
-        '2024-01-15T00:00:00.000Z'
+        '2024-01-15T00:00:00.000Z',
       );
     });
 

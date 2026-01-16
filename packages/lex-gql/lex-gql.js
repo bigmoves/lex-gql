@@ -26,10 +26,18 @@ import {
 // ============================================================================
 
 /**
+ * A where clause for filtering records.
+ * Can be a field condition or a logical operator (AND/OR).
+ *
+ * Field condition: { field: 'text', op: 'eq', value: 'hello' }
+ * Logical AND:     { op: 'and', conditions: WhereClause[][] }
+ * Logical OR:      { op: 'or', conditions: WhereClause[][] }
+ *
  * @typedef {Object} WhereClause
- * @property {string} field
- * @property {string} op
- * @property {*} value
+ * @property {string} [field] - Field name (for field conditions)
+ * @property {string} op - Operator: 'eq' | 'in' | 'contains' | 'gt' | 'gte' | 'lt' | 'lte' | 'and' | 'or'
+ * @property {*} [value] - Value to compare (for field conditions)
+ * @property {WhereClause[][]} [conditions] - Nested conditions (for and/or)
  */
 
 /**
@@ -502,6 +510,13 @@ function createBlobType() {
       ref: {
         type: new GraphQLNonNull(GraphQLString),
         description: 'CID reference to the blob',
+        resolve: (blob) => {
+          // Handle ATProto format: ref: { $link: 'cid' } -> 'cid'
+          if (blob.ref && typeof blob.ref === 'object' && blob.ref.$link) {
+            return blob.ref.$link;
+          }
+          return blob.ref;
+        },
       },
       mimeType: {
         type: new GraphQLNonNull(GraphQLString),
@@ -527,7 +542,9 @@ function createBlobType() {
             throw new Error('Blob missing required did or ref for URL generation');
           }
           if (!VALID_BLOB_PRESETS.includes(preset)) {
-            throw new Error(`Invalid blob preset: ${preset}. Valid presets: ${VALID_BLOB_PRESETS.join(', ')}`);
+            throw new Error(
+              `Invalid blob preset: ${preset}. Valid presets: ${VALID_BLOB_PRESETS.join(', ')}`,
+            );
           }
           return `https://cdn.bsky.app/img/${preset}/plain/${did}/${ref}@jpeg`;
         },
@@ -719,6 +736,11 @@ function createWhereInputType(typeName, recordDef, fieldConditionTypes, whereInp
       /** @type {Record<string, import('graphql').GraphQLInputFieldConfig>} */
       const fields = {};
 
+      // Add system fields that are always filterable
+      fields.uri = { type: fieldConditionTypes.String };
+      fields.did = { type: fieldConditionTypes.String };
+      fields.collection = { type: fieldConditionTypes.String };
+
       for (const prop of recordDef.properties) {
         const gqlType = mapLexiconType(prop.type);
         const conditionType = fieldConditionTypes[gqlType];
@@ -818,7 +840,15 @@ function createAggregateResultType(typeName, recordDef) {
     name: groupTypeName,
     fields: () => {
       /** @type {Record<string, import('graphql').GraphQLFieldConfig<*, *>>} */
-      const fields = { count: { type: GraphQLInt } };
+      const fields = {
+        count: { type: GraphQLInt },
+        // System fields are always groupable
+        uri: { type: GraphQLString },
+        cid: { type: GraphQLString },
+        did: { type: GraphQLString },
+        collection: { type: GraphQLString },
+        actorHandle: { type: GraphQLString },
+      };
 
       // Add groupable primitive fields
       for (const prop of recordDef.properties) {
@@ -848,7 +878,14 @@ function createAggregateResultType(typeName, recordDef) {
  */
 function createAggregateGroupByEnum(typeName, recordDef) {
   /** @type {Record<string, import('graphql').GraphQLEnumValueConfig>} */
-  const values = {};
+  const values = {
+    // System fields are always groupable
+    uri: { value: 'uri' },
+    cid: { value: 'cid' },
+    did: { value: 'did' },
+    collection: { value: 'collection' },
+    actorHandle: { value: 'actorHandle' },
+  };
 
   for (const prop of recordDef.properties) {
     if (['string', 'integer', 'number', 'boolean'].includes(prop.type)) {
@@ -881,7 +918,14 @@ function createAggregateGroupByEnum(typeName, recordDef) {
  * @param {() => GraphQLUnionType | null} [getRecordUnionType] - Getter for Record union type (for forward joins)
  * @returns {GraphQLObjectType}
  */
-function createNestedObjectType(lexiconId, defName, def, blobType, typeRegistry, getRecordUnionType) {
+function createNestedObjectType(
+  lexiconId,
+  defName,
+  def,
+  blobType,
+  typeRegistry,
+  getRecordUnionType,
+) {
   const typeName = nsidToTypeName(lexiconId) + defName.charAt(0).toUpperCase() + defName.slice(1);
 
   return new GraphQLObjectType({
@@ -1166,9 +1210,24 @@ function createSubscriptionTypeWithResolvers(lexicons, recordTypes, subscribeFn)
  * @param {string} [parentTypeName] - Parent type name for creating union type names
  * @returns {import('graphql').GraphQLOutputType}
  */
-function getGraphQLType(prop, blobType, strongRefType, typeRegistry, parentLexiconId, unionRegistry, parentTypeName) {
+function getGraphQLType(
+  prop,
+  blobType,
+  strongRefType,
+  typeRegistry,
+  parentLexiconId,
+  unionRegistry,
+  parentTypeName,
+) {
   // Handle union type with refs array - create a union type
-  if (prop.type === 'union' && prop.refs && typeRegistry && parentLexiconId && unionRegistry && parentTypeName) {
+  if (
+    prop.type === 'union' &&
+    prop.refs &&
+    typeRegistry &&
+    parentLexiconId &&
+    unionRegistry &&
+    parentTypeName
+  ) {
     // Create a unique union type name based on parent type and field name
     const unionTypeName = `${parentTypeName}${prop.name.charAt(0).toUpperCase()}${prop.name.slice(1)}`;
 
@@ -1407,7 +1466,15 @@ function createRecordType(
       // Add lexicon properties
       for (const prop of recordDef.properties) {
         fields[prop.name] = {
-          type: getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexiconId, unionRegistry, typeName),
+          type: getGraphQLType(
+            prop,
+            blobType,
+            strongRefType,
+            typeRegistry,
+            lexiconId,
+            unionRegistry,
+            typeName,
+          ),
           description: `Field from lexicon`,
         };
 
@@ -1490,6 +1557,9 @@ function createRecordType(
  * @param {JoinCollector} joinCollector
  * @param {GraphQLObjectType} blobType
  * @param {Function} queryFn
+ * @param {GraphQLObjectType | null} strongRefType
+ * @param {Record<string, GraphQLObjectType>} typeRegistry
+ * @param {Record<string, GraphQLUnionType>} unionRegistry
  * @returns {GraphQLObjectType}
  */
 function createRecordTypeWithResolvers(
@@ -1502,6 +1572,9 @@ function createRecordTypeWithResolvers(
   joinCollector,
   blobType,
   queryFn,
+  strongRefType,
+  typeRegistry,
+  unionRegistry,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -1527,7 +1600,15 @@ function createRecordTypeWithResolvers(
       // Add lexicon properties
       for (const prop of recordDef.properties) {
         fields[prop.name] = {
-          type: getGraphQLType(prop, blobType),
+          type: getGraphQLType(
+            prop,
+            blobType,
+            strongRefType,
+            typeRegistry,
+            lexiconId,
+            unionRegistry,
+            typeName,
+          ),
           description: `Field from lexicon`,
         };
 
@@ -1661,7 +1742,14 @@ export function buildSchema(lexicons) {
       for (const [defName, def] of Object.entries(lexicon.defs.others)) {
         if (def.type === 'object' && def.properties) {
           const refKey = `${lexicon.id}#${defName}`;
-          const nestedType = createNestedObjectType(lexicon.id, defName, def, blobType, typeRegistry, getRecordUnionType);
+          const nestedType = createNestedObjectType(
+            lexicon.id,
+            defName,
+            def,
+            blobType,
+            typeRegistry,
+            getRecordUnionType,
+          );
           nestedTypes[refKey] = nestedType;
           typeRegistry[refKey] = nestedType;
         }
@@ -1671,25 +1759,29 @@ export function buildSchema(lexicons) {
 
   // Add main object types (type: 'object', not 'record') to registry
   for (const lexicon of lexicons) {
-    if (lexicon.defs.main?.type === 'object' && lexicon.defs.main.properties) {
+    const mainDef = lexicon.defs.main;
+    if (mainDef?.type === 'object' && mainDef.properties) {
       // Create a simple object type for main defs that are objects (not records)
       const typeName = nsidToTypeName(lexicon.id);
+      const mainProperties = mainDef.properties;
       const mainObjectType = new GraphQLObjectType({
         name: typeName,
         description: `Object type from ${lexicon.id}`,
         fields: () => {
           /** @type {Record<string, import('graphql').GraphQLFieldConfig<*, *>>} */
           const fields = {};
-          for (const prop of lexicon.defs.main.properties || []) {
+          for (const prop of mainProperties) {
             fields[prop.name] = {
               type: prop.required
-                ? new GraphQLNonNull(getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexicon.id))
+                ? new GraphQLNonNull(
+                    getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexicon.id),
+                  )
                 : getGraphQLType(prop, blobType, strongRefType, typeRegistry, lexicon.id),
               description: 'Field from object definition',
             };
           }
           // Add forward join fields for strongRef references
-          addForwardJoinFields(fields, lexicon.defs.main.properties || [], getRecordUnionType());
+          addForwardJoinFields(fields, mainProperties, getRecordUnionType());
           return fields;
         },
       });
@@ -1859,6 +1951,10 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   const sortInputTypes = {};
   /** @type {Record<string, GraphQLInputObjectType>} */
   const inputTypes = {};
+  /** @type {Record<string, GraphQLObjectType>} */
+  const typeRegistry = {};
+  /** @type {Record<string, GraphQLUnionType>} */
+  const unionRegistry = {};
 
   // Create shared types
   const pageInfoType = createPageInfoType();
@@ -1868,8 +1964,38 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   const resolvedRecordType = createResolvedRecordType();
   const blobType = createBlobType();
 
+  // Holder for recordUnionType - used by strongRef uriResolved field
+  /** @type {{ value: GraphQLUnionType | null }} */
+  const recordUnionTypeHolder = { value: null };
+  const getRecordUnionType = () => recordUnionTypeHolder.value;
+
+  // Create strongRef type if not defined in lexicons
+  const hasStrongRefLexicon = lexicons.some((l) => l.id === 'com.atproto.repo.strongRef');
+  const strongRefType = hasStrongRefLexicon ? null : createStrongRefType(getRecordUnionType);
+  if (strongRefType) {
+    typeRegistry['com.atproto.repo.strongRef'] = strongRefType;
+  }
+
   // Create join collector for batching
   const joinCollector = new JoinCollector(queryFn);
+
+  // Pre-pass: Create nested types from local defs (like #replyRef, #entity, etc.)
+  for (const lexicon of lexicons) {
+    const otherDefs = lexicon.defs?.others || {};
+    for (const [defName, defValue] of Object.entries(otherDefs)) {
+      if ((defValue.type === 'object' || !defValue.type) && defValue.properties) {
+        const localKey = `${lexicon.id}#${defName}`;
+        typeRegistry[localKey] = createNestedObjectType(
+          lexicon.id,
+          defName,
+          defValue,
+          blobType,
+          typeRegistry,
+          getRecordUnionType,
+        );
+      }
+    }
+  }
 
   // First pass: create all record types
   for (const lexicon of lexicons) {
@@ -1888,7 +2014,12 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         joinCollector,
         blobType,
         queryFn,
+        strongRefType,
+        typeRegistry,
+        unionRegistry,
       );
+      // Register in type registry
+      typeRegistry[lexicon.id] = recordTypes[lexicon.id];
       // Create where input type (keyed by typeName for self-reference lookup)
       whereInputTypes[typeName] = createWhereInputType(
         typeName,
@@ -1902,6 +2033,23 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
       // Create input type for mutations
       inputTypes[lexicon.id] = createInputType(typeName, lexicon.defs.main);
     }
+  }
+
+  // Create Record union type from all record types
+  const recordTypeValues = Object.values(recordTypes).filter((t) => t instanceof GraphQLObjectType);
+  if (recordTypeValues.length > 0) {
+    const recordUnionType = new GraphQLUnionType({
+      name: 'Record',
+      description: 'Union of all record types',
+      types: recordTypeValues,
+      resolveType: (value) => {
+        if (value?.collection) {
+          return nsidToTypeName(value.collection);
+        }
+        return undefined;
+      },
+    });
+    recordUnionTypeHolder.value = recordUnionType;
   }
 
   // Second pass: create edge and connection types
@@ -2156,14 +2304,27 @@ export function createAdapter(lexicons, options) {
 /**
  * Compile where clause to operation format
  * @param {Object} where
- * @returns {Array<{ field: string, op: string, value: any }>}
+ * @returns {WhereClause[]}
  */
 function compileWhere(where) {
   if (!where) return [];
 
   const conditions = [];
   for (const [field, condition] of Object.entries(where)) {
-    if (field === 'AND' || field === 'OR') continue; // Handle separately
+    if (field === 'AND' && Array.isArray(condition)) {
+      const andConditions = condition.map((c) => compileWhere(c));
+      if (andConditions.length > 0) {
+        conditions.push({ op: 'and', conditions: andConditions });
+      }
+      continue;
+    }
+    if (field === 'OR' && Array.isArray(condition)) {
+      const orConditions = condition.map((c) => compileWhere(c));
+      if (orConditions.length > 0) {
+        conditions.push({ op: 'or', conditions: orConditions });
+      }
+      continue;
+    }
     if (!condition) continue;
 
     for (const [op, value] of Object.entries(condition)) {
@@ -2222,16 +2383,24 @@ function extractSelectFields(info) {
  */
 function formatConnection(result) {
   const { rows, hasNext, hasPrev, totalCount } = result;
+
+  // Create base64-encoded cursor with id for sqlite adapter
+  /** @param {any} row */
+  const makeCursor = (row) => {
+    if (!row) return null;
+    return Buffer.from(JSON.stringify({ id: row._id, uri: row.uri })).toString('base64');
+  };
+
   return {
-    edges: rows.map((row, i) => ({
+    edges: rows.map((row) => ({
       node: row,
-      cursor: Buffer.from(JSON.stringify({ i, uri: row.uri })).toString('base64'),
+      cursor: makeCursor(row),
     })),
     pageInfo: {
       hasNextPage: hasNext,
       hasPreviousPage: hasPrev,
-      startCursor: rows.length > 0 ? rows[0].uri : null,
-      endCursor: rows.length > 0 ? rows[rows.length - 1].uri : null,
+      startCursor: makeCursor(rows[0]),
+      endCursor: makeCursor(rows[rows.length - 1]),
     },
     totalCount,
   };

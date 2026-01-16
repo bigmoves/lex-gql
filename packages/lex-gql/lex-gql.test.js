@@ -427,11 +427,15 @@ describe('resolveRefKey', () => {
   });
 
   it('resolves external ref without fragment', () => {
-    expect(resolveRefKey('com.atproto.repo.strongRef', 'app.bsky.feed.post')).toBe('com.atproto.repo.strongRef');
+    expect(resolveRefKey('com.atproto.repo.strongRef', 'app.bsky.feed.post')).toBe(
+      'com.atproto.repo.strongRef',
+    );
   });
 
   it('resolves external ref with fragment', () => {
-    expect(resolveRefKey('app.bsky.embed.defs#aspectRatio', 'app.bsky.embed.images')).toBe('app.bsky.embed.defs#aspectRatio');
+    expect(resolveRefKey('app.bsky.embed.defs#aspectRatio', 'app.bsky.embed.images')).toBe(
+      'app.bsky.embed.defs#aspectRatio',
+    );
   });
 });
 
@@ -2549,7 +2553,9 @@ describe('Blob URL resolver', () => {
     };
 
     const result = urlField.resolve(blob, {});
-    expect(result).toBe('https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:user123/bafyreiabc123@jpeg');
+    expect(result).toBe(
+      'https://cdn.bsky.app/img/feed_fullsize/plain/did:plc:user123/bafyreiabc123@jpeg',
+    );
   });
 
   it('generates CDN URL with avatar preset', () => {
@@ -2609,7 +2615,9 @@ describe('Blob URL resolver', () => {
     };
 
     const result = urlField.resolve(blob, { preset: 'banner' });
-    expect(result).toBe('https://cdn.bsky.app/img/banner/plain/did:plc:banner123/bafyreiabc456@jpeg');
+    expect(result).toBe(
+      'https://cdn.bsky.app/img/banner/plain/did:plc:banner123/bafyreiabc456@jpeg',
+    );
   });
 
   it('generates CDN URL with feed_thumbnail preset', () => {
@@ -2639,7 +2647,9 @@ describe('Blob URL resolver', () => {
     };
 
     const result = urlField.resolve(blob, { preset: 'feed_thumbnail' });
-    expect(result).toBe('https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:thumb456/bafyreiathumbnail@jpeg');
+    expect(result).toBe(
+      'https://cdn.bsky.app/img/feed_thumbnail/plain/did:plc:thumb456/bafyreiathumbnail@jpeg',
+    );
   });
 
   it('throws error when did is missing from blob', () => {
@@ -2668,7 +2678,9 @@ describe('Blob URL resolver', () => {
       // did is missing
     };
 
-    expect(() => urlField.resolve(blob, {})).toThrow('Blob missing required did or ref for URL generation');
+    expect(() => urlField.resolve(blob, {})).toThrow(
+      'Blob missing required did or ref for URL generation',
+    );
   });
 
   it('throws error when ref is missing from blob', () => {
@@ -2697,7 +2709,9 @@ describe('Blob URL resolver', () => {
       did: 'did:plc:user123',
     };
 
-    expect(() => urlField.resolve(blob, {})).toThrow('Blob missing required did or ref for URL generation');
+    expect(() => urlField.resolve(blob, {})).toThrow(
+      'Blob missing required did or ref for URL generation',
+    );
   });
 
   it('throws error for invalid preset', () => {
@@ -2727,7 +2741,7 @@ describe('Blob URL resolver', () => {
     };
 
     expect(() => urlField.resolve(blob, { preset: 'invalid_preset' })).toThrow(
-      'Invalid blob preset: invalid_preset. Valid presets: avatar, banner, feed_thumbnail, feed_fullsize'
+      'Invalid blob preset: invalid_preset. Valid presets: avatar, banner, feed_thumbnail, feed_fullsize',
     );
   });
 });
@@ -2825,7 +2839,12 @@ describe('Hydration Helpers', () => {
         cid: 'bafyreicid',
         record: JSON.stringify({
           displayName: 'Test',
-          avatar: { $type: 'blob', ref: { $link: 'bafyrei123' }, mimeType: 'image/jpeg', size: 100 },
+          avatar: {
+            $type: 'blob',
+            ref: { $link: 'bafyrei123' },
+            mimeType: 'image/jpeg',
+            size: 100,
+          },
         }),
         indexed_at: '2024-01-01T00:00:00Z',
       };

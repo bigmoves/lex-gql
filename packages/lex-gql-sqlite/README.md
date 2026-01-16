@@ -13,7 +13,7 @@ npm install lex-gql-sqlite lex-gql better-sqlite3
 ```javascript
 import Database from 'better-sqlite3';
 import { createAdapter, parseLexicon } from 'lex-gql';
-import { createSqliteAdapter, setupSchema } from 'lex-gql-sqlite';
+import { createSqliteAdapter, createWriter, setupSchema } from 'lex-gql-sqlite';
 
 const db = new Database('./data.db');
 setupSchema(db);
@@ -51,6 +51,31 @@ Builds SQL WHERE clause from lex-gql where conditions. Supports:
 ### `buildOrderBy(sort)`
 
 Builds SQL ORDER BY clause from lex-gql sort conditions.
+
+### `createWriter(db)`
+
+Creates a writer with prepared statements for efficient writes.
+
+```javascript
+const writer = createWriter(db);
+
+// Insert or replace a record
+writer.insertRecord({
+  uri: 'at://did:plc:alice/app.bsky.feed.post/1',
+  did: 'did:plc:alice',
+  collection: 'app.bsky.feed.post',
+  rkey: '1',
+  cid: 'bafycid123',          // optional
+  record: { text: 'Hello!' }, // object or JSON string
+  indexedAt: '2024-01-15T12:00:00Z', // optional, defaults to now
+});
+
+// Delete a record
+writer.deleteRecord('at://did:plc:alice/app.bsky.feed.post/1');
+
+// Insert or update an actor
+writer.upsertActor('did:plc:alice', 'alice.bsky.social');
+```
 
 ## Schema
 

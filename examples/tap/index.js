@@ -27,7 +27,7 @@ import { createServer } from 'node:http';
 import Database from 'better-sqlite3';
 import { createHandler } from 'graphql-http/lib/use/node';
 import { createAdapter, parseLexicon } from 'lex-gql';
-import { createSqliteAdapter, setupSchema } from 'lex-gql-sqlite';
+import { createSqliteAdapter, createWriter, setupSchema } from 'lex-gql-sqlite';
 import WebSocket from 'ws';
 
 // 1. Define lexicons
@@ -86,19 +86,8 @@ const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
 setupSchema(db);
 
-// Prepared statements
-const insertRecord = db.prepare(`
-  INSERT OR REPLACE INTO records (uri, did, collection, rkey, cid, record, indexed_at)
-  VALUES (?, ?, ?, ?, ?, ?, ?)
-`);
-
-const deleteRecord = db.prepare(`
-  DELETE FROM records WHERE uri = ?
-`);
-
-const upsertActor = db.prepare(`
-  INSERT OR REPLACE INTO actors (did, handle) VALUES (?, ?)
-`);
+// Create writer for inserting/deleting records
+const writer = createWriter(db);
 
 // 3. Connect to tap's websocket and store records
 const TAP_WS_URL = process.env.TAP_WS_URL || 'ws://localhost:2480/channel';
@@ -123,7 +112,7 @@ function connectToTap() {
       if (event.type === 'identity' && event.identity) {
         const { did, handle } = event.identity;
         if (did && handle) {
-          upsertActor.run(did, handle);
+          writer.upsertActor(did, handle);
         }
       }
 
@@ -138,12 +127,11 @@ function connectToTap() {
         const uri = `at://${did}/${collection}/${rkey}`;
 
         if (action === 'delete') {
-          deleteRecord.run(uri);
+          writer.deleteRecord(uri);
           console.log(`Deleted: ${uri}`);
         } else {
           // create or update
-          const now = new Date().toISOString();
-          insertRecord.run(uri, did, collection, rkey, cid, JSON.stringify(record), now);
+          writer.insertRecord({ uri, did, collection, rkey, cid, record });
           recordCount++;
           if (recordCount % 100 === 0) {
             const dbCount = db.prepare('SELECT COUNT(*) as c FROM records').get().c;

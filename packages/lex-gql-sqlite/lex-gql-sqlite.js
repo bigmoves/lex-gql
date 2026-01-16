@@ -37,6 +37,58 @@ export function setupSchema(db) {
   db.exec(SCHEMA_SQL);
 }
 
+/**
+ * @typedef {Object} RecordInput
+ * @property {string} uri - Record URI (at://did/collection/rkey)
+ * @property {string} did - DID of record author
+ * @property {string} collection - Collection NSID
+ * @property {string} rkey - Record key
+ * @property {string} [cid] - Record CID
+ * @property {object} record - Record data (will be JSON stringified)
+ * @property {string} [indexedAt] - Timestamp (defaults to now)
+ */
+
+/**
+ * @typedef {Object} Writer
+ * @property {(record: RecordInput) => void} insertRecord - Insert or replace a record
+ * @property {(uri: string) => void} deleteRecord - Delete a record by URI
+ * @property {(did: string, handle: string) => void} upsertActor - Insert or replace an actor
+ */
+
+/**
+ * Create a writer with prepared statements for efficient writes
+ * @param {import('better-sqlite3').Database} db
+ * @returns {Writer}
+ */
+export function createWriter(db) {
+  const insertRecordStmt = db.prepare(`
+    INSERT OR REPLACE INTO records (uri, did, collection, rkey, cid, record, indexed_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const deleteRecordStmt = db.prepare(`
+    DELETE FROM records WHERE uri = ?
+  `);
+
+  const upsertActorStmt = db.prepare(`
+    INSERT OR REPLACE INTO actors (did, handle) VALUES (?, ?)
+  `);
+
+  return {
+    insertRecord: ({ uri, did, collection, rkey, cid, record, indexedAt }) => {
+      const recordJson = typeof record === 'string' ? record : JSON.stringify(record);
+      const timestamp = indexedAt || new Date().toISOString();
+      insertRecordStmt.run(uri, did, collection, rkey, cid || null, recordJson, timestamp);
+    },
+    deleteRecord: (uri) => {
+      deleteRecordStmt.run(uri);
+    },
+    upsertActor: (did, handle) => {
+      upsertActorStmt.run(did, handle);
+    },
+  };
+}
+
 /** @type {Record<string, string>} */
 const SYSTEM_FIELDS = {
   did: 'r.did',
@@ -48,7 +100,7 @@ const SYSTEM_FIELDS = {
 
 /**
  * Build SQL WHERE clause from lex-gql where conditions
- * @param {Array<{field: string, op: string, value: any}>} where
+ * @param {import('lex-gql').WhereClause[]} where
  * @returns {{ sql: string, params: any[] }}
  */
 export function buildWhere(where) {
@@ -60,26 +112,33 @@ export function buildWhere(where) {
   const params = [];
 
   for (const clause of where) {
-    const { field, op, value } = clause;
+    const { field, op, value, conditions } = clause;
 
-    // Handle AND/OR
-    if (field === 'AND' || op === 'and') {
+    // Handle AND/OR logical operators
+    if (op === 'and' && conditions) {
       /** @type {Array<{sql: string, params: any[]}>} */
-      const subClauses = value.map((/** @type {any} */ sub) => buildWhere(sub));
+      const subClauses = conditions.map((/** @type {any} */ sub) => buildWhere(sub));
       const subSql = subClauses.map((s) => s.sql).join(' AND ');
       parts.push(`(${subSql})`);
-      subClauses.forEach((s) => params.push(...s.params));
+      for (const s of subClauses) {
+        params.push(...s.params);
+      }
       continue;
     }
 
-    if (field === 'OR' || op === 'or') {
+    if (op === 'or' && conditions) {
       /** @type {Array<{sql: string, params: any[]}>} */
-      const subClauses = value.map((/** @type {any} */ sub) => buildWhere(sub));
+      const subClauses = conditions.map((/** @type {any} */ sub) => buildWhere(sub));
       const subSql = subClauses.map((s) => s.sql).join(' OR ');
       parts.push(`(${subSql})`);
-      subClauses.forEach((s) => params.push(...s.params));
+      for (const s of subClauses) {
+        params.push(...s.params);
+      }
       continue;
     }
+
+    // Field conditions require a field name
+    if (!field) continue;
 
     const fieldPath = SYSTEM_FIELDS[field] || `json_extract(r.record, '$.${field}')`;
 
@@ -134,10 +193,12 @@ export function buildOrderBy(sort) {
     return 'r.id DESC';
   }
 
-  return sort.map(({ field, dir = 'asc' }) => {
-    const fieldPath = SYSTEM_FIELDS[field] || `json_extract(r.record, '$.${field}')`;
-    return `${fieldPath} ${dir.toUpperCase()}`;
-  }).join(', ');
+  return sort
+    .map(({ field, dir = 'asc' }) => {
+      const fieldPath = SYSTEM_FIELDS[field] || `json_extract(r.record, '$.${field}')`;
+      return `${fieldPath} ${dir.toUpperCase()}`;
+    })
+    .join(', ');
 }
 
 /**
@@ -195,9 +256,8 @@ function findMany(db, op) {
     } catch {}
   }
 
-  const fullWhere = cursorConditions.length > 0
-    ? `${whereSql} AND ${cursorConditions.join(' AND ')}`
-    : whereSql;
+  const fullWhere =
+    cursorConditions.length > 0 ? `${whereSql} AND ${cursorConditions.join(' AND ')}` : whereSql;
 
   const allParams = [...whereParams, ...cursorParams];
 
@@ -234,10 +294,16 @@ function findMany(db, op) {
     _id: row.id,
   }));
 
+  // Get total count (without pagination)
+  const countSql = `SELECT COUNT(*) as count FROM records r WHERE ${whereSql}`;
+  /** @type {{count: number}} */
+  const countResult = /** @type {any} */ (db.prepare(countSql).get(...whereParams));
+
   return {
     rows: transformed,
     hasNext: first ? hasMore : !!before,
     hasPrev: !!after || (last ? hasMore : false),
+    totalCount: countResult.count,
   };
 }
 
@@ -260,14 +326,18 @@ function aggregate(db, op) {
     return { count: result.count, groups: [] };
   }
 
-  const groupFields = groupBy.map((/** @type {string} */ f) => {
-    const fieldPath = SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
-    return `${fieldPath} as ${f}`;
-  }).join(', ');
+  const groupFields = groupBy
+    .map((/** @type {string} */ f) => {
+      const fieldPath = SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
+      return `${fieldPath} as ${f}`;
+    })
+    .join(', ');
 
-  const groupByClause = groupBy.map((/** @type {string} */ f) => {
-    return SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
-  }).join(', ');
+  const groupByClause = groupBy
+    .map((/** @type {string} */ f) => {
+      return SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
+    })
+    .join(', ');
 
   const sql = `
     SELECT ${groupFields}, COUNT(*) as count

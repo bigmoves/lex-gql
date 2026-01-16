@@ -32,6 +32,13 @@ export function parseRefUri(refUri: string): {
     fragment: string;
 };
 /**
+ * Resolve a ref string to a full registry key
+ * @param {string} ref - The ref string (e.g., "#replyRef" or "app.bsky.embed.images")
+ * @param {string} parentLexiconId - The lexicon ID containing this ref
+ * @returns {string} Full registry key
+ */
+export function resolveRefKey(ref: string, parentLexiconId: string): string;
+/**
  * Convert a ref URI to a GraphQL type name
  * @param {string} refUri - e.g. "fm.teal.alpha.feed.defs#artist"
  * @returns {string} - e.g. "FmTealAlphaFeedDefsArtist"
@@ -157,10 +164,31 @@ export type DatabaseRow = {
      */
     handle?: string | undefined;
 };
+/**
+ * A where clause for filtering records.
+ * Can be a field condition or a logical operator (AND/OR).
+ *
+ * Field condition: { field: 'text', op: 'eq', value: 'hello' }
+ * Logical AND:     { op: 'and', conditions: WhereClause[][] }
+ * Logical OR:      { op: 'or', conditions: WhereClause[][] }
+ */
 export type WhereClause = {
-    field: string;
+    /**
+     * - Field name (for field conditions)
+     */
+    field?: string | undefined;
+    /**
+     * - Operator: 'eq' | 'in' | 'contains' | 'gt' | 'gte' | 'lt' | 'lte' | 'and' | 'or'
+     */
     op: string;
-    value: any;
+    /**
+     * - Value to compare (for field conditions)
+     */
+    value?: any;
+    /**
+     * - Nested conditions (for and/or)
+     */
+    conditions?: WhereClause[][] | undefined;
 };
 export type SortClause = {
     field: string;

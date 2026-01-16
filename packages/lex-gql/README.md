@@ -147,7 +147,13 @@ type Operation =
   | { type: 'update'; collection: string; rkey: string; record: object }
   | { type: 'delete'; collection: string; rkey: string }
 
-type WhereClause = { field: string; op: 'eq' | 'in' | 'contains' | 'gt' | 'gte' | 'lt' | 'lte'; value: any }
+// Field condition
+type FieldCondition = { field: string; op: 'eq' | 'in' | 'contains' | 'gt' | 'gte' | 'lt' | 'lte'; value: any }
+
+// Logical operators (for AND/OR queries)
+type LogicalCondition = { op: 'and' | 'or'; conditions: WhereClause[][] }
+
+type WhereClause = FieldCondition | LogicalCondition
 type SortClause = { field: string; dir: 'asc' | 'desc' }
 type Pagination = { first?: number; after?: string; last?: number; before?: string }
 ```
