@@ -37,6 +37,7 @@ export function setupSchema(db) {
   db.exec(SCHEMA_SQL);
 }
 
+/** @type {Record<string, string>} */
 const SYSTEM_FIELDS = {
   did: 'r.did',
   uri: 'r.uri',
@@ -63,7 +64,8 @@ export function buildWhere(where) {
 
     // Handle AND/OR
     if (field === 'AND' || op === 'and') {
-      const subClauses = value.map((sub) => buildWhere(sub));
+      /** @type {Array<{sql: string, params: any[]}>} */
+      const subClauses = value.map((/** @type {any} */ sub) => buildWhere(sub));
       const subSql = subClauses.map((s) => s.sql).join(' AND ');
       parts.push(`(${subSql})`);
       subClauses.forEach((s) => params.push(...s.params));
@@ -71,7 +73,8 @@ export function buildWhere(where) {
     }
 
     if (field === 'OR' || op === 'or') {
-      const subClauses = value.map((sub) => buildWhere(sub));
+      /** @type {Array<{sql: string, params: any[]}>} */
+      const subClauses = value.map((/** @type {any} */ sub) => buildWhere(sub));
       const subSql = subClauses.map((s) => s.sql).join(' OR ');
       parts.push(`(${subSql})`);
       subClauses.forEach((s) => params.push(...s.params));
@@ -154,6 +157,10 @@ export function createSqliteAdapter(db) {
   };
 }
 
+/**
+ * @param {import('better-sqlite3').Database} db
+ * @param {any} op
+ */
 function findMany(db, op) {
   const { collection, where = [], sort = [], pagination = {} } = op;
   const { first = 20, after, last, before } = pagination;
@@ -214,7 +221,7 @@ function findMany(db, op) {
   const rows = hasMore ? rawRows.slice(0, -1) : rawRows;
 
   // Transform rows
-  const transformed = rows.map((row) => ({
+  const transformed = rows.map((/** @type {any} */ row) => ({
     ...hydrateRecord({
       uri: row.uri,
       did: row.did,
@@ -234,6 +241,10 @@ function findMany(db, op) {
   };
 }
 
+/**
+ * @param {import('better-sqlite3').Database} db
+ * @param {any} op
+ */
 function aggregate(db, op) {
   const { collection, where = [], groupBy = [] } = op;
 
@@ -244,16 +255,17 @@ function aggregate(db, op) {
 
   if (groupBy.length === 0) {
     const sql = `SELECT COUNT(*) as count FROM records r WHERE ${whereSql}`;
-    const result = db.prepare(sql).get(...params);
+    /** @type {{count: number}} */
+    const result = /** @type {any} */ (db.prepare(sql).get(...params));
     return { count: result.count, groups: [] };
   }
 
-  const groupFields = groupBy.map((f) => {
+  const groupFields = groupBy.map((/** @type {string} */ f) => {
     const fieldPath = SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
     return `${fieldPath} as ${f}`;
   }).join(', ');
 
-  const groupByClause = groupBy.map((f) => {
+  const groupByClause = groupBy.map((/** @type {string} */ f) => {
     return SYSTEM_FIELDS[f] || `json_extract(r.record, '$.${f}')`;
   }).join(', ');
 
@@ -266,7 +278,8 @@ function aggregate(db, op) {
     LIMIT 100
   `;
 
-  const groups = db.prepare(sql).all(...params);
+  /** @type {Array<{count: number, [key: string]: any}>} */
+  const groups = /** @type {any} */ (db.prepare(sql).all(...params));
   const count = groups.reduce((sum, g) => sum + g.count, 0);
 
   return { count, groups };

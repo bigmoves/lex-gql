@@ -23,8 +23,11 @@
     "lex-gql": ">=0.1.0"
   },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.12",
+    "@types/node": "^22.10.0",
     "better-sqlite3": "^11.8.1",
     "lex-gql": "workspace:*",
+    "typescript": "^5.7.2",
     "vitest": "^1.6.1"
   }
 }
