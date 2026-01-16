@@ -26,7 +26,8 @@
 import { createServer } from 'node:http';
 import Database from 'better-sqlite3';
 import { createHandler } from 'graphql-http/lib/use/node';
-import { createAdapter, parseLexicon, hydrateRecord } from 'lex-gql';
+import { createAdapter, parseLexicon } from 'lex-gql';
+import { createSqliteAdapter, setupSchema } from 'lex-gql-sqlite';
 import WebSocket from 'ws';
 
 // 1. Define lexicons
@@ -83,27 +84,7 @@ const SYNC_COLLECTIONS = ['xyz.statusphere.status', 'app.bsky.actor.profile'];
 const dbPath = './data/records.db';
 const db = new Database(dbPath);
 db.pragma('journal_mode = WAL');
-
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS records (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    uri TEXT UNIQUE NOT NULL,
-    did TEXT NOT NULL,
-    collection TEXT NOT NULL,
-    rkey TEXT NOT NULL,
-    cid TEXT,
-    record TEXT NOT NULL,
-    indexed_at TEXT NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS idx_records_collection ON records(collection);
-  CREATE INDEX IF NOT EXISTS idx_records_did ON records(did);
-
-  CREATE TABLE IF NOT EXISTS actors (
-    did TEXT PRIMARY KEY,
-    handle TEXT NOT NULL
-  );
-`);
+setupSchema(db);
 
 // Prepared statements
 const insertRecord = db.prepare(`
@@ -196,167 +177,8 @@ function scheduleReconnect() {
 // Start websocket connection
 connectToTap();
 
-// 4. Query adapter: translates lex-gql operations to SQLite queries
-async function query(op) {
-  if (op.type === 'findMany') {
-    return findMany(op);
-  }
-  if (op.type === 'aggregate') {
-    return aggregate(op);
-  }
-  throw new Error(`Unsupported operation type: ${op.type}`);
-}
-
-function findMany(op) {
-  const { collection, where = [], pagination = {} } = op;
-  const { first = 20, after } = pagination;
-
-  // Build WHERE clause
-  const conditions = ['r.collection = ?'];
-  const params = [collection];
-
-  // System fields that are columns, not in JSON
-  const systemFields = {
-    did: 'r.did',
-    uri: 'r.uri',
-    collection: 'r.collection',
-    cid: 'r.cid',
-    indexedAt: 'r.indexed_at',
-  };
-
-  for (const clause of where) {
-    const { field, op: operator, value } = clause;
-    // Map field to column or JSON path
-    const fieldPath = systemFields[field] || `json_extract(r.record, '$.${field}')`;
-
-    switch (operator) {
-      case 'eq':
-        conditions.push(`${fieldPath} = ?`);
-        params.push(value);
-        break;
-      case 'contains':
-        conditions.push(`${fieldPath} LIKE ?`);
-        params.push(`%${value}%`);
-        break;
-      case 'gt':
-        conditions.push(`${fieldPath} > ?`);
-        params.push(value);
-        break;
-      case 'gte':
-        conditions.push(`${fieldPath} >= ?`);
-        params.push(value);
-        break;
-      case 'lt':
-        conditions.push(`${fieldPath} < ?`);
-        params.push(value);
-        break;
-      case 'lte':
-        conditions.push(`${fieldPath} <= ?`);
-        params.push(value);
-        break;
-      case 'in':
-        if (Array.isArray(value) && value.length > 0) {
-          const placeholders = value.map(() => '?').join(', ');
-          conditions.push(`${fieldPath} IN (${placeholders})`);
-          params.push(...value);
-        }
-        break;
-    }
-  }
-
-  // Handle cursor pagination
-  if (after) {
-    try {
-      const cursor = JSON.parse(Buffer.from(after, 'base64').toString());
-      if (cursor.id) {
-        conditions.push('r.id < ?');
-        params.push(cursor.id);
-      }
-    } catch {
-      // Invalid cursor, ignore
-    }
-  }
-
-  // Build and execute query
-  const whereClause = conditions.join(' AND ');
-  const limit = first + 1; // Fetch one extra to detect hasNext
-  const sql = `
-    SELECT r.id, r.did, r.collection, r.rkey, r.cid, r.record, r.indexed_at, a.handle
-    FROM records r
-    LEFT JOIN actors a ON r.did = a.did
-    WHERE ${whereClause}
-    ORDER BY r.id DESC
-    LIMIT ?
-  `;
-  params.push(limit);
-
-  const rawRows = db.prepare(sql).all(...params);
-  const hasNext = rawRows.length > first;
-  const rows = hasNext ? rawRows.slice(0, first) : rawRows;
-
-  // Transform rows to lex-gql format
-  const transformed = rows.map((row) => ({
-    ...hydrateRecord({
-      uri: `at://${row.did}/${row.collection}/${row.rkey}`,
-      did: row.did,
-      collection: row.collection,
-      cid: row.cid,
-      record: row.record,
-      indexed_at: row.indexed_at,
-      handle: row.handle,
-    }),
-    _id: row.id, // For cursor
-  }));
-
-  return {
-    rows: transformed,
-    hasNext,
-    hasPrev: !!after,
-  };
-}
-
-function aggregate(op) {
-  const { collection, where = [], groupBy = [] } = op;
-
-  // Build WHERE clause
-  const conditions = ['collection = ?'];
-  const params = [collection];
-
-  for (const clause of where) {
-    const { field, op: operator, value } = clause;
-    const jsonPath = `json_extract(record, '$.${field}')`;
-    if (operator === 'eq') {
-      conditions.push(`${jsonPath} = ?`);
-      params.push(value);
-    }
-  }
-
-  const whereClause = conditions.join(' AND ');
-
-  if (groupBy.length === 0) {
-    // Simple count
-    const sql = `SELECT COUNT(*) as count FROM records WHERE ${whereClause}`;
-    const result = db.prepare(sql).get(...params);
-    return { count: result.count, groups: [] };
-  }
-
-  // Grouped count
-  const groupFields = groupBy.map((f) => `json_extract(record, '$.${f}') as ${f}`).join(', ');
-  const sql = `
-    SELECT ${groupFields}, COUNT(*) as count
-    FROM records
-    WHERE ${whereClause}
-    GROUP BY ${groupBy.map((f) => `json_extract(record, '$.${f}')`).join(', ')}
-    ORDER BY count DESC
-    LIMIT 100
-  `;
-  const groups = db.prepare(sql).all(...params);
-
-  return {
-    count: groups.reduce((sum, g) => sum + g.count, 0),
-    groups,
-  };
-}
+// 4. Query adapter: use lex-gql-sqlite
+const query = createSqliteAdapter(db);
 
 // 5. Create lex-gql adapter
 const adapter = createAdapter(lexicons, { query });

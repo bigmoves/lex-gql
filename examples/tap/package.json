@@ -12,6 +12,7 @@
     "graphql": "^16.8.0",
     "graphql-http": "^1.22.0",
     "lex-gql": "workspace:*",
+    "lex-gql-sqlite": "workspace:*",
     "ws": "^8.18.0"
   }
 }
