@@ -8,6 +8,8 @@ import {
   buildSchema,
   createAdapter,
   ErrorCodes,
+  hydrateBlobs,
+  hydrateRecord,
   LexGqlError,
   mapLexiconType,
   nsidToCollectionName,
@@ -2597,5 +2599,171 @@ describe('Blob URL resolver', () => {
     expect(() => urlField.resolve(blob, { preset: 'invalid_preset' })).toThrow(
       'Invalid blob preset: invalid_preset. Valid presets: avatar, banner, feed_thumbnail, feed_fullsize'
     );
+  });
+});
+
+describe('Hydration Helpers', () => {
+  describe('hydrateBlobs', () => {
+    it('injects did into blob objects', () => {
+      const record = {
+        text: 'hello',
+        avatar: {
+          $type: 'blob',
+          ref: { $link: 'bafyreiabc123' },
+          mimeType: 'image/jpeg',
+          size: 12345,
+        },
+      };
+
+      const result = hydrateBlobs(record, 'did:plc:user123');
+
+      expect(result.text).toBe('hello');
+      expect(result.avatar.did).toBe('did:plc:user123');
+      expect(result.avatar.ref).toBe('bafyreiabc123');
+    });
+
+    it('handles nested blob objects', () => {
+      const record = {
+        embed: {
+          images: [
+            { image: { $type: 'blob', ref: 'bafyrei1', mimeType: 'image/jpeg', size: 100 } },
+            { image: { $type: 'blob', ref: 'bafyrei2', mimeType: 'image/png', size: 200 } },
+          ],
+        },
+      };
+
+      const result = hydrateBlobs(record, 'did:plc:user123');
+
+      expect(result.embed.images[0].image.did).toBe('did:plc:user123');
+      expect(result.embed.images[1].image.did).toBe('did:plc:user123');
+    });
+
+    it('returns primitives unchanged', () => {
+      expect(hydrateBlobs(null, 'did:plc:x')).toBe(null);
+      expect(hydrateBlobs(undefined, 'did:plc:x')).toBe(undefined);
+      expect(hydrateBlobs('string', 'did:plc:x')).toBe('string');
+      expect(hydrateBlobs(123, 'did:plc:x')).toBe(123);
+    });
+
+    it('handles empty arrays', () => {
+      const record = { images: [] };
+      const result = hydrateBlobs(record, 'did:plc:x');
+      expect(result.images).toEqual([]);
+    });
+
+    it('handles blob without $type but with ref/mimeType/size', () => {
+      const record = {
+        avatar: { ref: 'bafyreiabc', mimeType: 'image/jpeg', size: 100 },
+      };
+
+      const result = hydrateBlobs(record, 'did:plc:user');
+      expect(result.avatar.did).toBe('did:plc:user');
+    });
+  });
+
+  describe('hydrateRecord', () => {
+    it('transforms a database row to lex-gql record format', () => {
+      const row = {
+        uri: 'at://did:plc:user123/app.bsky.feed.post/abc',
+        did: 'did:plc:user123',
+        collection: 'app.bsky.feed.post',
+        rkey: 'abc',
+        cid: 'bafyreicid',
+        record: JSON.stringify({ text: 'hello', createdAt: '2024-01-01T00:00:00Z' }),
+        indexed_at: '2024-01-01T00:00:00Z',
+        handle: 'user.bsky.social',
+      };
+
+      const result = hydrateRecord(row);
+
+      expect(result.uri).toBe('at://did:plc:user123/app.bsky.feed.post/abc');
+      expect(result.did).toBe('did:plc:user123');
+      expect(result.collection).toBe('app.bsky.feed.post');
+      expect(result.cid).toBe('bafyreicid');
+      expect(result.indexedAt).toBe('2024-01-01T00:00:00Z');
+      expect(result.actorHandle).toBe('user.bsky.social');
+      expect(result.text).toBe('hello');
+      expect(result.createdAt).toBe('2024-01-01T00:00:00Z');
+    });
+
+    it('hydrates blob fields with did', () => {
+      const row = {
+        uri: 'at://did:plc:user/app.bsky.actor.profile/self',
+        did: 'did:plc:user',
+        collection: 'app.bsky.actor.profile',
+        rkey: 'self',
+        cid: 'bafyreicid',
+        record: JSON.stringify({
+          displayName: 'Test',
+          avatar: { $type: 'blob', ref: { $link: 'bafyrei123' }, mimeType: 'image/jpeg', size: 100 },
+        }),
+        indexed_at: '2024-01-01T00:00:00Z',
+      };
+
+      const result = hydrateRecord(row);
+
+      expect(result.avatar.did).toBe('did:plc:user');
+      expect(result.avatar.ref).toBe('bafyrei123');
+    });
+
+    it('handles missing optional fields', () => {
+      const row = {
+        uri: 'at://did:plc:user/col/rkey',
+        did: 'did:plc:user',
+        collection: 'col',
+        rkey: 'rkey',
+        record: '{}',
+        indexed_at: '2024-01-01T00:00:00Z',
+        // cid and handle are missing
+      };
+
+      const result = hydrateRecord(row);
+
+      expect(result.cid).toBeUndefined();
+      expect(result.actorHandle).toBeNull();
+    });
+
+    it('accepts record as object instead of JSON string', () => {
+      const row = {
+        uri: 'at://did:plc:user/col/rkey',
+        did: 'did:plc:user',
+        collection: 'col',
+        rkey: 'rkey',
+        record: { text: 'already parsed' },
+        indexed_at: '2024-01-01T00:00:00Z',
+      };
+
+      const result = hydrateRecord(row);
+      expect(result.text).toBe('already parsed');
+    });
+
+    it('metadata fields take precedence over record fields', () => {
+      const row = {
+        uri: 'at://did:plc:user/col/rkey',
+        did: 'did:plc:user',
+        collection: 'col',
+        rkey: 'rkey',
+        record: { uri: 'should-be-overwritten', did: 'should-be-overwritten' },
+        indexed_at: '2024-01-01T00:00:00Z',
+      };
+
+      const result = hydrateRecord(row);
+
+      expect(result.uri).toBe('at://did:plc:user/col/rkey');
+      expect(result.did).toBe('did:plc:user');
+    });
+
+    it('throws on malformed JSON', () => {
+      const row = {
+        uri: 'at://did:plc:user/col/rkey',
+        did: 'did:plc:user',
+        collection: 'col',
+        rkey: 'rkey',
+        record: 'not valid json {',
+        indexed_at: '2024-01-01T00:00:00Z',
+      };
+
+      expect(() => hydrateRecord(row)).toThrow(SyntaxError);
+    });
   });
 });

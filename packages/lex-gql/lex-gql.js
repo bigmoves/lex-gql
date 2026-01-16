@@ -254,6 +254,95 @@ export function refToTypeName(refUri) {
 }
 
 // ============================================================================
+// HYDRATION HELPERS
+// ============================================================================
+
+/**
+ * Inject DID into blob objects for URL resolution.
+ * Blobs need the parent record's DID to generate CDN URLs.
+ *
+ * @param {any} obj - Record object or value to hydrate
+ * @param {string} did - DID to inject into blob objects
+ * @returns {any} - Hydrated object with did added to blobs
+ *
+ * @example
+ * const record = JSON.parse(row.record);
+ * const hydrated = hydrateBlobs(record, row.did);
+ */
+export function hydrateBlobs(obj, did) {
+  if (!obj || typeof obj !== 'object') return obj;
+
+  // Check if this is a blob (has $type: 'blob' or has ref + mimeType + size)
+  if (obj.$type === 'blob' || (obj.ref && obj.mimeType && obj.size)) {
+    return {
+      ...obj,
+      ref: obj.ref?.$link || obj.ref, // Normalize { $link: "..." } format
+      did,
+    };
+  }
+
+  // Recurse into arrays
+  if (Array.isArray(obj)) {
+    return obj.map((item) => hydrateBlobs(item, did));
+  }
+
+  // Recurse into object properties
+  /** @type {Record<string, any>} */
+  const result = {};
+  for (const [key, value] of Object.entries(obj)) {
+    result[key] = hydrateBlobs(value, did);
+  }
+  return result;
+}
+
+/**
+ * @typedef {Object} DatabaseRow
+ * @property {string} uri - Record AT URI
+ * @property {string} did - Author DID
+ * @property {string} collection - Lexicon NSID
+ * @property {string} [cid] - Content ID
+ * @property {string|Object} record - JSON string or parsed object
+ * @property {string} indexed_at - ISO timestamp
+ * @property {string} [handle] - Actor handle from actors table join
+ */
+
+/**
+ * Transform a database row into lex-gql record format.
+ * Expects the standard records table schema.
+ *
+ * Standard schema:
+ * - uri: TEXT (record AT URI)
+ * - did: TEXT (author DID)
+ * - collection: TEXT (lexicon NSID)
+ * - cid: TEXT (optional, content ID)
+ * - record: TEXT (JSON) or Object
+ * - indexed_at: TEXT (ISO timestamp)
+ * - handle: TEXT (optional, actor handle from actors table join)
+ *
+ * @param {DatabaseRow} row - Database row
+ * @returns {Record<string, any>} - Hydrated record for lex-gql
+ *
+ * @example
+ * const rows = db.query('SELECT r.*, a.handle FROM records r LEFT JOIN actors a ON r.did = a.did');
+ * const records = rows.map(hydrateRecord);
+ */
+export function hydrateRecord(row) {
+  const record = typeof row.record === 'string' ? JSON.parse(row.record) : row.record;
+  const hydrated = hydrateBlobs(record, row.did);
+
+  // Spread hydrated first so metadata fields take precedence
+  return {
+    ...hydrated,
+    uri: row.uri,
+    cid: row.cid,
+    did: row.did,
+    collection: row.collection,
+    indexedAt: row.indexed_at,
+    actorHandle: row.handle || null,
+  };
+}
+
+// ============================================================================
 // LEXICON PARSING
 // ============================================================================
 

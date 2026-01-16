@@ -133,6 +133,78 @@ import {
 } from 'lex-gql'
 ```
 
+## Query Port Interface
+
+lex-gql follows the hexagonal architecture pattern. Your data layer implements the **query port** interface:
+
+### Operation Types
+
+```typescript
+type Operation =
+  | { type: 'findMany'; collection: string; where: WhereClause[]; pagination: Pagination; sort?: SortClause[] }
+  | { type: 'aggregate'; collection: string; where: WhereClause[]; groupBy?: string[] }
+  | { type: 'create'; collection: string; rkey?: string; record: object }
+  | { type: 'update'; collection: string; rkey: string; record: object }
+  | { type: 'delete'; collection: string; rkey: string }
+
+type WhereClause = { field: string; op: 'eq' | 'in' | 'contains' | 'gt' | 'gte' | 'lt' | 'lte'; value: any }
+type SortClause = { field: string; dir: 'asc' | 'desc' }
+type Pagination = { first?: number; after?: string; last?: number; before?: string }
+```
+
+### Response Format
+
+```typescript
+// For findMany
+{ rows: Record[]; hasNext: boolean; hasPrev: boolean }
+
+// For aggregate
+{ count: number; groups: { [field]: value; count: number }[] }
+
+// For mutations
+Record | { uri: string }
+```
+
+### Standard Records Schema
+
+For SQL-based adapters, we recommend this schema:
+
+```sql
+CREATE TABLE records (
+  uri TEXT PRIMARY KEY,
+  did TEXT NOT NULL,
+  collection TEXT NOT NULL,
+  rkey TEXT NOT NULL,
+  cid TEXT,
+  record TEXT NOT NULL,  -- JSON blob
+  indexed_at TEXT NOT NULL
+);
+
+CREATE INDEX idx_records_collection ON records(collection);
+CREATE INDEX idx_records_did ON records(did);
+
+CREATE TABLE actors (
+  did TEXT PRIMARY KEY,
+  handle TEXT NOT NULL
+);
+```
+
+### Hydration Helpers
+
+Use these helpers to transform database rows into lex-gql format:
+
+```javascript
+import { hydrateBlobs, hydrateRecord } from 'lex-gql';
+
+// hydrateBlobs - inject DID into blob fields for URL resolution
+const record = JSON.parse(row.record);
+const hydrated = hydrateBlobs(record, row.did);
+
+// hydrateRecord - full transformation from standard schema
+const rows = db.query('SELECT r.*, a.handle FROM records r LEFT JOIN actors a ON r.did = a.did');
+const records = rows.map(hydrateRecord);
+```
+
 ## Generated Schema Structure
 
 For each record lexicon, lex-gql generates:

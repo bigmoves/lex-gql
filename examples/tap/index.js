@@ -26,7 +26,7 @@
 import { createServer } from 'node:http';
 import Database from 'better-sqlite3';
 import { createHandler } from 'graphql-http/lib/use/node';
-import { createAdapter, parseLexicon } from 'lex-gql';
+import { createAdapter, parseLexicon, hydrateRecord } from 'lex-gql';
 import WebSocket from 'ws';
 
 // 1. Define lexicons
@@ -164,8 +164,9 @@ function connectToTap() {
           const now = new Date().toISOString();
           insertRecord.run(uri, did, collection, rkey, cid, JSON.stringify(record), now);
           recordCount++;
-          if (recordCount % 10 === 1) {
-            console.log(`Stored record #${recordCount}: ${uri}`);
+          if (recordCount % 100 === 0) {
+            const dbCount = db.prepare('SELECT COUNT(*) as c FROM records').get().c;
+            console.log(`Processed ${recordCount} events, ${dbCount} records in db`);
           }
         }
       }
@@ -194,33 +195,6 @@ function scheduleReconnect() {
 
 // Start websocket connection
 connectToTap();
-
-// Helper to inject did into blob fields for URL resolution
-function injectDidIntoBlobs(obj, did) {
-  if (!obj || typeof obj !== 'object') return obj;
-
-  // Check if this is a blob (has ref and mimeType)
-  if (obj.$type === 'blob' || (obj.ref && obj.mimeType && obj.size)) {
-    return {
-      ...obj,
-      ref: obj.ref?.$link || obj.ref, // Handle { $link: "..." } format
-      did,
-    };
-  }
-
-  // Recurse into object properties
-  const result = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (Array.isArray(value)) {
-      result[key] = value.map((item) => injectDidIntoBlobs(item, did));
-    } else if (typeof value === 'object') {
-      result[key] = injectDidIntoBlobs(value, did);
-    } else {
-      result[key] = value;
-    }
-  }
-  return result;
-}
 
 // 4. Query adapter: translates lex-gql operations to SQLite queries
 async function query(op) {
@@ -321,20 +295,18 @@ function findMany(op) {
   const rows = hasNext ? rawRows.slice(0, first) : rawRows;
 
   // Transform rows to lex-gql format
-  const transformed = rows.map((row) => {
-    const record = JSON.parse(row.record);
-    const withBlobs = injectDidIntoBlobs(record, row.did);
-    return {
+  const transformed = rows.map((row) => ({
+    ...hydrateRecord({
       uri: `at://${row.did}/${row.collection}/${row.rkey}`,
-      cid: row.cid,
       did: row.did,
       collection: row.collection,
-      indexedAt: row.indexed_at,
-      actorHandle: row.handle || null,
-      ...withBlobs,
-      _id: row.id, // For cursor
-    };
-  });
+      cid: row.cid,
+      record: row.record,
+      indexed_at: row.indexed_at,
+      handle: row.handle,
+    }),
+    _id: row.id, // For cursor
+  }));
 
   return {
     rows: transformed,

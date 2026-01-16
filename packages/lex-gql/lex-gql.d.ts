@@ -28,8 +28,8 @@ export function mapLexiconType(lexiconType: string): string;
  * @returns {{ nsid: string|null, fragment: string }}
  */
 export function parseRefUri(refUri: string): {
-  nsid: string | null;
-  fragment: string;
+    nsid: string | null;
+    fragment: string;
 };
 /**
  * Convert a ref URI to a GraphQL type name
@@ -37,6 +37,50 @@ export function parseRefUri(refUri: string): {
  * @returns {string} - e.g. "FmTealAlphaFeedDefsArtist"
  */
 export function refToTypeName(refUri: string): string;
+/**
+ * Inject DID into blob objects for URL resolution.
+ * Blobs need the parent record's DID to generate CDN URLs.
+ *
+ * @param {any} obj - Record object or value to hydrate
+ * @param {string} did - DID to inject into blob objects
+ * @returns {any} - Hydrated object with did added to blobs
+ *
+ * @example
+ * const record = JSON.parse(row.record);
+ * const hydrated = hydrateBlobs(record, row.did);
+ */
+export function hydrateBlobs(obj: any, did: string): any;
+/**
+ * @typedef {Object} DatabaseRow
+ * @property {string} uri - Record AT URI
+ * @property {string} did - Author DID
+ * @property {string} collection - Lexicon NSID
+ * @property {string} [cid] - Content ID
+ * @property {string|Object} record - JSON string or parsed object
+ * @property {string} indexed_at - ISO timestamp
+ * @property {string} [handle] - Actor handle from actors table join
+ */
+/**
+ * Transform a database row into lex-gql record format.
+ * Expects the standard records table schema.
+ *
+ * Standard schema:
+ * - uri: TEXT (record AT URI)
+ * - did: TEXT (author DID)
+ * - collection: TEXT (lexicon NSID)
+ * - cid: TEXT (optional, content ID)
+ * - record: TEXT (JSON) or Object
+ * - indexed_at: TEXT (ISO timestamp)
+ * - handle: TEXT (optional, actor handle from actors table join)
+ *
+ * @param {DatabaseRow} row - Database row
+ * @returns {Record<string, any>} - Hydrated record for lex-gql
+ *
+ * @example
+ * const rows = db.query('SELECT r.*, a.handle FROM records r LEFT JOIN actors a ON r.did = a.did');
+ * const records = rows.map(hydrateRecord);
+ */
+export function hydrateRecord(row: DatabaseRow): Record<string, any>;
 /**
  * Parse a lexicon JSON object into structured form
  * @param {RawLexiconJson} json - Raw lexicon JSON
@@ -59,114 +103,138 @@ export function buildSchema(lexicons: Lexicon[]): GraphQLSchema;
  *   subscribe: (query: string, variables?: Record<string, unknown>) => Promise<AsyncIterable<import('graphql').ExecutionResult>>
  * }}
  */
-export function createAdapter(
-  lexicons: Lexicon[],
-  options: AdapterOptions,
-): {
-  schema: GraphQLSchema;
-  execute: (query: string, variables?: Record<string, unknown>) => Promise<any>;
-  subscribe: (
-    query: string,
-    variables?: Record<string, unknown>,
-  ) => Promise<AsyncIterable<import('graphql').ExecutionResult>>;
+export function createAdapter(lexicons: Lexicon[], options: AdapterOptions): {
+    schema: GraphQLSchema;
+    execute: (query: string, variables?: Record<string, unknown>) => Promise<any>;
+    subscribe: (query: string, variables?: Record<string, unknown>) => Promise<AsyncIterable<import("graphql").ExecutionResult>>;
 };
 export namespace ErrorCodes {
-  let INVALID_LEXICON: string;
-  let UNSUPPORTED_VERSION: string;
-  let QUERY_FAILED: string;
-  let VALIDATION_FAILED: string;
+    let INVALID_LEXICON: string;
+    let UNSUPPORTED_VERSION: string;
+    let QUERY_FAILED: string;
+    let VALIDATION_FAILED: string;
 }
 /**
  * Custom error class for lex-gql errors
  */
 export class LexGqlError extends Error {
-  /**
-   * @param {string} message
-   * @param {string} code
-   * @param {Object} [details]
-   */
-  constructor(message: string, code: string, details?: Object);
-  code: string;
-  details: Object;
+    /**
+     * @param {string} message
+     * @param {string} code
+     * @param {Object} [details]
+     */
+    constructor(message: string, code: string, details?: Object);
+    code: string;
+    details: Object;
 }
+export type DatabaseRow = {
+    /**
+     * - Record AT URI
+     */
+    uri: string;
+    /**
+     * - Author DID
+     */
+    did: string;
+    /**
+     * - Lexicon NSID
+     */
+    collection: string;
+    /**
+     * - Content ID
+     */
+    cid?: string | undefined;
+    /**
+     * - JSON string or parsed object
+     */
+    record: string | Object;
+    /**
+     * - ISO timestamp
+     */
+    indexed_at: string;
+    /**
+     * - Actor handle from actors table join
+     */
+    handle?: string | undefined;
+};
 export type WhereClause = {
-  field: string;
-  op: string;
-  value: any;
+    field: string;
+    op: string;
+    value: any;
 };
 export type SortClause = {
-  field: string;
-  dir: string;
+    field: string;
+    dir: string;
 };
 export type Pagination = {
-  first?: number | undefined;
-  after?: string | undefined;
-  last?: number | undefined;
-  before?: string | undefined;
+    first?: number | undefined;
+    after?: string | undefined;
+    last?: number | undefined;
+    before?: string | undefined;
 };
 export type Aggregate = {
-  field: string;
-  fn: string;
+    field: string;
+    fn: string;
 };
 export type Operation = {
-  type: 'findMany' | 'findOne' | 'count' | 'aggregate' | 'create' | 'update' | 'delete';
-  collection: string;
-  where?: WhereClause[] | undefined;
-  select?: string[] | undefined;
-  sort?: SortClause[] | undefined;
-  pagination?: Pagination | undefined;
-  data?: Record<string, any> | undefined;
-  uri?: string | undefined;
-  rkey?: string | undefined;
-  groupBy?: string[] | undefined;
-  aggregates?: Aggregate[] | undefined;
+    type: "findMany" | "findOne" | "count" | "aggregate" | "create" | "update" | "delete";
+    collection: string;
+    where?: WhereClause[] | undefined;
+    select?: string[] | undefined;
+    sort?: SortClause[] | undefined;
+    pagination?: Pagination | undefined;
+    data?: Record<string, any> | undefined;
+    uri?: string | undefined;
+    rkey?: string | undefined;
+    groupBy?: string[] | undefined;
+    aggregates?: Aggregate[] | undefined;
 };
 export type AdapterOptions = {
-  query: (op: Operation) => Promise<any>;
-  subscribe?: ((op: SubscribeOperation) => AsyncIterable<any>) | undefined;
-  context?: Record<string, any> | undefined;
-  maxDepth?: number | undefined;
+    query: (op: Operation) => Promise<any>;
+    subscribe?: ((op: SubscribeOperation) => AsyncIterable<any>) | undefined;
+    context?: Record<string, any> | undefined;
+    maxDepth?: number | undefined;
 };
-export type SubscriptionEvent = 'created' | 'updated' | 'deleted';
+export type SubscriptionEvent = "created" | "updated" | "deleted";
 export type SubscribeOperation = {
-  /**
-   * - The collection NSID (e.g., 'app.bsky.feed.post')
-   */
-  collection: string;
-  /**
-   * - The event type
-   */
-  event: SubscriptionEvent;
+    /**
+     * - The collection NSID (e.g., 'app.bsky.feed.post')
+     */
+    collection: string;
+    /**
+     * - The event type
+     */
+    event: SubscriptionEvent;
 };
 export type Property = {
-  name: string;
-  type: string;
-  required: boolean;
-  format?: string | null | undefined;
-  ref?: string | null | undefined;
-  refs?: string[] | null | undefined;
-  items?: ArrayItems | null | undefined;
+    name: string;
+    type: string;
+    required: boolean;
+    format?: string | null | undefined;
+    ref?: string | null | undefined;
+    refs?: string[] | null | undefined;
+    items?: ArrayItems | null | undefined;
 };
 export type ArrayItems = {
-  type: string;
-  ref?: string | null | undefined;
-  refs?: string[] | null | undefined;
+    type: string;
+    ref?: string | null | undefined;
+    refs?: string[] | null | undefined;
 };
 export type RecordDef = {
-  type: string;
-  key?: string | null | undefined;
-  properties: Property[];
+    type: string;
+    key?: string | null | undefined;
+    properties: Property[];
 };
 export type Lexicon = {
-  id: string;
-  defs: {
-    main: RecordDef | null;
-    others: Record<string, RecordDef>;
-  };
+    id: string;
+    defs: {
+        main: RecordDef | null;
+        others: Record<string, RecordDef>;
+    };
 };
 export type RawLexiconJson = {
-  id: string;
-  lexicon?: number | undefined;
-  defs?: Record<string, any> | undefined;
+    id: string;
+    lexicon?: number | undefined;
+    defs?: Record<string, any> | undefined;
 };
 import { GraphQLSchema } from 'graphql';
