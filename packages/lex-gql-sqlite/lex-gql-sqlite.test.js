@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import Database from 'better-sqlite3';
-import { setupSchema, buildWhere } from './lex-gql-sqlite.js';
+import { setupSchema, buildWhere, buildOrderBy } from './lex-gql-sqlite.js';
 
 describe('setupSchema', () => {
   let db;
@@ -119,5 +119,35 @@ describe('buildWhere', () => {
     ]);
     expect(sql).toBe("json_extract(r.record, '$.status') = ? AND (json_extract(r.record, '$.author') = ? OR json_extract(r.record, '$.author') = ?)");
     expect(params).toEqual(['active', 'alice', 'bob']);
+  });
+});
+
+describe('buildOrderBy', () => {
+  it('returns default order when no sort', () => {
+    const sql = buildOrderBy([]);
+    expect(sql).toBe('r.id DESC');
+  });
+
+  it('handles single sort field', () => {
+    const sql = buildOrderBy([{ field: 'createdAt', dir: 'asc' }]);
+    expect(sql).toBe("json_extract(r.record, '$.createdAt') ASC");
+  });
+
+  it('handles system field sort', () => {
+    const sql = buildOrderBy([{ field: 'indexedAt', dir: 'desc' }]);
+    expect(sql).toBe('r.indexed_at DESC');
+  });
+
+  it('handles multi-field sort', () => {
+    const sql = buildOrderBy([
+      { field: 'status', dir: 'asc' },
+      { field: 'createdAt', dir: 'desc' }
+    ]);
+    expect(sql).toBe("json_extract(r.record, '$.status') ASC, json_extract(r.record, '$.createdAt') DESC");
+  });
+
+  it('defaults to asc when dir not specified', () => {
+    const sql = buildOrderBy([{ field: 'name' }]);
+    expect(sql).toBe("json_extract(r.record, '$.name') ASC");
   });
 });

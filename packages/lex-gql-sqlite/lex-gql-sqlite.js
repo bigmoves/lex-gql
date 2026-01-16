@@ -120,6 +120,22 @@ export function buildWhere(where) {
 }
 
 /**
+ * Build SQL ORDER BY clause from lex-gql sort conditions
+ * @param {Array<{field: string, dir?: string}>} sort
+ * @returns {string}
+ */
+export function buildOrderBy(sort) {
+  if (!sort || sort.length === 0) {
+    return 'r.id DESC';
+  }
+
+  return sort.map(({ field, dir = 'asc' }) => {
+    const fieldPath = SYSTEM_FIELDS[field] || `json_extract(r.record, '$.${field}')`;
+    return `${fieldPath} ${dir.toUpperCase()}`;
+  }).join(', ');
+}
+
+/**
  * Create a SQLite query adapter for lex-gql
  * @param {import('better-sqlite3').Database} db - better-sqlite3 database instance
  * @returns {(op: import('lex-gql').Operation) => Promise<any>}
