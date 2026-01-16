@@ -1,0 +1,17 @@
+{
+  "name": "lex-gql-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "End-to-end tests for lex-gql",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "better-sqlite3": "^12.6.0",
+    "lex-gql": "workspace:*",
+    "lex-gql-sqlite": "workspace:*",
+    "vitest": "^1.6.1"
+  }
+}
