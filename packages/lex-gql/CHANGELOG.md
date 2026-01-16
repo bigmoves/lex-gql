@@ -10,6 +10,8 @@
   - Default preset: `feed_fullsize`
 - Validation for `did` and `ref` fields (throws if missing)
 - Validation for preset values (throws if invalid)
+- `hydrateBlobs(obj, did)` helper to inject DID into blob objects for URL resolution
+- `hydrateRecord(row)` helper to transform database rows to lex-gql format
 
 ### Notes
 
