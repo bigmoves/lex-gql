@@ -57,9 +57,6 @@ describe('lex-gql e2e with real lexicons', () => {
     it('queries posts with all standard fields', async () => {
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.feed.post/3abc',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.feed.post',
-        rkey: '3abc',
         cid: 'bafyreiabc',
         record: {
           text: 'Hello ATProto!',
@@ -105,9 +102,6 @@ describe('lex-gql e2e with real lexicons', () => {
     it('queries posts with embedded images', async () => {
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.feed.post/withimg',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.feed.post',
-        rkey: 'withimg',
         cid: 'bafyimg',
         record: {
           text: 'Check out this photo!',
@@ -173,9 +167,6 @@ describe('lex-gql e2e with real lexicons', () => {
       // Parent post
       writer.insertRecord({
         uri: 'at://did:plc:bob/app.bsky.feed.post/parent',
-        did: 'did:plc:bob',
-        collection: 'app.bsky.feed.post',
-        rkey: 'parent',
         cid: 'bafyparent',
         record: {
           text: 'Original post',
@@ -187,9 +178,6 @@ describe('lex-gql e2e with real lexicons', () => {
       // Reply
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.feed.post/reply',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.feed.post',
-        rkey: 'reply',
         cid: 'bafyreply',
         record: {
           text: 'This is a reply',
@@ -242,9 +230,6 @@ describe('lex-gql e2e with real lexicons', () => {
     it('queries profiles with avatar blob', async () => {
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.actor.profile/self',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.actor.profile',
-        rkey: 'self',
         cid: 'bafyprofile',
         record: {
           displayName: 'Alice',
@@ -294,9 +279,6 @@ describe('lex-gql e2e with real lexicons', () => {
     it('queries follows', async () => {
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.graph.follow/abc123',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.graph.follow',
-        rkey: 'abc123',
         cid: 'bafyfollow',
         record: {
           subject: 'did:plc:bob',
@@ -332,9 +314,6 @@ describe('lex-gql e2e with real lexicons', () => {
       for (let i = 1; i <= 25; i++) {
         writer.insertRecord({
           uri: `at://did:plc:alice/app.bsky.feed.post/${i}`,
-          did: 'did:plc:alice',
-          collection: 'app.bsky.feed.post',
-          rkey: `${i}`,
           record: { text: `Post number ${i}`, createdAt: '2024-01-15T00:00:00.000Z' },
           indexedAt: `2024-01-15T00:00:${i.toString().padStart(2, '0')}.000Z`,
         });
@@ -398,9 +377,6 @@ describe('lex-gql e2e with real lexicons', () => {
     beforeEach(() => {
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.feed.post',
-        rkey: '1',
         record: {
           text: 'Hello world',
           createdAt: '2024-01-15T00:00:00.000Z',
@@ -410,9 +386,6 @@ describe('lex-gql e2e with real lexicons', () => {
       });
       writer.insertRecord({
         uri: 'at://did:plc:bob/app.bsky.feed.post/2',
-        did: 'did:plc:bob',
-        collection: 'app.bsky.feed.post',
-        rkey: '2',
         record: {
           text: 'Hola mundo',
           createdAt: '2024-01-16T00:00:00.000Z',
@@ -422,9 +395,6 @@ describe('lex-gql e2e with real lexicons', () => {
       });
       writer.insertRecord({
         uri: 'at://did:plc:carol/app.bsky.feed.post/3',
-        did: 'did:plc:carol',
-        collection: 'app.bsky.feed.post',
-        rkey: '3',
         record: {
           text: 'Hello from Carol',
           createdAt: '2024-01-17T00:00:00.000Z',
@@ -526,25 +496,16 @@ describe('lex-gql e2e with real lexicons', () => {
     beforeEach(() => {
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.feed.post',
-        rkey: '1',
         record: { text: 'B post', createdAt: '2024-01-15T00:00:00.000Z' },
         indexedAt: '2024-01-15T00:00:00.000Z',
       });
       writer.insertRecord({
         uri: 'at://did:plc:bob/app.bsky.feed.post/2',
-        did: 'did:plc:bob',
-        collection: 'app.bsky.feed.post',
-        rkey: '2',
         record: { text: 'A post', createdAt: '2024-01-14T00:00:00.000Z' },
         indexedAt: '2024-01-14T00:00:00.000Z',
       });
       writer.insertRecord({
         uri: 'at://did:plc:carol/app.bsky.feed.post/3',
-        did: 'did:plc:carol',
-        collection: 'app.bsky.feed.post',
-        rkey: '3',
         record: { text: 'C post', createdAt: '2024-01-16T00:00:00.000Z' },
         indexedAt: '2024-01-16T00:00:00.000Z',
       });
@@ -605,9 +566,6 @@ describe('lex-gql e2e with real lexicons', () => {
       for (let i = 1; i <= 3; i++) {
         writer.insertRecord({
           uri: `at://did:plc:alice/app.bsky.feed.post/${i}`,
-          did: 'did:plc:alice',
-          collection: 'app.bsky.feed.post',
-          rkey: `${i}`,
           record: { text: `Alice post ${i}`, createdAt: '2024-01-15T00:00:00.000Z' },
           indexedAt: '2024-01-15T00:00:00.000Z',
         });
@@ -616,9 +574,6 @@ describe('lex-gql e2e with real lexicons', () => {
       for (let i = 1; i <= 2; i++) {
         writer.insertRecord({
           uri: `at://did:plc:bob/app.bsky.feed.post/${i}`,
-          did: 'did:plc:bob',
-          collection: 'app.bsky.feed.post',
-          rkey: `${i}`,
           record: { text: `Bob post ${i}`, createdAt: '2024-01-15T00:00:00.000Z' },
           indexedAt: '2024-01-15T00:00:00.000Z',
         });
@@ -684,9 +639,6 @@ describe('lex-gql e2e with real lexicons', () => {
       // Create profile for Alice
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.actor.profile/self',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.actor.profile',
-        rkey: 'self',
         record: { displayName: 'Alice', description: 'Test user Alice' },
         indexedAt: '2024-01-01T00:00:00.000Z',
       });
@@ -695,9 +647,6 @@ describe('lex-gql e2e with real lexicons', () => {
       // Create post by Alice
       writer.insertRecord({
         uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-        did: 'did:plc:alice',
-        collection: 'app.bsky.feed.post',
-        rkey: '1',
         record: { text: 'Hello from Alice', createdAt: '2024-01-15T00:00:00.000Z' },
         indexedAt: '2024-01-15T00:00:00.000Z',
       });
@@ -705,9 +654,6 @@ describe('lex-gql e2e with real lexicons', () => {
       // Create post by Bob (no profile)
       writer.insertRecord({
         uri: 'at://did:plc:bob/app.bsky.feed.post/1',
-        did: 'did:plc:bob',
-        collection: 'app.bsky.feed.post',
-        rkey: '1',
         record: { text: 'Hello from Bob', createdAt: '2024-01-15T00:00:00.000Z' },
         indexedAt: '2024-01-15T00:00:00.000Z',
       });

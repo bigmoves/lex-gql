@@ -68,9 +68,6 @@ describe('createWriter', () => {
   it('inserts a record', () => {
     writer.insertRecord({
       uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-      did: 'did:plc:alice',
-      collection: 'app.bsky.feed.post',
-      rkey: '1',
       cid: 'bafycid123',
       record: { text: 'Hello world' },
     });
@@ -86,17 +83,11 @@ describe('createWriter', () => {
   it('replaces existing record on conflict', () => {
     writer.insertRecord({
       uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-      did: 'did:plc:alice',
-      collection: 'app.bsky.feed.post',
-      rkey: '1',
       record: { text: 'First version' },
     });
 
     writer.insertRecord({
       uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-      did: 'did:plc:alice',
-      collection: 'app.bsky.feed.post',
-      rkey: '1',
       record: { text: 'Updated version' },
     });
 
@@ -108,9 +99,6 @@ describe('createWriter', () => {
   it('deletes a record', () => {
     writer.insertRecord({
       uri: 'at://did:plc:alice/app.bsky.feed.post/1',
-      did: 'did:plc:alice',
-      collection: 'app.bsky.feed.post',
-      rkey: '1',
       record: { text: 'Hello' },
     });
 
@@ -288,9 +276,6 @@ describe('findMany', () => {
   it('returns records for collection', async () => {
     writer.insertRecord({
       uri: 'at://did:plc:abc/app.bsky.feed.post/123',
-      did: 'did:plc:abc',
-      collection: 'app.bsky.feed.post',
-      rkey: '123',
       record: { text: 'hello' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
@@ -311,9 +296,6 @@ describe('findMany', () => {
     for (let i = 0; i < 5; i++) {
       writer.insertRecord({
         uri: `at://did:plc:abc/col/${i}`,
-        did: 'did:plc:abc',
-        collection: 'col',
-        rkey: `${i}`,
         record: {},
         indexedAt: '2024-01-01T00:00:00Z',
       });
@@ -334,9 +316,6 @@ describe('findMany', () => {
     for (let i = 0; i < 5; i++) {
       writer.insertRecord({
         uri: `at://did:plc:abc/col/${i}`,
-        did: 'did:plc:abc',
-        collection: 'col',
-        rkey: `${i}`,
         record: {},
         indexedAt: '2024-01-01T00:00:00Z',
       });
@@ -365,17 +344,11 @@ describe('findMany', () => {
   it('filters with where clause', async () => {
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/1',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '1',
       record: { status: 'active' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/2',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '2',
       record: { status: 'inactive' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
@@ -394,17 +367,11 @@ describe('findMany', () => {
   it('sorts results', async () => {
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/1',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '1',
       record: { name: 'banana' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/2',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '2',
       record: { name: 'apple' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
@@ -425,9 +392,6 @@ describe('findMany', () => {
     writer.upsertActor('did:plc:abc', 'alice.test');
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/1',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '1',
       record: {},
       indexedAt: '2024-01-01T00:00:00Z',
     });
@@ -473,9 +437,6 @@ describe('aggregate', () => {
     for (let i = 0; i < 5; i++) {
       writer.insertRecord({
         uri: `at://did:plc:abc/col/${i}`,
-        did: 'did:plc:abc',
-        collection: 'col',
-        rkey: `${i}`,
         record: {},
         indexedAt: '2024-01-01T00:00:00Z',
       });
@@ -493,17 +454,11 @@ describe('aggregate', () => {
   it('respects where clause', async () => {
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/1',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '1',
       record: { status: 'active' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/2',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '2',
       record: { status: 'inactive' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
@@ -520,25 +475,16 @@ describe('aggregate', () => {
   it('groups by field', async () => {
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/1',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '1',
       record: { status: 'active' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/2',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '2',
       record: { status: 'active' },
       indexedAt: '2024-01-01T00:00:00Z',
     });
     writer.insertRecord({
       uri: 'at://did:plc:abc/col/3',
-      did: 'did:plc:abc',
-      collection: 'col',
-      rkey: '3',
       record: { status: 'inactive' },
       indexedAt: '2024-01-01T00:00:00Z',
     });

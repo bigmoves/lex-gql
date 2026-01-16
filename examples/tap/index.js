@@ -131,7 +131,7 @@ function connectToTap() {
           console.log(`Deleted: ${uri}`);
         } else {
           // create or update
-          writer.insertRecord({ uri, did, collection, rkey, cid, record });
+          writer.insertRecord({ uri, cid, record });
           recordCount++;
           if (recordCount % 100 === 0) {
             const dbCount = db.prepare('SELECT COUNT(*) as c FROM records').get().c;

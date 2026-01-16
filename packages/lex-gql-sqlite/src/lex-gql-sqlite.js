@@ -38,11 +38,21 @@ export function setupSchema(db) {
 }
 
 /**
+ * Parse an AT URI into its components
+ * @param {string} uri - AT URI (at://did/collection/rkey)
+ * @returns {{ did: string, collection: string, rkey: string }}
+ */
+function parseAtUri(uri) {
+  const match = uri.match(/^at:\/\/([^/]+)\/([^/]+)\/(.+)$/);
+  if (!match) {
+    throw new Error(`Invalid AT URI: ${uri}`);
+  }
+  return { did: match[1], collection: match[2], rkey: match[3] };
+}
+
+/**
  * @typedef {Object} RecordInput
  * @property {string} uri - Record URI (at://did/collection/rkey)
- * @property {string} did - DID of record author
- * @property {string} collection - Collection NSID
- * @property {string} rkey - Record key
  * @property {string} [cid] - Record CID
  * @property {object} record - Record data (will be JSON stringified)
  * @property {string} [indexedAt] - Timestamp (defaults to now)
@@ -75,7 +85,8 @@ export function createWriter(db) {
   `);
 
   return {
-    insertRecord: ({ uri, did, collection, rkey, cid, record, indexedAt }) => {
+    insertRecord: ({ uri, cid, record, indexedAt }) => {
+      const { did, collection, rkey } = parseAtUri(uri);
       const recordJson = typeof record === 'string' ? record : JSON.stringify(record);
       const timestamp = indexedAt || new Date().toISOString();
       insertRecordStmt.run(uri, did, collection, rkey, cid || null, recordJson, timestamp);

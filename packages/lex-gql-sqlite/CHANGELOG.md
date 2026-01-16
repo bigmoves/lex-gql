@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Changed
+
+- `insertRecord` now parses `did`, `collection`, and `rkey` from the URI automatically
+  - Before: `insertRecord({ uri, did, collection, rkey, cid?, record, indexedAt? })`
+  - After: `insertRecord({ uri, cid?, record, indexedAt? })`
+
 ## [0.1.0] - 2026-01-16
 
 ### Added

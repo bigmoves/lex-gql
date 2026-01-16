@@ -6,9 +6,6 @@ export function setupSchema(db: import("better-sqlite3").Database): void;
 /**
  * @typedef {Object} RecordInput
  * @property {string} uri - Record URI (at://did/collection/rkey)
- * @property {string} did - DID of record author
- * @property {string} collection - Collection NSID
- * @property {string} rkey - Record key
  * @property {string} [cid] - Record CID
  * @property {object} record - Record data (will be JSON stringified)
  * @property {string} [indexedAt] - Timestamp (defaults to now)
@@ -59,21 +56,9 @@ export type RecordInput = {
      */
     uri: string;
     /**
-     * - DID of record author
-     */
-    did: string;
-    /**
-     * - Collection NSID
-     */
-    collection: string;
-    /**
-     * - Record key
-     */
-    rkey: string;
-    /**
      * - Record CID
      */
-    cid?: string | undefined;
+    cid?: string;
     /**
      * - Record data (will be JSON stringified)
      */
@@ -81,7 +66,7 @@ export type RecordInput = {
     /**
      * - Timestamp (defaults to now)
      */
-    indexedAt?: string | undefined;
+    indexedAt?: string;
 };
 export type Writer = {
     /**
