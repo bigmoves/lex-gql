@@ -1,0 +1,9 @@
+[service]
+name = "tap"
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+restartPolicyType = "on_failure"

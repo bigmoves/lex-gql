@@ -1,0 +1,11 @@
+[service]
+name = "relay"
+
+[build]
+builder = "nixpacks"
+buildCommand = "npm run build"
+
+[deploy]
+startCommand = "npm run start"
+healthcheckPath = "/stats"
+restartPolicyType = "on_failure"

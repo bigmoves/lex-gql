@@ -88,23 +88,37 @@ function parseAtUri(uri) {
 
 // Batch writes for better performance
 const pendingWrites = [];
-const BATCH_SIZE = 500;
-const BATCH_INTERVAL = 250;
+const BATCH_SIZE = 100;  // Smaller batches
+const BATCH_INTERVAL = 100;
 let batchTimeout = null;
+let isFlushing = false;
+
+// Yield to event loop
+const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
 
 async function flushWrites() {
-  if (pendingWrites.length === 0) return;
+  if (pendingWrites.length === 0 || isFlushing) return;
+  isFlushing = true;
 
-  const batch = pendingWrites.splice(0, pendingWrites.length);
-  for (const input of batch) {
+  const batch = pendingWrites.splice(0, BATCH_SIZE);
+  for (let i = 0; i < batch.length; i++) {
     try {
-      await baseWriter.insertRecord(input);
+      await baseWriter.insertRecord(batch[i]);
     } catch (err) {
       // Ignore constraint errors from malformed records
       if (!err.message.includes('NOT NULL constraint')) {
         console.error('Insert error:', err.message);
       }
     }
+    // Yield every 10 writes to keep server responsive
+    if (i % 10 === 0) await yieldToEventLoop();
+  }
+
+  isFlushing = false;
+
+  // If more pending, schedule next batch
+  if (pendingWrites.length > 0) {
+    scheduleBatchFlush();
   }
 }
 
@@ -174,7 +188,7 @@ function connectToTap() {
         if (action === "delete") {
           writer.deleteRecord(uri);
           console.log(`Deleted: ${uri}`);
-        } else {
+        } else if (record) {
           writer.insertRecord({ uri, cid, record });
           recordCount2++;
           if (recordCount2 % 1000 === 0) {
