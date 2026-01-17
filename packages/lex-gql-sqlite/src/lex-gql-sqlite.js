@@ -258,7 +258,7 @@ function findMany(db, op) {
         cursorParams.push(cursor.id);
       }
     } catch (err) {
-      console.warn('lex-gql-sqlite: Malformed cursor (after), ignoring:', err.message);
+      console.warn('lex-gql-sqlite: Malformed cursor (after), ignoring:', /** @type {Error} */ (err).message);
     }
   }
 
@@ -270,7 +270,7 @@ function findMany(db, op) {
         cursorParams.push(cursor.id);
       }
     } catch (err) {
-      console.warn('lex-gql-sqlite: Malformed cursor (before), ignoring:', err.message);
+      console.warn('lex-gql-sqlite: Malformed cursor (before), ignoring:', /** @type {Error} */ (err).message);
     }
   }
 

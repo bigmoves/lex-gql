@@ -218,6 +218,7 @@ export type Operation = {
     aggregates?: Aggregate[] | undefined;
     limit?: number | undefined;
     orderBy?: "COUNT_ASC" | "COUNT_DESC" | undefined;
+    arrayFields?: string[] | undefined;
 };
 export type AdapterOptions = {
     query: (op: Operation) => Promise<any>;

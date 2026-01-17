@@ -382,7 +382,7 @@ async function findMany(conn, op) {
         cursorParams.push(cursor.id);
       }
     } catch (err) {
-      console.warn('lex-gql-duckdb: Malformed cursor (after), ignoring:', err.message);
+      console.warn('lex-gql-duckdb: Malformed cursor (after), ignoring:', /** @type {Error} */ (err).message);
     }
   }
 
@@ -394,7 +394,7 @@ async function findMany(conn, op) {
         cursorParams.push(cursor.id);
       }
     } catch (err) {
-      console.warn('lex-gql-duckdb: Malformed cursor (before), ignoring:', err.message);
+      console.warn('lex-gql-duckdb: Malformed cursor (before), ignoring:', /** @type {Error} */ (err).message);
     }
   }
 

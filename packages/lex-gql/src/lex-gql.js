@@ -75,6 +75,7 @@ import {
  * @property {Aggregate[]} [aggregates]
  * @property {number} [limit]
  * @property {'COUNT_ASC'|'COUNT_DESC'} [orderBy]
+ * @property {string[]} [arrayFields]
  */
 
 /**
@@ -869,8 +870,8 @@ function createAggregateResultType(typeName, recordDef, lexiconId, typeRegistry)
         if (prop.type === 'array') {
           const arrayType = getGraphQLType(
             prop,
-            null, // blobType not needed for arrays
-            null, // strongRefType not needed
+            undefined, // blobType not needed for arrays
+            undefined, // strongRefType not needed
             typeRegistry,
             lexiconId,
           );
