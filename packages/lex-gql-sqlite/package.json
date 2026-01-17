@@ -1,6 +1,6 @@
 {
   "name": "lex-gql-sqlite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "SQLite adapter for lex-gql",
   "type": "module",
   "main": "src/lex-gql-sqlite.js",
@@ -27,7 +27,7 @@
   "license": "MIT",
   "peerDependencies": {
     "better-sqlite3": ">=11.0.0",
-    "lex-gql": ">=0.1.0"
+    "lex-gql": ">=0.2.0"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

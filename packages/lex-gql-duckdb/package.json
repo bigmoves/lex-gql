@@ -1,6 +1,6 @@
 {
   "name": "lex-gql-duckdb",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "DuckDB adapter for lex-gql - optimized for analytics queries",
   "type": "module",
   "main": "src/lex-gql-duckdb.js",
@@ -28,7 +28,7 @@
   "license": "MIT",
   "peerDependencies": {
     "duckdb": ">=1.0.0",
-    "lex-gql": ">=0.1.0"
+    "lex-gql": ">=0.2.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
