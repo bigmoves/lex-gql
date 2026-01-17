@@ -1,0 +1,531 @@
+"""Exposes a URL that specifies the behavior of this scalar."""
+directive @specifiedBy(
+  """The URL that specifies the behavior of this scalar."""
+  url: String!
+) on SCALAR
+
+"""
+Indicates exactly one field must be supplied and this field must not be `null`.
+"""
+directive @oneOf on INPUT_OBJECT
+
+"""Order direction for aggregate count"""
+enum AggregateOrderBy {
+  """Ascending by count"""
+  COUNT_ASC
+
+  """Descending by count (default)"""
+  COUNT_DESC
+}
+
+"""Record type: AppBskyActorProfile"""
+type AppBskyActorProfile {
+  """Record URI"""
+  uri: String
+
+  """Record CID"""
+  cid: String
+
+  """DID of record author"""
+  did: String
+
+  """Collection name"""
+  collection: String
+
+  """When record was indexed"""
+  indexedAt: String
+
+  """Handle of the actor who created this record"""
+  actorHandle: String
+
+  """Field from lexicon"""
+  avatar: Blob
+
+  """Field from lexicon"""
+  banner: Blob
+
+  """Field from lexicon"""
+  labels: AppBskyActorProfileLabels
+
+  """Field from lexicon"""
+  website: String
+
+  """Field from lexicon"""
+  pronouns: String
+
+  """Field from lexicon"""
+  createdAt: String
+
+  """Field from lexicon"""
+  pinnedPost: ComAtprotoRepoStrongRef
+
+  """Resolved reference for pinnedPost"""
+  pinnedPostResolved: Record
+
+  """Field from lexicon"""
+  description: String
+
+  """Field from lexicon"""
+  displayName: String
+
+  """Field from lexicon"""
+  joinedViaStarterPack: ComAtprotoRepoStrongRef
+
+  """Resolved reference for joinedViaStarterPack"""
+  joinedViaStarterPackResolved: Record
+
+  """FmTealAlphaFeedPlay records for this DID"""
+  fmTealAlphaFeedPlayByDid: [FmTealAlphaFeedPlay]
+}
+
+type AppBskyActorProfileAggregated {
+  count: Int
+  groups: [AppBskyActorProfileAggregateGroup]
+}
+
+type AppBskyActorProfileAggregateGroup {
+  count: Int
+  uri: String
+  cid: String
+  did: String
+  collection: String
+  actorHandle: String
+  website: String
+  pronouns: String
+  createdAt: String
+  createdAt_day: String
+  createdAt_week: String
+  createdAt_month: String
+  description: String
+  displayName: String
+}
+
+type AppBskyActorProfileConnection {
+  edges: [AppBskyActorProfileEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type AppBskyActorProfileEdge {
+  node: AppBskyActorProfile
+  cursor: String!
+}
+
+enum AppBskyActorProfileGroupByField {
+  uri
+  cid
+  did
+  collection
+  actorHandle
+  website
+  pronouns
+  createdAt
+  description
+  displayName
+  createdAt_day
+  createdAt_week
+  createdAt_month
+}
+
+input AppBskyActorProfileInput {
+  avatar: String
+  banner: String
+  labels: String
+  website: String
+  pronouns: String
+  createdAt: String
+  pinnedPost: String
+  description: String
+  displayName: String
+  joinedViaStarterPack: String
+}
+
+"""Union type for AppBskyActorProfile.labels"""
+union AppBskyActorProfileLabels = ComAtprotoLabelDefsSelfLabels
+
+enum AppBskyActorProfileSortField {
+  uri
+  indexedAt
+  website
+  pronouns
+  createdAt
+  description
+  displayName
+}
+
+input AppBskyActorProfileSortFieldInput {
+  field: AppBskyActorProfileSortField!
+  direction: SortDirection
+}
+
+input AppBskyActorProfileWhereInput {
+  uri: StringFieldCondition
+  did: StringFieldCondition
+  collection: StringFieldCondition
+  labels: StringFieldCondition
+  website: StringFieldCondition
+  pronouns: StringFieldCondition
+  createdAt: StringFieldCondition
+  pinnedPost: StringFieldCondition
+  description: StringFieldCondition
+  displayName: StringFieldCondition
+  joinedViaStarterPack: StringFieldCondition
+  AND: [AppBskyActorProfileWhereInput]
+  OR: [AppBskyActorProfileWhereInput]
+}
+
+"""Binary blob reference"""
+type Blob {
+  """CID reference to the blob"""
+  ref: String!
+
+  """MIME type of the blob"""
+  mimeType: String!
+
+  """Size in bytes"""
+  size: Int!
+
+  """
+  Generate CDN URL for the blob with the specified preset (avatar, banner, feed_thumbnail, feed_fullsize)
+  """
+  url(
+    """Image preset: avatar, banner, feed_thumbnail, feed_fullsize"""
+    preset: String
+  ): String!
+}
+
+"""Nested type from com.atproto.label.defs#selfLabel"""
+type ComAtprotoLabelDefsSelfLabel {
+  """Field from object definition"""
+  val: String!
+}
+
+"""Nested type from com.atproto.label.defs#selfLabels"""
+type ComAtprotoLabelDefsSelfLabels {
+  """Field from object definition"""
+  values: [ComAtprotoLabelDefsSelfLabel!]!
+}
+
+"""Record type: ComAtprotoRepoStrongRef"""
+type ComAtprotoRepoStrongRef {
+  """Field from lexicon"""
+  uri: String
+
+  """Field from lexicon"""
+  cid: String
+
+  """DID of record author"""
+  did: String
+
+  """Collection name"""
+  collection: String
+
+  """When record was indexed"""
+  indexedAt: String
+
+  """Handle of the actor who created this record"""
+  actorHandle: String
+
+  """Resolved reference for uri"""
+  uriResolved: Record
+
+  """AppBskyActorProfile for this DID"""
+  appBskyActorProfileByDid: AppBskyActorProfile
+
+  """FmTealAlphaFeedPlay records for this DID"""
+  fmTealAlphaFeedPlayByDid: [FmTealAlphaFeedPlay]
+}
+
+type DeleteResult {
+  """URI of deleted record"""
+  uri: String
+}
+
+"""Nested type from fm.teal.alpha.feed.defs#artist"""
+type FmTealAlphaFeedDefsArtist {
+  """Field from object definition"""
+  artistName: String!
+
+  """Field from object definition"""
+  artistMbId: String
+}
+
+"""Record type: FmTealAlphaFeedPlay"""
+type FmTealAlphaFeedPlay {
+  """Record URI"""
+  uri: String
+
+  """Record CID"""
+  cid: String
+
+  """DID of record author"""
+  did: String
+
+  """Collection name"""
+  collection: String
+
+  """When record was indexed"""
+  indexedAt: String
+
+  """Handle of the actor who created this record"""
+  actorHandle: String
+
+  """Field from lexicon"""
+  trackName: String
+
+  """Field from lexicon"""
+  trackMbId: String
+
+  """Field from lexicon"""
+  recordingMbId: String
+
+  """Field from lexicon"""
+  duration: Int
+
+  """Field from lexicon"""
+  artistNames: [String!]
+
+  """Field from lexicon"""
+  artistMbIds: [String!]
+
+  """Field from lexicon"""
+  artists: [FmTealAlphaFeedDefsArtist!]
+
+  """Field from lexicon"""
+  releaseName: String
+
+  """Field from lexicon"""
+  releaseMbId: String
+
+  """Field from lexicon"""
+  isrc: String
+
+  """Field from lexicon"""
+  originUrl: String
+
+  """Field from lexicon"""
+  musicServiceBaseDomain: String
+
+  """Field from lexicon"""
+  submissionClientAgent: String
+
+  """Field from lexicon"""
+  playedTime: String
+
+  """AppBskyActorProfile for this DID"""
+  appBskyActorProfileByDid: AppBskyActorProfile
+}
+
+type FmTealAlphaFeedPlayAggregated {
+  count: Int
+  groups: [FmTealAlphaFeedPlayAggregateGroup]
+}
+
+type FmTealAlphaFeedPlayAggregateGroup {
+  count: Int
+  uri: String
+  cid: String
+  did: String
+  collection: String
+  actorHandle: String
+  trackName: String
+  trackMbId: String
+  recordingMbId: String
+  duration: Int
+  releaseName: String
+  releaseMbId: String
+  isrc: String
+  originUrl: String
+  musicServiceBaseDomain: String
+  submissionClientAgent: String
+  playedTime: String
+  playedTime_day: String
+  playedTime_week: String
+  playedTime_month: String
+  artistNames: [String!]
+  artistMbIds: [String!]
+  artists: [FmTealAlphaFeedDefsArtist!]
+}
+
+type FmTealAlphaFeedPlayConnection {
+  edges: [FmTealAlphaFeedPlayEdge]
+  pageInfo: PageInfo!
+  totalCount: Int
+}
+
+type FmTealAlphaFeedPlayEdge {
+  node: FmTealAlphaFeedPlay
+  cursor: String!
+}
+
+enum FmTealAlphaFeedPlayGroupByField {
+  uri
+  cid
+  did
+  collection
+  actorHandle
+  trackName
+  trackMbId
+  recordingMbId
+  duration
+  releaseName
+  releaseMbId
+  isrc
+  originUrl
+  musicServiceBaseDomain
+  submissionClientAgent
+  playedTime
+  playedTime_day
+  playedTime_week
+  playedTime_month
+}
+
+input FmTealAlphaFeedPlayInput {
+  trackName: String!
+  trackMbId: String
+  recordingMbId: String
+  duration: Int
+  artistNames: String
+  artistMbIds: String
+  artists: String
+  releaseName: String
+  releaseMbId: String
+  isrc: String
+  originUrl: String
+  musicServiceBaseDomain: String
+  submissionClientAgent: String
+  playedTime: String
+}
+
+enum FmTealAlphaFeedPlaySortField {
+  uri
+  indexedAt
+  trackName
+  trackMbId
+  recordingMbId
+  duration
+  releaseName
+  releaseMbId
+  isrc
+  originUrl
+  musicServiceBaseDomain
+  submissionClientAgent
+  playedTime
+}
+
+input FmTealAlphaFeedPlaySortFieldInput {
+  field: FmTealAlphaFeedPlaySortField!
+  direction: SortDirection
+}
+
+input FmTealAlphaFeedPlayWhereInput {
+  uri: StringFieldCondition
+  did: StringFieldCondition
+  collection: StringFieldCondition
+  trackName: StringFieldCondition
+  trackMbId: StringFieldCondition
+  recordingMbId: StringFieldCondition
+  duration: IntFieldCondition
+  artistNames: StringFieldCondition
+  artistMbIds: StringFieldCondition
+  artists: StringFieldCondition
+  releaseName: StringFieldCondition
+  releaseMbId: StringFieldCondition
+  isrc: StringFieldCondition
+  originUrl: StringFieldCondition
+  musicServiceBaseDomain: StringFieldCondition
+  submissionClientAgent: StringFieldCondition
+  playedTime: StringFieldCondition
+  AND: [FmTealAlphaFeedPlayWhereInput]
+  OR: [FmTealAlphaFeedPlayWhereInput]
+}
+
+input IntFieldCondition {
+  eq: Int
+  in: [Int]
+  contains: Int
+  gt: Int
+  gte: Int
+  lt: Int
+  lte: Int
+}
+
+type Mutation {
+  createAppBskyActorProfile(input: AppBskyActorProfileInput!, rkey: String): AppBskyActorProfile
+  updateAppBskyActorProfile(rkey: String!, input: AppBskyActorProfileInput!): AppBskyActorProfile
+  deleteAppBskyActorProfile(rkey: String!): DeleteResult
+  createFmTealAlphaFeedPlay(input: FmTealAlphaFeedPlayInput!, rkey: String): FmTealAlphaFeedPlay
+  updateFmTealAlphaFeedPlay(rkey: String!, input: FmTealAlphaFeedPlayInput!): FmTealAlphaFeedPlay
+  deleteFmTealAlphaFeedPlay(rkey: String!): DeleteResult
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Query {
+  appBskyActorProfile(first: Int, after: String, last: Int, before: String, where: AppBskyActorProfileWhereInput, sortBy: [AppBskyActorProfileSortFieldInput]): AppBskyActorProfileConnection
+  appBskyActorProfileAggregate(
+    where: AppBskyActorProfileWhereInput
+    groupBy: [AppBskyActorProfileGroupByField]
+
+    """Maximum number of groups (default: 50, max: 1000)"""
+    limit: Int
+
+    """Order by count (default: COUNT_DESC)"""
+    orderBy: AggregateOrderBy
+  ): AppBskyActorProfileAggregated
+  fmTealAlphaFeedPlay(first: Int, after: String, last: Int, before: String, where: FmTealAlphaFeedPlayWhereInput, sortBy: [FmTealAlphaFeedPlaySortFieldInput]): FmTealAlphaFeedPlayConnection
+  fmTealAlphaFeedPlayAggregate(
+    where: FmTealAlphaFeedPlayWhereInput
+    groupBy: [FmTealAlphaFeedPlayGroupByField]
+
+    """Maximum number of groups (default: 50, max: 1000)"""
+    limit: Int
+
+    """Order by count (default: COUNT_DESC)"""
+    orderBy: AggregateOrderBy
+  ): FmTealAlphaFeedPlayAggregated
+}
+
+"""Union of all record types"""
+union Record = AppBskyActorProfile | ComAtprotoRepoStrongRef | FmTealAlphaFeedPlay
+
+enum SortDirection {
+  ASC
+  DESC
+}
+
+input StringFieldCondition {
+  eq: String
+  in: [String]
+  contains: String
+  gt: String
+  gte: String
+  lt: String
+  lte: String
+}
+
+type Subscription {
+  """Emitted when a new app.bsky.actor.profile record is created"""
+  appBskyActorProfileCreated: AppBskyActorProfile!
+
+  """Emitted when a app.bsky.actor.profile record is updated"""
+  appBskyActorProfileUpdated: AppBskyActorProfile!
+
+  """Emitted when a app.bsky.actor.profile record is deleted"""
+  appBskyActorProfileDeleted: AppBskyActorProfile!
+
+  """Emitted when a new fm.teal.alpha.feed.play record is created"""
+  fmTealAlphaFeedPlayCreated: FmTealAlphaFeedPlay!
+
+  """Emitted when a fm.teal.alpha.feed.play record is updated"""
+  fmTealAlphaFeedPlayUpdated: FmTealAlphaFeedPlay!
+
+  """Emitted when a fm.teal.alpha.feed.play record is deleted"""
+  fmTealAlphaFeedPlayDeleted: FmTealAlphaFeedPlay!
+}
+

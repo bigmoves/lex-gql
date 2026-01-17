@@ -1,0 +1,16 @@
+services:
+  tap:
+    image: ghcr.io/bluesky-social/indigo/tap:latest
+    platform: linux/amd64
+    ports:
+      - "2480:2480"
+    volumes:
+      - ./data:/data
+    environment:
+      TAP_DATABASE_URL: sqlite:///data/tap.db
+      TAP_RELAY_URL: https://relay1.us-east.bsky.network
+      TAP_SIGNAL_COLLECTION: fm.teal.alpha.feed.play
+      TAP_COLLECTION_FILTERS: fm.teal.alpha.feed.play,app.bsky.actor.profile
+      TAP_DISABLE_ACKS: "true"
+      TAP_RESYNC_PARALLELISM: "10"
+      TAP_LOG_LEVEL: info

@@ -9,6 +9,7 @@
   - `orderBy: AggregateOrderBy` argument - sort by count (`COUNT_ASC`, `COUNT_DESC`, default: `COUNT_DESC`)
   - Date interval fields in `AggregateGroup` types for datetime properties (`{field}_day`, `{field}_week`, `{field}_month`)
   - `AggregateOrderBy` enum type
+  - Array fields in `AggregateGroup` types - returns sample values from each group
 - **Forward join resolution to Record union** - `{field}Resolved` fields now return the `Record` union type
   - Enables inline fragment queries: `postResolved { ... on AppBskyFeedPost { text } }`
   - Works for both at-uri string fields (e.g., `post: String` with `format: at-uri`) and StrongRef fields
@@ -19,7 +20,7 @@
   - Union types automatically created for fields with `refs` array
   - `resolveType` function uses `$type` field for runtime type resolution
 - **Forward joins on nested types** - nested object types now get `*Resolved` fields for strongRef references
-- System fields (`uri`, `did`, `collection`) to WhereInput for filtering
+- System fields (`uri`, `did`, `collection`, `actorHandle`) to WhereInput for filtering
 - System fields (`uri`, `did`, `collection`, `cid`, `actorHandle`) to GroupByEnum and AggregateGroup
 - Blob ref resolution for ATProto format (`ref: { $link: 'cid' }` → `'cid'`)
 - `url(preset: String): String!` field on `Blob` type for generating Bluesky CDN URLs

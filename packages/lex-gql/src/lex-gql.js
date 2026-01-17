@@ -737,6 +737,7 @@ function createWhereInputType(typeName, recordDef, fieldConditionTypes, whereInp
       fields.uri = { type: fieldConditionTypes.String };
       fields.did = { type: fieldConditionTypes.String };
       fields.collection = { type: fieldConditionTypes.String };
+      fields.actorHandle = { type: fieldConditionTypes.String };
 
       for (const prop of recordDef.properties) {
         const gqlType = mapLexiconType(prop.type);
@@ -827,12 +828,14 @@ function createInputType(typeName, recordDef) {
  * Create aggregate result type with count and groups
  * @param {string} typeName
  * @param {RecordDef} recordDef
+ * @param {string} lexiconId
+ * @param {Record<string, GraphQLObjectType>} [typeRegistry]
  * @returns {GraphQLObjectType}
  */
-function createAggregateResultType(typeName, recordDef) {
+function createAggregateResultType(typeName, recordDef, lexiconId, typeRegistry) {
   const groupTypeName = `${typeName}AggregateGroup`;
 
-  // Create group type with groupable fields + count
+  // Create group type with groupable fields + count + array fields
   const groupType = new GraphQLObjectType({
     name: groupTypeName,
     fields: () => {
@@ -858,6 +861,20 @@ function createAggregateResultType(typeName, recordDef) {
             fields[`${prop.name}_week`] = { type: GraphQLString };
             fields[`${prop.name}_month`] = { type: GraphQLString };
           }
+        }
+      }
+
+      // Add array fields (not groupable, but selectable from sample records)
+      for (const prop of recordDef.properties) {
+        if (prop.type === 'array') {
+          const arrayType = getGraphQLType(
+            prop,
+            null, // blobType not needed for arrays
+            null, // strongRefType not needed
+            typeRegistry,
+            lexiconId,
+          );
+          fields[prop.name] = { type: arrayType };
         }
       }
 
@@ -1863,7 +1880,7 @@ export function buildSchema(lexicons) {
   for (const lexicon of lexicons) {
     if (lexicon.defs.main && lexicon.defs.main.type === 'record') {
       const typeName = nsidToTypeName(lexicon.id);
-      aggregateTypes[lexicon.id] = createAggregateResultType(typeName, lexicon.defs.main);
+      aggregateTypes[lexicon.id] = createAggregateResultType(typeName, lexicon.defs.main, lexicon.id, typeRegistry);
       groupByEnums[lexicon.id] = createAggregateGroupByEnum(typeName, lexicon.defs.main);
       fieldConditionInputTypes[typeName] = createPerTypeFieldCondition(
         typeName,
@@ -2129,8 +2146,13 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
 
     // Add aggregate query field
     const aggregateFieldName = `${fieldName}Aggregate`;
-    const aggregateResultType = createAggregateResultType(typeName, lexicon.defs.main);
+    const aggregateResultType = createAggregateResultType(typeName, lexicon.defs.main, lexicon.id, typeRegistry);
     const groupByEnum = createAggregateGroupByEnum(typeName, lexicon.defs.main);
+
+    // Extract array field names from the lexicon for aggregate queries
+    const arrayFields = lexicon.defs.main.properties
+      .filter((/** @type {Property} */ p) => p.type === 'array')
+      .map((/** @type {Property} */ p) => p.name);
 
     queryFields[aggregateFieldName] = {
       type: aggregateResultType,
@@ -2149,6 +2171,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
           groupBy: args.groupBy || [],
           limit: args.limit,
           orderBy: args.orderBy,
+          arrayFields,
         };
         return await queryFn(operation);
       },
