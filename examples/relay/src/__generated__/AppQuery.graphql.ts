@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<7daa7c3e31eb36da1f9c62fa8f2a2bf7>>
+ * @generated SignedSource<<89f51a04654ed0d18537fb36b014bfb8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -84,14 +84,7 @@ v1 = [
       }
     ]
   }
-],
-v2 = {
-  "alias": null,
-  "args": null,
-  "kind": "ScalarField",
-  "name": "playedTime",
-  "storageKey": null
-};
+];
 return {
   "fragment": {
     "argumentDefinitions": (v0/*: any*/),
@@ -150,7 +143,13 @@ return {
                 "name": "node",
                 "plural": false,
                 "selections": [
-                  (v2/*: any*/),
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
+                    "name": "playedTime",
+                    "storageKey": null
+                  },
                   {
                     "alias": null,
                     "args": null,
@@ -315,7 +314,13 @@ return {
             "name": "groups",
             "plural": true,
             "selections": [
-              (v2/*: any*/),
+              {
+                "alias": null,
+                "args": null,
+                "kind": "ScalarField",
+                "name": "playedTime_day",
+                "storageKey": null
+              },
               {
                 "alias": null,
                 "args": null,
@@ -332,12 +337,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4e332d65d68b3c91b015719ade36b211",
+    "cacheID": "dcc7f147a1751d918d0d060a05550e5b",
     "id": null,
     "metadata": {},
     "name": "AppQuery",
     "operationKind": "query",
-    "text": "query AppQuery(\n  $chartWhere: FmTealAlphaFeedPlayWhereInput!\n) {\n  ...App_plays\n  ...ScrobbleChart_data\n}\n\nfragment App_plays on Query {\n  fmTealAlphaFeedPlay(first: 20, sortBy: [{field: playedTime, direction: DESC}]) {\n    totalCount\n    edges {\n      node {\n        playedTime\n        ...TrackItem_play\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment ScrobbleChart_data on Query {\n  chartData: fmTealAlphaFeedPlayAggregate(groupBy: [playedTime_day], where: $chartWhere, limit: 90) {\n    groups {\n      playedTime\n      count\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n  }\n}\n"
+    "text": "query AppQuery(\n  $chartWhere: FmTealAlphaFeedPlayWhereInput!\n) {\n  ...App_plays\n  ...ScrobbleChart_data\n}\n\nfragment App_plays on Query {\n  fmTealAlphaFeedPlay(first: 20, sortBy: [{field: playedTime, direction: DESC}]) {\n    totalCount\n    edges {\n      node {\n        playedTime\n        ...TrackItem_play\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment ScrobbleChart_data on Query {\n  chartData: fmTealAlphaFeedPlayAggregate(groupBy: [playedTime_day], where: $chartWhere, limit: 90) {\n    groups {\n      playedTime_day\n      count\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n  }\n}\n"
   }
 };
 })();

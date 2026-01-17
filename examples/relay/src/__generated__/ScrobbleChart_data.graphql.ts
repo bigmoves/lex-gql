@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<a5849508e44970ba4970151b0e7633ea>>
+ * @generated SignedSource<<5a4754136f629432b8c9e09c557c42a6>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -14,7 +14,7 @@ export type ScrobbleChart_data$data = {
   readonly chartData: {
     readonly groups: ReadonlyArray<{
       readonly count: number | null | undefined;
-      readonly playedTime: string | null | undefined;
+      readonly playedTime_day: string | null | undefined;
     } | null | undefined> | null | undefined;
   } | null | undefined;
   readonly " $fragmentType": "ScrobbleChart_data";
@@ -73,7 +73,7 @@ const node: ReaderFragment = {
               "alias": null,
               "args": null,
               "kind": "ScalarField",
-              "name": "playedTime",
+              "name": "playedTime_day",
               "storageKey": null
             },
             {
@@ -94,6 +94,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "04c7e5f0de6d84e09de76b2e56361c44";
+(node as any).hash = "23f5f4c09f38c466a360ad326ad51600";
 
 export default node;

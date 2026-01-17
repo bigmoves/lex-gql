@@ -16,7 +16,7 @@ export default function ScrobbleChart({ queryRef }: ScrobbleChartProps) {
           limit: 90
         ) {
           groups {
-            playedTime
+            playedTime_day
             count
           }
         }
@@ -30,8 +30,8 @@ export default function ScrobbleChart({ queryRef }: ScrobbleChartProps) {
 
     // Convert aggregated data to chart format
     const aggregated = data.chartData.groups.map((item) => {
-      // playedTime comes back as '2025-08-03 00:00:00', extract just the date part
-      const date = item.playedTime ? item.playedTime.split(" ")[0] : "";
+      // playedTime_day comes back as '2025-08-03', already a date
+      const date = item.playedTime_day || "";
       return {
         date,
         count: item.count,
