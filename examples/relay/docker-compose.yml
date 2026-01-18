@@ -11,6 +11,5 @@ services:
       TAP_RELAY_URL: https://relay1.us-east.bsky.network
       TAP_SIGNAL_COLLECTION: fm.teal.alpha.feed.play
       TAP_COLLECTION_FILTERS: fm.teal.alpha.feed.play,app.bsky.actor.profile
-      TAP_DISABLE_ACKS: "true"
-      TAP_RESYNC_PARALLELISM: "10"
       TAP_LOG_LEVEL: info
+      TAP_DISABLE_ACKS: "true"

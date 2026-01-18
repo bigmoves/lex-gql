@@ -57,11 +57,11 @@ importers:
         specifier: ^5.16.0
         version: 5.16.2(graphql@16.12.0)
       lex-gql:
-        specifier: workspace:*
-        version: link:../../packages/lex-gql
+        specifier: ^0.2.0
+        version: 0.2.0(graphql@16.12.0)
       lex-gql-duckdb:
-        specifier: workspace:*
-        version: link:../../packages/lex-gql-duckdb
+        specifier: ^0.3.0
+        version: 0.3.0(duckdb@1.4.3(encoding@0.1.13))(lex-gql@0.2.0(graphql@16.12.0))
       react:
         specifier: ^19.1.1
         version: 19.2.3
@@ -1711,6 +1711,17 @@ packages:
 
   jsonfile@4.0.0:
     resolution: {integrity: sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==}
+
+  lex-gql-duckdb@0.3.0:
+    resolution: {integrity: sha512-KBx0+D8qxS0UfqpY7z4lC2x1iBsV0aEISdQqbnlVMZmUewPS6Kiq6PSRne81JxTPkBD48swUMIjJgSTT9EgDkQ==}
+    peerDependencies:
+      duckdb: '>=1.0.0'
+      lex-gql: '>=0.2.0'
+
+  lex-gql@0.2.0:
+    resolution: {integrity: sha512-69YfTv8f1+CyaM1/dkxVS1JAZB9jNMoxWrq4KGdFKcS7OxTiGsC7rbFNZkr+rWjjG72fFTXblZ2LFRSLmuXr8Q==}
+    peerDependencies:
+      graphql: ^16.0.0
 
   lightningcss-android-arm64@1.30.2:
     resolution: {integrity: sha512-BH9sEdOCahSgmkVhBLeU7Hc9DWeZ1Eb6wNS6Da8igvUwAe0sqROHddIlvU06q3WyXVEOYDZ6ykBZQnjTbmo4+A==}
@@ -4097,6 +4108,15 @@ snapshots:
   jsonfile@4.0.0:
     optionalDependencies:
       graceful-fs: 4.2.11
+
+  lex-gql-duckdb@0.3.0(duckdb@1.4.3(encoding@0.1.13))(lex-gql@0.2.0(graphql@16.12.0)):
+    dependencies:
+      duckdb: 1.4.3(encoding@0.1.13)
+      lex-gql: 0.2.0(graphql@16.12.0)
+
+  lex-gql@0.2.0(graphql@16.12.0):
+    dependencies:
+      graphql: 16.12.0
 
   lightningcss-android-arm64@1.30.2:
     optional: true
