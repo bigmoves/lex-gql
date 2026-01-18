@@ -103,6 +103,7 @@ function parseAtUri(uri) {
 /**
  * @typedef {Object} Writer
  * @property {(record: RecordInput) => Promise<void>} insertRecord - Insert or replace a record
+ * @property {(records: RecordInput[]) => Promise<void>} insertRecordsBatch - Insert multiple records in a single statement
  * @property {(uri: string) => Promise<void>} deleteRecord - Delete a record by URI
  * @property {(did: string, handle: string) => Promise<void>} upsertActor - Insert or replace an actor
  */
@@ -138,6 +139,36 @@ export function createWriter(conn) {
         cid || null,
         recordJson,
         timestamp
+      );
+    },
+
+    insertRecordsBatch: async (records) => {
+      if (records.length === 0) return;
+
+      const now = new Date().toISOString();
+      const rows = records.map(({ uri, cid, record, indexedAt }) => {
+        const { did, collection, rkey } = parseAtUri(uri);
+        const recordJson = typeof record === 'string' ? record : JSON.stringify(record);
+        return [uri, did, collection, rkey, cid || null, recordJson, indexedAt || now];
+      });
+
+      // Build a single INSERT with multiple VALUES for ~10x faster performance
+      const placeholders = rows.map(() => '(?, ?, ?, ?, ?, ?, ?)').join(', ');
+      const params = rows.flat();
+
+      await conn.run(
+        `
+        INSERT INTO records (uri, did, collection, rkey, cid, record, indexed_at)
+        VALUES ${placeholders}
+        ON CONFLICT (uri) DO UPDATE SET
+          did = EXCLUDED.did,
+          collection = EXCLUDED.collection,
+          rkey = EXCLUDED.rkey,
+          cid = EXCLUDED.cid,
+          record = EXCLUDED.record,
+          indexed_at = EXCLUDED.indexed_at
+      `,
+        ...params
       );
     },
 

@@ -88,30 +88,24 @@ function parseAtUri(uri) {
 
 // Batch writes for better performance
 const pendingWrites = [];
-const BATCH_SIZE = 100;  // Smaller batches
+const BATCH_SIZE = 500;  // Larger batches with true batch INSERT
 const BATCH_INTERVAL = 100;
 let batchTimeout = null;
 let isFlushing = false;
-
-// Yield to event loop
-const yieldToEventLoop = () => new Promise(resolve => setImmediate(resolve));
 
 async function flushWrites() {
   if (pendingWrites.length === 0 || isFlushing) return;
   isFlushing = true;
 
   const batch = pendingWrites.splice(0, BATCH_SIZE);
-  for (let i = 0; i < batch.length; i++) {
-    try {
-      await baseWriter.insertRecord(batch[i]);
-    } catch (err) {
-      // Ignore constraint errors from malformed records
-      if (!err.message.includes('NOT NULL constraint')) {
-        console.error('Insert error:', err.message);
-      }
+  try {
+    // Single batch INSERT is ~10x faster than individual inserts
+    await baseWriter.insertRecordsBatch(batch);
+  } catch (err) {
+    // Ignore constraint errors from malformed records
+    if (!err.message.includes('NOT NULL constraint')) {
+      console.error('Batch insert error:', err.message);
     }
-    // Yield every 10 writes to keep server responsive
-    if (i % 10 === 0) await yieldToEventLoop();
   }
 
   isFlushing = false;

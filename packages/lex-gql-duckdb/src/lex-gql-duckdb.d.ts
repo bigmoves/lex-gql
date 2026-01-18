@@ -27,6 +27,7 @@ export function setupSchema(conn: DuckDBConnection): Promise<void>;
 /**
  * @typedef {Object} Writer
  * @property {(record: RecordInput) => Promise<void>} insertRecord - Insert or replace a record
+ * @property {(records: RecordInput[]) => Promise<void>} insertRecordsBatch - Insert multiple records in a single statement
  * @property {(uri: string) => Promise<void>} deleteRecord - Delete a record by URI
  * @property {(did: string, handle: string) => Promise<void>} upsertActor - Insert or replace an actor
  */
@@ -109,6 +110,10 @@ export type Writer = {
      * - Insert or replace a record
      */
     insertRecord: (record: RecordInput) => Promise<void>;
+    /**
+     * - Insert multiple records in a single statement
+     */
+    insertRecordsBatch: (records: RecordInput[]) => Promise<void>;
     /**
      * - Delete a record by URI
      */

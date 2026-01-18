@@ -109,6 +109,43 @@ describe('createWriter', () => {
     expect(rows).toHaveLength(1);
     expect(rows[0].handle).toBe('alice.example.com');
   });
+
+  it('inserts multiple records in a batch', async () => {
+    await writer.insertRecordsBatch([
+      { uri: 'at://did:plc:alice/app.bsky.feed.post/1', cid: 'cid1', record: { text: 'Post 1' } },
+      { uri: 'at://did:plc:alice/app.bsky.feed.post/2', cid: 'cid2', record: { text: 'Post 2' } },
+      { uri: 'at://did:plc:bob/app.bsky.feed.post/1', cid: 'cid3', record: { text: 'Post 3' } },
+    ]);
+
+    const rows = await db.all('SELECT * FROM records ORDER BY uri');
+    expect(rows).toHaveLength(3);
+    expect(JSON.parse(rows[0].record)).toEqual({ text: 'Post 1' });
+    expect(JSON.parse(rows[1].record)).toEqual({ text: 'Post 2' });
+    expect(rows[2].did).toBe('did:plc:bob');
+  });
+
+  it('handles batch upsert (updates on conflict)', async () => {
+    await writer.insertRecord({
+      uri: 'at://did:plc:alice/app.bsky.feed.post/1',
+      record: { text: 'Original' },
+    });
+
+    await writer.insertRecordsBatch([
+      { uri: 'at://did:plc:alice/app.bsky.feed.post/1', record: { text: 'Updated' } },
+      { uri: 'at://did:plc:alice/app.bsky.feed.post/2', record: { text: 'New' } },
+    ]);
+
+    const rows = await db.all('SELECT * FROM records ORDER BY uri');
+    expect(rows).toHaveLength(2);
+    expect(JSON.parse(rows[0].record)).toEqual({ text: 'Updated' });
+    expect(JSON.parse(rows[1].record)).toEqual({ text: 'New' });
+  });
+
+  it('handles empty batch gracefully', async () => {
+    await writer.insertRecordsBatch([]);
+    const rows = await db.all('SELECT * FROM records');
+    expect(rows).toHaveLength(0);
+  });
 });
 
 describe('buildWhere', () => {
