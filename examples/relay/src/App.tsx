@@ -2,19 +2,19 @@ import {
   graphql,
   useLazyLoadQuery,
   usePaginationFragment,
-  // useSubscription,
+  useSubscription,
 } from "react-relay";
 import { useEffect, useMemo, useRef } from "react";
 import type { AppQuery } from "./__generated__/AppQuery.graphql";
 import type { App_plays$key } from "./__generated__/App_plays.graphql";
-// import type { AppSubscription } from "./__generated__/AppSubscription.graphql";
+import type { AppSubscription } from "./__generated__/AppSubscription.graphql";
 import TrackItem from "./TrackItem";
 import Layout from "./Layout";
 import ScrobbleChart from "./ScrobbleChart";
-// import {
-//   ConnectionHandler,
-//   type GraphQLSubscriptionConfig,
-// } from "relay-runtime";
+import {
+  ConnectionHandler,
+  type GraphQLSubscriptionConfig,
+} from "relay-runtime";
 
 export default function App() {
   const queryVariables = useMemo(() => {
@@ -61,6 +61,7 @@ export default function App() {
           totalCount
           edges {
             node {
+              uri
               playedTime
               ...TrackItem_play
             }
@@ -76,77 +77,81 @@ export default function App() {
   const isLoadingRef = useRef(false);
   loadNextRef.current = loadNext;
 
-  // Subscribe to new plays - disabled during backfill for performance
-  // const subscriptionConfig: GraphQLSubscriptionConfig<AppSubscription> =
-  //   useMemo(() => ({
-  //     subscription: graphql`
-  //     subscription AppSubscription {
-  //       fmTealAlphaFeedPlayCreated {
-  //         uri
-  //         playedTime
-  //         ...TrackItem_play
-  //       }
-  //     }
-  //   `,
-  //     variables: {},
-  //     updater: (store) => {
-  //       const newPlay = store.getRootField("fmTealAlphaFeedPlayCreated");
-  //       if (!newPlay) return;
+  // Subscribe to new plays
+  const subscriptionConfig: GraphQLSubscriptionConfig<AppSubscription> =
+    useMemo(() => ({
+      subscription: graphql`
+      subscription AppSubscription {
+        fmTealAlphaFeedPlayCreated {
+          uri
+          playedTime
+          ...TrackItem_play
+        }
+      }
+    `,
+      variables: {},
+      updater: (store) => {
+        const newPlay = store.getRootField("fmTealAlphaFeedPlayCreated");
+        if (!newPlay) return;
 
-  //       // Only add plays from the last 24 hours
-  //       const playedTime = newPlay.getValue("playedTime") as string | null;
-  //       if (!playedTime) return;
+        // Only add plays from the last 24 hours
+        const playedTime = newPlay.getValue("playedTime") as string | null;
+        if (!playedTime) return;
 
-  //       const playDate = new Date(playedTime);
-  //       const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const playDate = new Date(playedTime);
+        const cutoff = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-  //       if (playDate < cutoff) {
-  //         // Play is too old, don't add it to the feed
-  //         return;
-  //       }
+        if (playDate < cutoff) {
+          // Play is too old, don't add it to the feed
+          return;
+        }
 
-  //       const root = store.getRoot();
-  //       const connection = ConnectionHandler.getConnection(
-  //         root,
-  //         "App_fmTealAlphaFeedPlay",
-  //         { sortBy: [{ field: "playedTime", direction: "DESC" }] },
-  //       );
+        const root = store.getRoot();
+        const connection = ConnectionHandler.getConnection(
+          root,
+          "App_fmTealAlphaFeedPlay",
+          { sortBy: [{ field: "playedTime", direction: "DESC" }] },
+        );
 
-  //       if (!connection) return;
+        if (!connection) return;
 
-  //       const edge = ConnectionHandler.createEdge(
-  //         store,
-  //         connection,
-  //         newPlay,
-  //         "FmTealAlphaFeedPlayEdge",
-  //       );
+        const edge = ConnectionHandler.createEdge(
+          store,
+          connection,
+          newPlay,
+          "FmTealAlphaFeedPlayEdge",
+        );
 
-  //       ConnectionHandler.insertEdgeBefore(connection, edge);
+        ConnectionHandler.insertEdgeBefore(connection, edge);
 
-  //       // Update totalCount
-  //       const totalCountRecord = root.getLinkedRecord("fmTealAlphaFeedPlay", {
-  //         sortBy: [{ field: "playedTime", direction: "DESC" }],
-  //       });
-  //       if (totalCountRecord) {
-  //         const currentCount = totalCountRecord.getValue(
-  //           "totalCount",
-  //         ) as number;
-  //         if (typeof currentCount === "number") {
-  //           totalCountRecord.setValue(currentCount + 1, "totalCount");
-  //         }
-  //       }
-  //     },
-  //   }), []);
+        // Update totalCount
+        const totalCountRecord = root.getLinkedRecord("fmTealAlphaFeedPlay", {
+          sortBy: [{ field: "playedTime", direction: "DESC" }],
+        });
+        if (totalCountRecord) {
+          const currentCount = totalCountRecord.getValue(
+            "totalCount",
+          ) as number;
+          if (typeof currentCount === "number") {
+            totalCountRecord.setValue(currentCount + 1, "totalCount");
+          }
+        }
+      },
+    }), []);
 
-  // useSubscription(subscriptionConfig);
+  useSubscription(subscriptionConfig);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const plays = data?.fmTealAlphaFeedPlay?.edges
-    ?.map((edge) => edge.node)
-    .filter((n) => n != null) || [];
+  const plays = (data?.fmTealAlphaFeedPlay?.edges
+    ?.map((edge) => edge?.node)
+    .filter((n) => n != null) || [])
+    .sort((a, b) => {
+      if (!a.playedTime || !b.playedTime) return 0;
+      return new Date(b.playedTime).getTime() - new Date(a.playedTime).getTime();
+    });
 
   // Sync the loading ref with isLoadingNext
   useEffect(() => {
@@ -208,9 +213,9 @@ export default function App() {
             <h2 className="text-xs text-zinc-600 font-medium mb-6 uppercase tracking-wider">
               {group.date}
             </h2>
-            <div className="space-y-1">
-              {group.plays.map((play, index) => (
-                <TrackItem key={index} play={play} />
+            <div className="space-y-2">
+              {group.plays.map((play) => (
+                <TrackItem key={play.uri} play={play} />
               ))}
             </div>
           </div>

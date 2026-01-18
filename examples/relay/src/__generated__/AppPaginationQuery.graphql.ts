@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<783e2832122c1d8f7bb41d1fe78f9ef1>>
+ * @generated SignedSource<<3f063f257bdc008122aa346cf76b38c8>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -125,6 +125,13 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
+                    "name": "uri",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
                     "name": "playedTime",
                     "storageKey": null
                   },
@@ -195,6 +202,30 @@ return {
                         "kind": "ScalarField",
                         "name": "displayName",
                         "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Blob",
+                        "kind": "LinkedField",
+                        "name": "avatar",
+                        "plural": false,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "preset",
+                                "value": "avatar"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "url",
+                            "storageKey": "url(preset:\"avatar\")"
+                          }
+                        ],
+                        "storageKey": null
                       }
                     ],
                     "storageKey": null
@@ -261,16 +292,16 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dac482c1a09c5930d955d9805c6dfb8d",
+    "cacheID": "dcf0f73a4629d00f30dc1acf64488396",
     "id": null,
     "metadata": {},
     "name": "AppPaginationQuery",
     "operationKind": "query",
-    "text": "query AppPaginationQuery(\n  $count: Int = 20\n  $cursor: String\n) {\n  ...App_plays_1G22uz\n}\n\nfragment App_plays_1G22uz on Query {\n  fmTealAlphaFeedPlay(first: $count, after: $cursor, sortBy: [{field: playedTime, direction: DESC}]) {\n    totalCount\n    edges {\n      node {\n        playedTime\n        ...TrackItem_play\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n  }\n}\n"
+    "text": "query AppPaginationQuery(\n  $count: Int = 20\n  $cursor: String\n) {\n  ...App_plays_1G22uz\n}\n\nfragment App_plays_1G22uz on Query {\n  fmTealAlphaFeedPlay(first: $count, after: $cursor, sortBy: [{field: playedTime, direction: DESC}]) {\n    totalCount\n    edges {\n      node {\n        uri\n        playedTime\n        ...TrackItem_play\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n    avatar {\n      url(preset: \"avatar\")\n    }\n  }\n}\n"
   }
 };
 })();
 
-(node as any).hash = "b793d066128b9e7d52d3209bd3e14afe";
+(node as any).hash = "ae5c8dffd2400bd56376ba2c8d94891c";
 
 export default node;

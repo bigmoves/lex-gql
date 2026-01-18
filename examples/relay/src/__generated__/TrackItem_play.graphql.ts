@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<d110bc257911ffb384b30e7e973211c9>>
+ * @generated SignedSource<<74280602b52aef4bebd292c749fd184f>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -13,6 +13,9 @@ import { FragmentRefs } from "relay-runtime";
 export type TrackItem_play$data = {
   readonly actorHandle: string | null | undefined;
   readonly appBskyActorProfileByDid: {
+    readonly avatar: {
+      readonly url: string;
+    } | null | undefined;
     readonly displayName: string | null | undefined;
   } | null | undefined;
   readonly artists: ReadonlyArray<{
@@ -110,6 +113,30 @@ const node: ReaderFragment = {
           "kind": "ScalarField",
           "name": "displayName",
           "storageKey": null
+        },
+        {
+          "alias": null,
+          "args": null,
+          "concreteType": "Blob",
+          "kind": "LinkedField",
+          "name": "avatar",
+          "plural": false,
+          "selections": [
+            {
+              "alias": null,
+              "args": [
+                {
+                  "kind": "Literal",
+                  "name": "preset",
+                  "value": "avatar"
+                }
+              ],
+              "kind": "ScalarField",
+              "name": "url",
+              "storageKey": "url(preset:\"avatar\")"
+            }
+          ],
+          "storageKey": null
         }
       ],
       "storageKey": null
@@ -119,6 +146,6 @@ const node: ReaderFragment = {
   "abstractKey": null
 };
 
-(node as any).hash = "93f45db972efd335604fbc28995328de";
+(node as any).hash = "37e9c6f851f478846e3e68ef417d4da4";
 
 export default node;

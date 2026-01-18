@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<89f51a04654ed0d18537fb36b014bfb8>>
+ * @generated SignedSource<<c5017ac1b4525858f41077a4837cd728>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -147,6 +147,13 @@ return {
                     "alias": null,
                     "args": null,
                     "kind": "ScalarField",
+                    "name": "uri",
+                    "storageKey": null
+                  },
+                  {
+                    "alias": null,
+                    "args": null,
+                    "kind": "ScalarField",
                     "name": "playedTime",
                     "storageKey": null
                   },
@@ -216,6 +223,30 @@ return {
                         "args": null,
                         "kind": "ScalarField",
                         "name": "displayName",
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "concreteType": "Blob",
+                        "kind": "LinkedField",
+                        "name": "avatar",
+                        "plural": false,
+                        "selections": [
+                          {
+                            "alias": null,
+                            "args": [
+                              {
+                                "kind": "Literal",
+                                "name": "preset",
+                                "value": "avatar"
+                              }
+                            ],
+                            "kind": "ScalarField",
+                            "name": "url",
+                            "storageKey": "url(preset:\"avatar\")"
+                          }
+                        ],
                         "storageKey": null
                       }
                     ],
@@ -337,12 +368,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "dcc7f147a1751d918d0d060a05550e5b",
+    "cacheID": "d26ff61c518a317c14a2a9b8d4aaaf54",
     "id": null,
     "metadata": {},
     "name": "AppQuery",
     "operationKind": "query",
-    "text": "query AppQuery(\n  $chartWhere: FmTealAlphaFeedPlayWhereInput!\n) {\n  ...App_plays\n  ...ScrobbleChart_data\n}\n\nfragment App_plays on Query {\n  fmTealAlphaFeedPlay(first: 20, sortBy: [{field: playedTime, direction: DESC}]) {\n    totalCount\n    edges {\n      node {\n        playedTime\n        ...TrackItem_play\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment ScrobbleChart_data on Query {\n  chartData: fmTealAlphaFeedPlayAggregate(groupBy: [playedTime_day], where: $chartWhere, limit: 90) {\n    groups {\n      playedTime_day\n      count\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n  }\n}\n"
+    "text": "query AppQuery(\n  $chartWhere: FmTealAlphaFeedPlayWhereInput!\n) {\n  ...App_plays\n  ...ScrobbleChart_data\n}\n\nfragment App_plays on Query {\n  fmTealAlphaFeedPlay(first: 20, sortBy: [{field: playedTime, direction: DESC}]) {\n    totalCount\n    edges {\n      node {\n        uri\n        playedTime\n        ...TrackItem_play\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment ScrobbleChart_data on Query {\n  chartData: fmTealAlphaFeedPlayAggregate(groupBy: [playedTime_day], where: $chartWhere, limit: 90) {\n    groups {\n      playedTime_day\n      count\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n    avatar {\n      url(preset: \"avatar\")\n    }\n  }\n}\n"
   }
 };
 })();

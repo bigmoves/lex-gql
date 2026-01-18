@@ -77,6 +77,40 @@ console.log(`DuckDB has ${Number(recordCount.c).toLocaleString()} records`);
 const recordEvents = new EventEmitter();
 recordEvents.setMaxListeners(100);
 
+// Look up actor handle from database
+async function getActorHandle(did) {
+  const row = await duck.get("SELECT handle FROM actors WHERE did = ?", [did]);
+  return row?.handle || null;
+}
+
+// Look up actor profile from database
+async function getActorProfile(did) {
+  const row = await duck.get(
+    "SELECT record FROM records WHERE did = ? AND collection = 'app.bsky.actor.profile'",
+    [did]
+  );
+  if (!row?.record) return null;
+
+  const profile = typeof row.record === 'string' ? JSON.parse(row.record) : row.record;
+
+  // Return blob data in format expected by lex-gql Blob type resolver
+  // The resolver needs { ref, did, mimeType, size } to compute the URL
+  let avatar = null;
+  if (profile.avatar?.ref?.$link) {
+    avatar = {
+      ref: profile.avatar.ref.$link,
+      did,
+      mimeType: profile.avatar.mimeType || 'image/jpeg',
+      size: profile.avatar.size || 0,
+    };
+  }
+
+  return {
+    displayName: profile.displayName || null,
+    avatar,
+  };
+}
+
 // Create writer with batching for DuckDB
 const baseWriter = createWriter(duck);
 
@@ -184,6 +218,16 @@ function connectToTap() {
           console.log(`Deleted: ${uri}`);
         } else if (record) {
           writer.insertRecord({ uri, cid, record });
+          // TODO: Abstract subscription layer in lex-gql to handle field resolution
+          // (related records, blob URLs) like queries do, instead of manual lookups
+          Promise.all([getActorHandle(did), getActorProfile(did)]).then(([actorHandle, profile]) => {
+            recordEvents.emit(`${collection}:created`, {
+              ...record,
+              uri,
+              actorHandle,
+              appBskyActorProfileByDid: profile,
+            });
+          });
           recordCount2++;
           if (recordCount2 % 1000 === 0) {
             console.log(`Processed ${recordCount2} events`);

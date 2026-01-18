@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<896a9c63784bd14529042a1cb0adfd64>>
+ * @generated SignedSource<<09914b9466e64b998da5c58b69d7a24d>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -150,6 +150,30 @@ return {
                 "kind": "ScalarField",
                 "name": "displayName",
                 "storageKey": null
+              },
+              {
+                "alias": null,
+                "args": null,
+                "concreteType": "Blob",
+                "kind": "LinkedField",
+                "name": "avatar",
+                "plural": false,
+                "selections": [
+                  {
+                    "alias": null,
+                    "args": [
+                      {
+                        "kind": "Literal",
+                        "name": "preset",
+                        "value": "avatar"
+                      }
+                    ],
+                    "kind": "ScalarField",
+                    "name": "url",
+                    "storageKey": "url(preset:\"avatar\")"
+                  }
+                ],
+                "storageKey": null
               }
             ],
             "storageKey": null
@@ -160,12 +184,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "15e882ff59aeffce82a48611e02dbe63",
+    "cacheID": "a7bfd64e3451ccd61303087bd69621ac",
     "id": null,
     "metadata": {},
     "name": "AppSubscription",
     "operationKind": "subscription",
-    "text": "subscription AppSubscription {\n  fmTealAlphaFeedPlayCreated {\n    uri\n    playedTime\n    ...TrackItem_play\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n  }\n}\n"
+    "text": "subscription AppSubscription {\n  fmTealAlphaFeedPlayCreated {\n    uri\n    playedTime\n    ...TrackItem_play\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n    avatar {\n      url(preset: \"avatar\")\n    }\n  }\n}\n"
   }
 };
 })();

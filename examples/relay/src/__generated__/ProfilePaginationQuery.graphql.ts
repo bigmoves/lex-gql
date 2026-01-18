@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<52c4410e74e32587db18d04b089e3910>>
+ * @generated SignedSource<<13a59aa21ca3d021dce3ba6ea105ed77>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -251,13 +251,6 @@ return {
                       {
                         "alias": null,
                         "args": null,
-                        "kind": "ScalarField",
-                        "name": "description",
-                        "storageKey": null
-                      },
-                      {
-                        "alias": null,
-                        "args": null,
                         "concreteType": "Blob",
                         "kind": "LinkedField",
                         "name": "avatar",
@@ -277,6 +270,13 @@ return {
                             "storageKey": "url(preset:\"avatar\")"
                           }
                         ],
+                        "storageKey": null
+                      },
+                      {
+                        "alias": null,
+                        "args": null,
+                        "kind": "ScalarField",
+                        "name": "description",
                         "storageKey": null
                       }
                     ],
@@ -345,12 +345,12 @@ return {
     ]
   },
   "params": {
-    "cacheID": "4da0ee226512aceadce3210332ed4766",
+    "cacheID": "8b11e8a86ba408e56b78598469a6e2a5",
     "id": null,
     "metadata": {},
     "name": "ProfilePaginationQuery",
     "operationKind": "query",
-    "text": "query ProfilePaginationQuery(\n  $count: Int = 20\n  $cursor: String\n  $where: FmTealAlphaFeedPlayWhereInput!\n) {\n  ...Profile_plays_mjR8k\n}\n\nfragment Profile_plays_mjR8k on Query {\n  fmTealAlphaFeedPlay(first: $count, after: $cursor, sortBy: [{field: playedTime, direction: DESC}], where: $where) {\n    totalCount\n    edges {\n      node {\n        ...TrackItem_play\n        actorHandle\n        appBskyActorProfileByDid {\n          displayName\n          description\n          avatar {\n            url(preset: \"avatar\")\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n  }\n}\n"
+    "text": "query ProfilePaginationQuery(\n  $count: Int = 20\n  $cursor: String\n  $where: FmTealAlphaFeedPlayWhereInput!\n) {\n  ...Profile_plays_mjR8k\n}\n\nfragment Profile_plays_mjR8k on Query {\n  fmTealAlphaFeedPlay(first: $count, after: $cursor, sortBy: [{field: playedTime, direction: DESC}], where: $where) {\n    totalCount\n    edges {\n      node {\n        ...TrackItem_play\n        actorHandle\n        appBskyActorProfileByDid {\n          displayName\n          description\n          avatar {\n            url(preset: \"avatar\")\n          }\n        }\n        __typename\n      }\n      cursor\n    }\n    pageInfo {\n      endCursor\n      hasNextPage\n    }\n  }\n}\n\nfragment TrackItem_play on FmTealAlphaFeedPlay {\n  trackName\n  playedTime\n  artists {\n    artistName\n  }\n  releaseName\n  releaseMbId\n  actorHandle\n  musicServiceBaseDomain\n  appBskyActorProfileByDid {\n    displayName\n    avatar {\n      url(preset: \"avatar\")\n    }\n  }\n}\n"
   }
 };
 })();

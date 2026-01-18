@@ -157,7 +157,7 @@ export default function Profile() {
         <div className="space-y-1">
           {plays && plays.length > 0
             ? (
-              plays.map((play, index) => <TrackItem key={index} play={play} />)
+              plays.map((play, index) => <TrackItem key={index} play={play} hideUser />)
             )
             : (
               <p className="text-zinc-600 text-center py-8 text-xs uppercase tracking-wider">

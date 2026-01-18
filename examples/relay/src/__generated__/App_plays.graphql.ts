@@ -1,5 +1,5 @@
 /**
- * @generated SignedSource<<33204e604a301f06d4be2dcee37e62ed>>
+ * @generated SignedSource<<cd76eb2461391c6aa48caba98a5a4cbe>>
  * @lightSyntaxTransform
  * @nogrep
  */
@@ -15,6 +15,7 @@ export type App_plays$data = {
     readonly edges: ReadonlyArray<{
       readonly node: {
         readonly playedTime: string | null | undefined;
+        readonly uri: string | null | undefined;
         readonly " $fragmentSpreads": FragmentRefs<"TrackItem_play">;
       } | null | undefined;
     } | null | undefined> | null | undefined;
@@ -117,6 +118,13 @@ return {
                   "alias": null,
                   "args": null,
                   "kind": "ScalarField",
+                  "name": "uri",
+                  "storageKey": null
+                },
+                {
+                  "alias": null,
+                  "args": null,
+                  "kind": "ScalarField",
                   "name": "playedTime",
                   "storageKey": null
                 },
@@ -179,6 +187,6 @@ return {
 };
 })();
 
-(node as any).hash = "b793d066128b9e7d52d3209bd3e14afe";
+(node as any).hash = "ae5c8dffd2400bd56376ba2c8d94891c";
 
 export default node;
