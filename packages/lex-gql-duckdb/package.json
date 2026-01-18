@@ -1,6 +1,6 @@
 {
   "name": "lex-gql-duckdb",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "DuckDB adapter for lex-gql - optimized for analytics queries",
   "type": "module",
   "main": "src/lex-gql-duckdb.js",
