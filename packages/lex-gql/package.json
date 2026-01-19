@@ -1,6 +1,6 @@
 {
   "name": "lex-gql",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Generate a complete GraphQL API from AT Protocol lexicons",
   "license": "MIT",
   "type": "module",
