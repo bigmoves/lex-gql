@@ -7,7 +7,7 @@
 
 import duckdb from 'duckdb';
 import { promisify } from 'util';
-import { hydrateRecord } from 'lex-gql';
+import { hydrateRecord, DEFAULT_SORT } from 'lex-gql';
 
 /**
  * SQL schema for lex-gql records
@@ -200,6 +200,118 @@ const SYSTEM_FIELDS = {
 };
 
 /**
+ * Decode a sort-field-aware cursor
+ * @param {string} cursor - Base64 encoded cursor
+ * @param {Array<{field: string, dir?: string}>} sortFields - Sort configuration
+ * @returns {{ fieldValues: any[], uri: string } | null}
+ */
+function decodeCursor(cursor, sortFields) {
+  try {
+    const decoded = Buffer.from(cursor, 'base64').toString();
+    const parsed = JSON.parse(decoded);
+
+    // Validate cursor structure
+    if (!parsed.v || !Array.isArray(parsed.v) || !parsed.u) {
+      console.debug('lex-gql-duckdb: Invalid cursor structure');
+      return null;
+    }
+
+    // Validate field count matches sort configuration
+    const expectedCount = sortFields?.length || 1;
+    if (parsed.v.length !== expectedCount) {
+      console.debug(
+        `lex-gql-duckdb: Cursor field count mismatch (got ${parsed.v.length}, expected ${expectedCount})`
+      );
+      return null;
+    }
+
+    return { fieldValues: parsed.v, uri: parsed.u };
+  } catch (err) {
+    console.debug('lex-gql-duckdb: Failed to decode cursor:', /** @type {Error} */ (err).message);
+    return null;
+  }
+}
+
+/**
+ * Get SQL comparison operator based on sort direction and cursor type
+ * @param {string | undefined} direction - Sort direction ('asc' or 'desc')
+ * @param {boolean} isBefore - Whether this is a 'before' cursor
+ * @returns {string}
+ */
+function getComparisonOp(direction, isBefore) {
+  const isDesc = direction?.toLowerCase() === 'desc';
+  return isBefore ? (isDesc ? '>' : '<') : (isDesc ? '<' : '>');
+}
+
+/**
+ * Get SQL expression for a field, handling system vs record fields
+ * @param {string} field - Field name
+ * @returns {string}
+ */
+function fieldToSqlExpr(field) {
+  // Validate field name to prevent SQL injection (defense-in-depth)
+  if (!/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(field)) {
+    throw new Error(`Invalid field name: ${field}`);
+  }
+  return SYSTEM_FIELDS[field] || `json_extract_string(r.record, '$.${field}')`;
+}
+
+/**
+ * Build WHERE clause for cursor pagination with sort field awareness
+ * @param {string} cursor - Base64 encoded cursor
+ * @param {Array<{field: string, dir?: string}>} sortFields - Sort configuration
+ * @param {boolean} isBefore - Whether this is a 'before' cursor
+ * @returns {{ sql: string, params: any[] }}
+ */
+function buildCursorWhere(cursor, sortFields, isBefore) {
+  // Default to indexedAt DESC if no sort fields specified
+  const effectiveSort = sortFields && sortFields.length > 0 ? sortFields : DEFAULT_SORT;
+
+  const decoded = decodeCursor(cursor, effectiveSort);
+  if (!decoded || decoded.fieldValues.length === 0) {
+    return { sql: '1=1', params: [] };
+  }
+
+  const clauses = [];
+  const params = [];
+
+  // Build progressive OR clauses for multi-field sort
+  // For sort [A DESC, B ASC], after cursor [a_val, b_val, uri]:
+  // (A < a_val) OR (A = a_val AND B > b_val) OR (A = a_val AND B = b_val AND uri < uri_val)
+  for (let i = 0; i < effectiveSort.length; i++) {
+    const clauseParts = [];
+    const clauseParams = [];
+
+    // Add equality for all prior fields
+    for (let j = 0; j < i; j++) {
+      clauseParts.push(`${fieldToSqlExpr(effectiveSort[j].field)} = ?`);
+      clauseParams.push(decoded.fieldValues[j]);
+    }
+
+    // Add comparison for current field
+    const op = getComparisonOp(effectiveSort[i].dir, isBefore);
+    clauseParts.push(`${fieldToSqlExpr(effectiveSort[i].field)} ${op} ?`);
+    clauseParams.push(decoded.fieldValues[i]);
+
+    clauses.push(`(${clauseParts.join(' AND ')})`);
+    params.push(...clauseParams);
+  }
+
+  // Final clause: all sort fields equal, compare by URI (tiebreaker)
+  const allEqualParts = effectiveSort.map((s) => {
+    return `${fieldToSqlExpr(s.field)} = ?`;
+  });
+  const lastDir = effectiveSort[effectiveSort.length - 1]?.dir || 'desc';
+  const uriOp = getComparisonOp(lastDir, isBefore);
+  allEqualParts.push(`r.uri ${uriOp} ?`);
+
+  clauses.push(`(${allEqualParts.join(' AND ')})`);
+  params.push(...decoded.fieldValues, decoded.uri);
+
+  return { sql: `(${clauses.join(' OR ')})`, params };
+}
+
+/**
  * Convert a JSON field to timestamp, handling both ISO strings and Unix timestamps
  * @param {string} path - The JSON field path expression
  * @returns {string} - SQL expression that returns a timestamp
@@ -320,15 +432,19 @@ export function buildWhere(where) {
  */
 export function buildOrderBy(sort) {
   if (!sort || sort.length === 0) {
-    return 'r.id DESC';
+    return 'r.indexed_at DESC, r.uri DESC';
   }
 
-  return sort
-    .map(({ field, dir = 'asc' }) => {
-      const fieldPath = SYSTEM_FIELDS[field] || `json_extract_string(r.record, '$.${field}')`;
-      return `${fieldPath} ${dir.toUpperCase()}`;
-    })
-    .join(', ');
+  const sortClauses = sort.map(({ field, dir = 'asc' }) => {
+    const fieldPath = SYSTEM_FIELDS[field] || `json_extract_string(r.record, '$.${field}')`;
+    return `${fieldPath} ${dir.toUpperCase()}`;
+  });
+
+  // Add URI as tiebreaker using direction of last sort field
+  const lastDir = sort[sort.length - 1]?.dir || 'asc';
+  sortClauses.push(`r.uri ${lastDir.toUpperCase()}`);
+
+  return sortClauses.join(', ');
 }
 
 /**
@@ -406,26 +522,18 @@ async function findMany(conn, op) {
   const cursorParams = [];
 
   if (after) {
-    try {
-      const cursor = JSON.parse(Buffer.from(after, 'base64').toString());
-      if (cursor.id) {
-        cursorConditions.push('r.id < ?');
-        cursorParams.push(cursor.id);
-      }
-    } catch (err) {
-      console.warn('lex-gql-duckdb: Malformed cursor (after), ignoring:', /** @type {Error} */ (err).message);
+    const cursorWhere = buildCursorWhere(after, sort, false);
+    if (cursorWhere.sql !== '1=1') {
+      cursorConditions.push(cursorWhere.sql);
+      cursorParams.push(...cursorWhere.params);
     }
   }
 
   if (before) {
-    try {
-      const cursor = JSON.parse(Buffer.from(before, 'base64').toString());
-      if (cursor.id) {
-        cursorConditions.push('r.id > ?');
-        cursorParams.push(cursor.id);
-      }
-    } catch (err) {
-      console.warn('lex-gql-duckdb: Malformed cursor (before), ignoring:', /** @type {Error} */ (err).message);
+    const cursorWhere = buildCursorWhere(before, sort, true);
+    if (cursorWhere.sql !== '1=1') {
+      cursorConditions.push(cursorWhere.sql);
+      cursorParams.push(...cursorWhere.params);
     }
   }
 

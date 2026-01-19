@@ -245,32 +245,32 @@ describe('buildWhere', () => {
 describe('buildOrderBy', () => {
   it('returns default order when no sort', () => {
     const sql = buildOrderBy([]);
-    expect(sql).toBe('r.id DESC');
+    expect(sql).toBe('r.indexed_at DESC, r.uri DESC');
   });
 
-  it('handles single sort field', () => {
+  it('handles single sort field with uri tiebreaker', () => {
     const sql = buildOrderBy([{ field: 'createdAt', dir: 'asc' }]);
-    expect(sql).toBe("json_extract_string(r.record, '$.createdAt') ASC");
+    expect(sql).toBe("json_extract_string(r.record, '$.createdAt') ASC, r.uri ASC");
   });
 
-  it('handles system field sort', () => {
+  it('handles system field sort with uri tiebreaker', () => {
     const sql = buildOrderBy([{ field: 'indexedAt', dir: 'desc' }]);
-    expect(sql).toBe('r.indexed_at DESC');
+    expect(sql).toBe('r.indexed_at DESC, r.uri DESC');
   });
 
-  it('handles multi-field sort', () => {
+  it('handles multi-field sort with uri tiebreaker', () => {
     const sql = buildOrderBy([
       { field: 'status', dir: 'asc' },
       { field: 'createdAt', dir: 'desc' },
     ]);
     expect(sql).toBe(
-      "json_extract_string(r.record, '$.status') ASC, json_extract_string(r.record, '$.createdAt') DESC",
+      "json_extract_string(r.record, '$.status') ASC, json_extract_string(r.record, '$.createdAt') DESC, r.uri DESC",
     );
   });
 
   it('defaults to asc when dir not specified', () => {
     const sql = buildOrderBy([{ field: 'name' }]);
-    expect(sql).toBe("json_extract_string(r.record, '$.name') ASC");
+    expect(sql).toBe("json_extract_string(r.record, '$.name') ASC, r.uri ASC");
   });
 });
 
@@ -357,7 +357,13 @@ describe('findMany', () => {
       pagination: { first: 2 },
     });
 
-    const cursor = Buffer.from(JSON.stringify({ id: first.rows[1]._id })).toString('base64');
+    // Cursor format: JSON { v: [sortValues], u: uri } (default sort is indexedAt DESC)
+    // indexedAt comes back as Date object, convert to ISO string
+    const lastRow = first.rows[1];
+    const indexedAtStr = lastRow.indexedAt instanceof Date
+      ? lastRow.indexedAt.toISOString()
+      : lastRow.indexedAt;
+    const cursor = Buffer.from(JSON.stringify({ v: [indexedAtStr], u: lastRow.uri })).toString('base64');
 
     const second = await query({
       type: 'findMany',
@@ -368,6 +374,216 @@ describe('findMany', () => {
 
     expect(second.rows).toHaveLength(2);
     expect(second.hasPrev).toBe(true);
+  });
+
+  it('handles cursor pagination with custom sort field', async () => {
+    // Insert records with different playedTime values (out of insertion order)
+    await writer.insertRecord({
+      uri: 'at://did:plc:abc/col/1',
+      record: { playedTime: '2024-01-03T00:00:00Z', name: 'third' },
+    });
+    await writer.insertRecord({
+      uri: 'at://did:plc:abc/col/2',
+      record: { playedTime: '2024-01-01T00:00:00Z', name: 'first' },
+    });
+    await writer.insertRecord({
+      uri: 'at://did:plc:abc/col/3',
+      record: { playedTime: '2024-01-05T00:00:00Z', name: 'fifth' },
+    });
+    await writer.insertRecord({
+      uri: 'at://did:plc:abc/col/4',
+      record: { playedTime: '2024-01-02T00:00:00Z', name: 'second' },
+    });
+    await writer.insertRecord({
+      uri: 'at://did:plc:abc/col/5',
+      record: { playedTime: '2024-01-04T00:00:00Z', name: 'fourth' },
+    });
+
+    // Get first page sorted by playedTime DESC
+    const first = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      sort: [{ field: 'playedTime', dir: 'desc' }],
+      pagination: { first: 2 },
+    });
+
+    expect(first.rows).toHaveLength(2);
+    expect(first.rows[0].name).toBe('fifth');  // 2024-01-05
+    expect(first.rows[1].name).toBe('fourth'); // 2024-01-04
+    expect(first.hasNext).toBe(true);
+
+    // Build cursor from last row - this is what formatConnection does
+    const lastRow = first.rows[1];
+    const cursor = Buffer.from(JSON.stringify({ v: ['2024-01-04T00:00:00Z'], u: lastRow.uri })).toString('base64');
+
+    // Get second page
+    const second = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      sort: [{ field: 'playedTime', dir: 'desc' }],
+      pagination: { first: 2, after: cursor },
+    });
+
+    expect(second.rows).toHaveLength(2);
+    expect(second.rows[0].name).toBe('third');  // 2024-01-03
+    expect(second.rows[1].name).toBe('second'); // 2024-01-02
+    expect(second.hasNext).toBe(true);
+
+    // Get third page
+    const lastRow2 = second.rows[1];
+    const cursor2 = Buffer.from(JSON.stringify({ v: ['2024-01-02T00:00:00Z'], u: lastRow2.uri })).toString('base64');
+
+    const third = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      sort: [{ field: 'playedTime', dir: 'desc' }],
+      pagination: { first: 2, after: cursor2 },
+    });
+
+    expect(third.rows).toHaveLength(1);
+    expect(third.rows[0].name).toBe('first'); // 2024-01-01
+    expect(third.hasNext).toBe(false);
+  });
+
+  it('does not produce duplicate records when paginating with custom sort', async () => {
+    // Insert 10 records with varying timestamps
+    const timestamps = [
+      '2024-01-10T00:00:00Z',
+      '2024-01-09T00:00:00Z',
+      '2024-01-08T00:00:00Z',
+      '2024-01-07T00:00:00Z',
+      '2024-01-06T00:00:00Z',
+      '2024-01-05T00:00:00Z',
+      '2024-01-04T00:00:00Z',
+      '2024-01-03T00:00:00Z',
+      '2024-01-02T00:00:00Z',
+      '2024-01-01T00:00:00Z',
+    ];
+
+    // Insert in random order
+    const insertOrder = [4, 7, 1, 9, 2, 5, 0, 8, 3, 6];
+    for (const i of insertOrder) {
+      await writer.insertRecord({
+        uri: `at://did:plc:abc/col/${i}`,
+        record: { playedTime: timestamps[i], index: i },
+      });
+    }
+
+    const allUris = new Set();
+    let cursor = null;
+
+    // Paginate through all records
+    for (let page = 0; page < 5; page++) {
+      const result = await query({
+        type: 'findMany',
+        collection: 'col',
+        where: [],
+        sort: [{ field: 'playedTime', dir: 'desc' }],
+        pagination: { first: 3, after: cursor },
+      });
+
+      // Check for duplicates
+      for (const row of result.rows) {
+        expect(allUris.has(row.uri)).toBe(false);
+        allUris.add(row.uri);
+      }
+
+      if (!result.hasNext) break;
+
+      // Build cursor for next page
+      const lastRow = result.rows[result.rows.length - 1];
+      cursor = Buffer.from(JSON.stringify({ v: [lastRow.playedTime], u: lastRow.uri })).toString('base64');
+    }
+
+    // Verify we got all records
+    expect(allUris.size).toBe(10);
+  });
+
+  it('handles before cursor with custom sort field', async () => {
+    // Insert records
+    for (let i = 1; i <= 5; i++) {
+      await writer.insertRecord({
+        uri: `at://did:plc:abc/col/${i}`,
+        record: { playedTime: `2024-01-0${i}T00:00:00Z`, name: `item${i}` },
+      });
+    }
+
+    // Start from the middle: item3 (2024-01-03)
+    const cursor = Buffer.from(JSON.stringify({ v: ['2024-01-03T00:00:00Z'], u: 'at://did:plc:abc/col/3' })).toString('base64');
+
+    // Get records BEFORE item3 (should be item4, item5 in DESC order)
+    const result = await query({
+      type: 'findMany',
+      collection: 'col',
+      where: [],
+      sort: [{ field: 'playedTime', dir: 'desc' }],
+      pagination: { last: 2, before: cursor },
+    });
+
+    expect(result.rows).toHaveLength(2);
+    expect(result.rows[0].name).toBe('item5'); // 2024-01-05
+    expect(result.rows[1].name).toBe('item4'); // 2024-01-04
+  });
+
+  it('handles cursor pagination with multi-field sort', async () => {
+    // Insert records with two sort fields: category and playedTime
+    const records = [
+      { uri: 'at://did:plc:abc/col/1', category: 'A', playedTime: '2024-01-03T00:00:00Z' },
+      { uri: 'at://did:plc:abc/col/2', category: 'A', playedTime: '2024-01-01T00:00:00Z' },
+      { uri: 'at://did:plc:abc/col/3', category: 'B', playedTime: '2024-01-05T00:00:00Z' },
+      { uri: 'at://did:plc:abc/col/4', category: 'A', playedTime: '2024-01-02T00:00:00Z' },
+      { uri: 'at://did:plc:abc/col/5', category: 'B', playedTime: '2024-01-04T00:00:00Z' },
+      { uri: 'at://did:plc:abc/col/6', category: 'C', playedTime: '2024-01-01T00:00:00Z' },
+    ];
+
+    for (const r of records) {
+      await writer.insertRecord({
+        uri: r.uri,
+        record: { category: r.category, playedTime: r.playedTime },
+      });
+    }
+
+    // Sort by category ASC, then playedTime DESC
+    // Expected order: A(01-03), A(01-02), A(01-01), B(01-05), B(01-04), C(01-01)
+    const allUris = [];
+    let cursor = null;
+
+    // Paginate through all records with page size 2
+    for (let page = 0; page < 4; page++) {
+      const result = await query({
+        type: 'findMany',
+        collection: 'col',
+        where: [],
+        sort: [{ field: 'category', dir: 'asc' }, { field: 'playedTime', dir: 'desc' }],
+        pagination: { first: 2, after: cursor },
+      });
+
+      for (const row of result.rows) {
+        allUris.push(row.uri);
+      }
+
+      if (!result.hasNext) break;
+
+      // Build cursor with both sort field values
+      const lastRow = result.rows[result.rows.length - 1];
+      cursor = Buffer.from(JSON.stringify({
+        v: [lastRow.category, lastRow.playedTime],
+        u: lastRow.uri,
+      })).toString('base64');
+    }
+
+    // Verify correct order
+    expect(allUris).toEqual([
+      'at://did:plc:abc/col/1', // A, 01-03
+      'at://did:plc:abc/col/4', // A, 01-02
+      'at://did:plc:abc/col/2', // A, 01-01
+      'at://did:plc:abc/col/3', // B, 01-05
+      'at://did:plc:abc/col/5', // B, 01-04
+      'at://did:plc:abc/col/6', // C, 01-01
+    ]);
   });
 
   it('filters with where clause', async () => {

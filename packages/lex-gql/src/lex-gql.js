@@ -2141,7 +2141,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         };
 
         const result = await queryFn(operation);
-        return formatConnection(result);
+        return formatConnection(result, operation.sort);
       },
     };
 
@@ -2426,19 +2426,27 @@ function extractSelectFields(info) {
     .map((s) => s.name.value);
 }
 
+/** @type {Array<{field: string, dir: string}>} */
+export const DEFAULT_SORT = [{ field: 'indexedAt', dir: 'desc' }];
+
 /**
  * Format query result as GraphQL connection
  * @param {{ rows: any[], hasNext: boolean, hasPrev: boolean, totalCount: number }} result
+ * @param {Array<{field: string, dir?: string}>} [sortBy] - Sort configuration for cursor encoding
  * @returns {Object}
  */
-function formatConnection(result) {
+function formatConnection(result, sortBy) {
   const { rows, hasNext, hasPrev, totalCount } = result;
+  const effectiveSort = sortBy && sortBy.length > 0 ? sortBy : DEFAULT_SORT;
 
-  // Create base64-encoded cursor with id for sqlite adapter
-  /** @param {any} row */
+  /**
+   * Create cursor encoding sort field values + uri as tiebreaker
+   * @param {any} row
+   */
   const makeCursor = (row) => {
     if (!row) return null;
-    return Buffer.from(JSON.stringify({ id: row._id, uri: row.uri })).toString('base64');
+    const values = effectiveSort.map((s) => row[s.field] ?? null);
+    return Buffer.from(JSON.stringify({ v: values, u: row.uri })).toString('base64');
   };
 
   return {

@@ -371,6 +371,75 @@ describe('lex-gql e2e with real lexicons', () => {
       expect(result.data.appBskyFeedPost.totalCount).toBe(25);
       expect(result.data.appBskyFeedPost.edges).toHaveLength(5);
     });
+
+    it('paginates with custom sort without duplicates', async () => {
+      // Clear and insert records with different createdAt values in random order
+      db.exec('DELETE FROM records');
+
+      const timestamps = [
+        '2024-01-10T00:00:00.000Z',
+        '2024-01-09T00:00:00.000Z',
+        '2024-01-08T00:00:00.000Z',
+        '2024-01-07T00:00:00.000Z',
+        '2024-01-06T00:00:00.000Z',
+        '2024-01-05T00:00:00.000Z',
+        '2024-01-04T00:00:00.000Z',
+        '2024-01-03T00:00:00.000Z',
+        '2024-01-02T00:00:00.000Z',
+        '2024-01-01T00:00:00.000Z',
+      ];
+
+      // Insert in random order (not matching createdAt order)
+      const insertOrder = [4, 7, 1, 9, 2, 5, 0, 8, 3, 6];
+      for (const i of insertOrder) {
+        writer.insertRecord({
+          uri: `at://did:plc:alice/app.bsky.feed.post/${i}`,
+          record: { text: `Post ${i}`, createdAt: timestamps[i] },
+          indexedAt: '2024-01-15T00:00:00.000Z',
+        });
+      }
+
+      const allTexts = [];
+      let cursor = null;
+
+      // Paginate through all results sorted by createdAt DESC
+      for (let page = 0; page < 5; page++) {
+        const result = await adapter.execute(
+          `
+          query ($cursor: String) {
+            appBskyFeedPost(first: 3, after: $cursor, sortBy: [{ field: createdAt, direction: DESC }]) {
+              edges {
+                node { text createdAt }
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        `,
+          { cursor },
+        );
+
+        expect(result.errors).toBeUndefined();
+
+        // Check for duplicates
+        for (const edge of result.data.appBskyFeedPost.edges) {
+          expect(allTexts).not.toContain(edge.node.text);
+          allTexts.push(edge.node.text);
+        }
+
+        if (!result.data.appBskyFeedPost.pageInfo.hasNextPage) break;
+        cursor = result.data.appBskyFeedPost.pageInfo.endCursor;
+      }
+
+      // Should have all 10 records without duplicates
+      expect(allTexts).toHaveLength(10);
+
+      // Should be in createdAt DESC order (Post 0 = Jan 10, Post 9 = Jan 1)
+      expect(allTexts[0]).toBe('Post 0'); // 2024-01-10
+      expect(allTexts[9]).toBe('Post 9'); // 2024-01-01
+    });
   });
 
   describe('filtering', () => {
