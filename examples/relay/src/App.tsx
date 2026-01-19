@@ -16,7 +16,7 @@ import {
   type GraphQLSubscriptionConfig,
 } from "relay-runtime";
 
-const SUBSCRIPTIONS_ENABLED = false;
+const SUBSCRIPTIONS_ENABLED = true;
 
 function PlaySubscription() {
   const subscriptionConfig: GraphQLSubscriptionConfig<AppSubscription> =
