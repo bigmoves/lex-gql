@@ -1582,6 +1582,11 @@ function createRecordType(
  * @param {GraphQLObjectType | null} strongRefType
  * @param {Record<string, GraphQLObjectType>} typeRegistry
  * @param {Record<string, GraphQLUnionType>} unionRegistry
+ * @param {Map<string, Array<{fromLexicon: string, fieldName: string}>>} reverseJoinMap
+ * @param {Record<string, GraphQLObjectType>} connectionTypes
+ * @param {Record<string, GraphQLInputObjectType>} sortInputTypes
+ * @param {Record<string, GraphQLInputObjectType>} whereInputTypes
+ * @param {(op: Operation) => Promise<any>} queryFn
  * @returns {GraphQLObjectType}
  */
 function createRecordTypeWithResolvers(
@@ -1597,6 +1602,11 @@ function createRecordTypeWithResolvers(
   strongRefType,
   typeRegistry,
   unionRegistry,
+  reverseJoinMap,
+  connectionTypes,
+  sortInputTypes,
+  whereInputTypes,
+  queryFn,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -1685,6 +1695,62 @@ function createRecordTypeWithResolvers(
             },
           };
         }
+      }
+
+      // Add reverse join fields (Via fields)
+      const reverseJoins = reverseJoinMap.get(lexiconId) || [];
+      for (const { fromLexicon, fieldName } of reverseJoins) {
+        const fromTypeName = nsidToTypeName(fromLexicon);
+        const reverseFieldName =
+          nsidToFieldName(fromLexicon) +
+          'Via' +
+          fieldName.charAt(0).toUpperCase() +
+          fieldName.slice(1);
+
+        /** @type {Record<string, import('graphql').GraphQLArgumentConfig>} */
+        const reverseFieldArgs = {
+          first: { type: GraphQLInt },
+          after: { type: GraphQLString },
+          last: { type: GraphQLInt },
+          before: { type: GraphQLString },
+          where: { type: whereInputTypes[fromTypeName] },
+        };
+        if (sortInputTypes[fromTypeName]) {
+          reverseFieldArgs.sortBy = {
+            type: new GraphQLList(sortInputTypes[fromTypeName]),
+          };
+        }
+        fields[reverseFieldName] = {
+          type: connectionTypes[fromLexicon],
+          args: reverseFieldArgs,
+          description: `${fromTypeName} records pointing to this via ${fieldName}`,
+          resolve: async (parent, args) => {
+            const uri = parent.uri;
+            if (!uri) {
+              return {
+                edges: [],
+                pageInfo: { hasNextPage: false, hasPreviousPage: false },
+                totalCount: 0,
+              };
+            }
+
+            const operation = {
+              type: 'findMany',
+              collection: fromLexicon,
+              where: [{ field: fieldName, op: 'eq', value: uri }],
+              sort: compileSortBy(args.sortBy),
+              pagination: {
+                first: args.first,
+                after: args.after,
+                last: args.last,
+                before: args.before,
+              },
+            };
+
+            const result = await queryFn(operation);
+            return formatConnection(result, operation.sort);
+          },
+        };
       }
 
       return fields;
@@ -2019,6 +2085,9 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   const joinCollector = new JoinCollector(queryFn);
   const didCollector = new DidCollector(queryFn);
 
+  // Discover reverse joins before building types
+  const reverseJoinMap = discoverReverseJoins(lexicons);
+
   // Pre-pass: Create nested types from local defs (like #replyRef, #entity, etc.)
   for (const lexicon of lexicons) {
     const otherDefs = lexicon.defs?.others || {};
@@ -2057,6 +2126,11 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         strongRefType,
         typeRegistry,
         unionRegistry,
+        reverseJoinMap,
+        connectionTypes,
+        sortInputTypes,
+        whereInputTypes,
+        queryFn,
       );
       // Register in type registry
       typeRegistry[lexicon.id] = recordTypes[lexicon.id];
