@@ -1,9 +1,9 @@
-import { graphql, useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router-dom";
-import type { TopAlbumsQuery } from "./__generated__/TopAlbumsQuery.graphql";
-import AlbumItem from "./AlbumItem";
-import Layout from "./Layout";
-import { useDateRangeFilter } from "./useDateRangeFilter";
+import { graphql, useLazyLoadQuery } from 'react-relay';
+import { useParams } from 'react-router-dom';
+import type { TopAlbumsQuery } from './__generated__/TopAlbumsQuery.graphql';
+import AlbumItem from './AlbumItem';
+import Layout from './Layout';
+import { useDateRangeFilter } from './useDateRangeFilter';
 
 export default function TopAlbums() {
   const { period } = useParams<{ period?: string }>();
@@ -30,7 +30,7 @@ export default function TopAlbums() {
       }
     `,
     queryVariables,
-    { fetchKey: period || "all", fetchPolicy: "network-only" },
+    { fetchKey: period || 'all', fetchPolicy: 'network-only' },
   );
 
   const albums = [...(data.fmTealAlphaFeedPlayAggregate?.groups || [])];
@@ -39,7 +39,7 @@ export default function TopAlbums() {
   const seenNames = new Set<string>();
   const dedupedAlbums = albums
     .filter((album) => {
-      const name = album.releaseName || "Unknown Album";
+      const name = album.releaseName || 'Unknown Album';
       if (seenNames.has(name)) {
         return false;
       }
@@ -56,7 +56,7 @@ export default function TopAlbums() {
         {dedupedAlbums.map((album, index) => (
           <AlbumItem
             key={album.releaseMbId || index}
-            releaseName={album.releaseName || "Unknown Album"}
+            releaseName={album.releaseName || 'Unknown Album'}
             releaseMbId={album.releaseMbId}
             artists={album.artists ? JSON.stringify(album.artists) : undefined}
             count={album.count}

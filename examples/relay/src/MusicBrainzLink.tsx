@@ -3,10 +3,7 @@ interface MusicBrainzLinkProps {
   children: React.ReactNode;
 }
 
-export default function MusicBrainzLink({
-  releaseMbId,
-  children,
-}: MusicBrainzLinkProps) {
+export default function MusicBrainzLink({ releaseMbId, children }: MusicBrainzLinkProps) {
   if (!releaseMbId) {
     return <>{children}</>;
   }

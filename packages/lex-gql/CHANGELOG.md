@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.2
+
+### Patch Changes
+
+- Add DidCollector for batching DID-based join resolution
+
+  Introduces a new `DidCollector` class (similar to the existing `JoinCollector`) that batches DID-based lookups across GraphQL resolvers. When multiple records reference the same DID, queries are now batched into a single database call per collection instead of N+1 individual queries.
+
+  - Group pending DID lookups by collection
+  - Batch fetch using `IN` queries with all pending DIDs
+  - Cache resolved results for subsequent requests
+  - Support both unique (single record) and non-unique (array) lookups
+  - Handle errors gracefully with null/empty fallbacks
+
 ## 0.2.1
 
 ### Patch Changes

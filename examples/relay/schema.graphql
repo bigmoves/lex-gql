@@ -1,6 +1,10 @@
-"""Exposes a URL that specifies the behavior of this scalar."""
+"""
+Exposes a URL that specifies the behavior of this scalar.
+"""
 directive @specifiedBy(
-  """The URL that specifies the behavior of this scalar."""
+  """
+  The URL that specifies the behavior of this scalar.
+  """
   url: String!
 ) on SCALAR
 
@@ -9,72 +13,118 @@ Indicates exactly one field must be supplied and this field must not be `null`.
 """
 directive @oneOf on INPUT_OBJECT
 
-"""Order direction for aggregate count"""
+"""
+Order direction for aggregate count
+"""
 enum AggregateOrderBy {
-  """Ascending by count"""
+  """
+  Ascending by count
+  """
   COUNT_ASC
 
-  """Descending by count (default)"""
+  """
+  Descending by count (default)
+  """
   COUNT_DESC
 }
 
-"""Record type: AppBskyActorProfile"""
+"""
+Record type: AppBskyActorProfile
+"""
 type AppBskyActorProfile {
-  """Record URI"""
+  """
+  Record URI
+  """
   uri: String
 
-  """Record CID"""
+  """
+  Record CID
+  """
   cid: String
 
-  """DID of record author"""
+  """
+  DID of record author
+  """
   did: String
 
-  """Collection name"""
+  """
+  Collection name
+  """
   collection: String
 
-  """When record was indexed"""
+  """
+  When record was indexed
+  """
   indexedAt: String
 
-  """Handle of the actor who created this record"""
+  """
+  Handle of the actor who created this record
+  """
   actorHandle: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   avatar: Blob
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   banner: Blob
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   labels: AppBskyActorProfileLabels
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   website: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   pronouns: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   createdAt: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   pinnedPost: ComAtprotoRepoStrongRef
 
-  """Resolved reference for pinnedPost"""
+  """
+  Resolved reference for pinnedPost
+  """
   pinnedPostResolved: Record
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   description: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   displayName: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   joinedViaStarterPack: ComAtprotoRepoStrongRef
 
-  """Resolved reference for joinedViaStarterPack"""
+  """
+  Resolved reference for joinedViaStarterPack
+  """
   joinedViaStarterPackResolved: Record
 
-  """FmTealAlphaFeedPlay records for this DID"""
+  """
+  FmTealAlphaFeedPlay records for this DID
+  """
   fmTealAlphaFeedPlayByDid: [FmTealAlphaFeedPlay]
 }
 
@@ -140,7 +190,9 @@ input AppBskyActorProfileInput {
   joinedViaStarterPack: String
 }
 
-"""Union type for AppBskyActorProfile.labels"""
+"""
+Union type for AppBskyActorProfile.labels
+"""
 union AppBskyActorProfileLabels = ComAtprotoLabelDefsSelfLabels
 
 enum AppBskyActorProfileSortField {
@@ -174,145 +226,235 @@ input AppBskyActorProfileWhereInput {
   OR: [AppBskyActorProfileWhereInput]
 }
 
-"""Binary blob reference"""
+"""
+Binary blob reference
+"""
 type Blob {
-  """CID reference to the blob"""
+  """
+  CID reference to the blob
+  """
   ref: String!
 
-  """MIME type of the blob"""
+  """
+  MIME type of the blob
+  """
   mimeType: String!
 
-  """Size in bytes"""
+  """
+  Size in bytes
+  """
   size: Int!
 
   """
   Generate CDN URL for the blob with the specified preset (avatar, banner, feed_thumbnail, feed_fullsize)
   """
   url(
-    """Image preset: avatar, banner, feed_thumbnail, feed_fullsize"""
+    """
+    Image preset: avatar, banner, feed_thumbnail, feed_fullsize
+    """
     preset: String
   ): String!
 }
 
-"""Nested type from com.atproto.label.defs#selfLabel"""
+"""
+Nested type from com.atproto.label.defs#selfLabel
+"""
 type ComAtprotoLabelDefsSelfLabel {
-  """Field from object definition"""
+  """
+  Field from object definition
+  """
   val: String!
 }
 
-"""Nested type from com.atproto.label.defs#selfLabels"""
+"""
+Nested type from com.atproto.label.defs#selfLabels
+"""
 type ComAtprotoLabelDefsSelfLabels {
-  """Field from object definition"""
+  """
+  Field from object definition
+  """
   values: [ComAtprotoLabelDefsSelfLabel!]!
 }
 
-"""Record type: ComAtprotoRepoStrongRef"""
+"""
+Record type: ComAtprotoRepoStrongRef
+"""
 type ComAtprotoRepoStrongRef {
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   uri: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   cid: String
 
-  """DID of record author"""
+  """
+  DID of record author
+  """
   did: String
 
-  """Collection name"""
+  """
+  Collection name
+  """
   collection: String
 
-  """When record was indexed"""
+  """
+  When record was indexed
+  """
   indexedAt: String
 
-  """Handle of the actor who created this record"""
+  """
+  Handle of the actor who created this record
+  """
   actorHandle: String
 
-  """Resolved reference for uri"""
+  """
+  Resolved reference for uri
+  """
   uriResolved: Record
 
-  """AppBskyActorProfile for this DID"""
+  """
+  AppBskyActorProfile for this DID
+  """
   appBskyActorProfileByDid: AppBskyActorProfile
 
-  """FmTealAlphaFeedPlay records for this DID"""
+  """
+  FmTealAlphaFeedPlay records for this DID
+  """
   fmTealAlphaFeedPlayByDid: [FmTealAlphaFeedPlay]
 }
 
 type DeleteResult {
-  """URI of deleted record"""
+  """
+  URI of deleted record
+  """
   uri: String
 }
 
-"""Nested type from fm.teal.alpha.feed.defs#artist"""
+"""
+Nested type from fm.teal.alpha.feed.defs#artist
+"""
 type FmTealAlphaFeedDefsArtist {
-  """Field from object definition"""
+  """
+  Field from object definition
+  """
   artistName: String!
 
-  """Field from object definition"""
+  """
+  Field from object definition
+  """
   artistMbId: String
 }
 
-"""Record type: FmTealAlphaFeedPlay"""
+"""
+Record type: FmTealAlphaFeedPlay
+"""
 type FmTealAlphaFeedPlay {
-  """Record URI"""
+  """
+  Record URI
+  """
   uri: String
 
-  """Record CID"""
+  """
+  Record CID
+  """
   cid: String
 
-  """DID of record author"""
+  """
+  DID of record author
+  """
   did: String
 
-  """Collection name"""
+  """
+  Collection name
+  """
   collection: String
 
-  """When record was indexed"""
+  """
+  When record was indexed
+  """
   indexedAt: String
 
-  """Handle of the actor who created this record"""
+  """
+  Handle of the actor who created this record
+  """
   actorHandle: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   trackName: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   trackMbId: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   recordingMbId: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   duration: Int
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   artistNames: [String!]
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   artistMbIds: [String!]
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   artists: [FmTealAlphaFeedDefsArtist!]
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   releaseName: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   releaseMbId: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   isrc: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   originUrl: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   musicServiceBaseDomain: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   submissionClientAgent: String
 
-  """Field from lexicon"""
+  """
+  Field from lexicon
+  """
   playedTime: String
 
-  """AppBskyActorProfile for this DID"""
+  """
+  AppBskyActorProfile for this DID
+  """
   appBskyActorProfileByDid: AppBskyActorProfile
 }
 
@@ -467,31 +609,55 @@ type PageInfo {
 }
 
 type Query {
-  appBskyActorProfile(first: Int, after: String, last: Int, before: String, where: AppBskyActorProfileWhereInput, sortBy: [AppBskyActorProfileSortFieldInput]): AppBskyActorProfileConnection
+  appBskyActorProfile(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    where: AppBskyActorProfileWhereInput
+    sortBy: [AppBskyActorProfileSortFieldInput]
+  ): AppBskyActorProfileConnection
   appBskyActorProfileAggregate(
     where: AppBskyActorProfileWhereInput
     groupBy: [AppBskyActorProfileGroupByField]
 
-    """Maximum number of groups (default: 50, max: 1000)"""
+    """
+    Maximum number of groups (default: 50, max: 1000)
+    """
     limit: Int
 
-    """Order by count (default: COUNT_DESC)"""
+    """
+    Order by count (default: COUNT_DESC)
+    """
     orderBy: AggregateOrderBy
   ): AppBskyActorProfileAggregated
-  fmTealAlphaFeedPlay(first: Int, after: String, last: Int, before: String, where: FmTealAlphaFeedPlayWhereInput, sortBy: [FmTealAlphaFeedPlaySortFieldInput]): FmTealAlphaFeedPlayConnection
+  fmTealAlphaFeedPlay(
+    first: Int
+    after: String
+    last: Int
+    before: String
+    where: FmTealAlphaFeedPlayWhereInput
+    sortBy: [FmTealAlphaFeedPlaySortFieldInput]
+  ): FmTealAlphaFeedPlayConnection
   fmTealAlphaFeedPlayAggregate(
     where: FmTealAlphaFeedPlayWhereInput
     groupBy: [FmTealAlphaFeedPlayGroupByField]
 
-    """Maximum number of groups (default: 50, max: 1000)"""
+    """
+    Maximum number of groups (default: 50, max: 1000)
+    """
     limit: Int
 
-    """Order by count (default: COUNT_DESC)"""
+    """
+    Order by count (default: COUNT_DESC)
+    """
     orderBy: AggregateOrderBy
   ): FmTealAlphaFeedPlayAggregated
 }
 
-"""Union of all record types"""
+"""
+Union of all record types
+"""
 union Record = AppBskyActorProfile | ComAtprotoRepoStrongRef | FmTealAlphaFeedPlay
 
 enum SortDirection {
@@ -510,22 +676,33 @@ input StringFieldCondition {
 }
 
 type Subscription {
-  """Emitted when a new app.bsky.actor.profile record is created"""
+  """
+  Emitted when a new app.bsky.actor.profile record is created
+  """
   appBskyActorProfileCreated: AppBskyActorProfile!
 
-  """Emitted when a app.bsky.actor.profile record is updated"""
+  """
+  Emitted when a app.bsky.actor.profile record is updated
+  """
   appBskyActorProfileUpdated: AppBskyActorProfile!
 
-  """Emitted when a app.bsky.actor.profile record is deleted"""
+  """
+  Emitted when a app.bsky.actor.profile record is deleted
+  """
   appBskyActorProfileDeleted: AppBskyActorProfile!
 
-  """Emitted when a new fm.teal.alpha.feed.play record is created"""
+  """
+  Emitted when a new fm.teal.alpha.feed.play record is created
+  """
   fmTealAlphaFeedPlayCreated: FmTealAlphaFeedPlay!
 
-  """Emitted when a fm.teal.alpha.feed.play record is updated"""
+  """
+  Emitted when a fm.teal.alpha.feed.play record is updated
+  """
   fmTealAlphaFeedPlayUpdated: FmTealAlphaFeedPlay!
 
-  """Emitted when a fm.teal.alpha.feed.play record is deleted"""
+  """
+  Emitted when a fm.teal.alpha.feed.play record is deleted
+  """
   fmTealAlphaFeedPlayDeleted: FmTealAlphaFeedPlay!
 }
-

@@ -1,12 +1,12 @@
-import { graphql, useFragment } from "react-relay";
-import type { TrackItem_play$key } from "./__generated__/TrackItem_play.graphql";
-import AlbumArt from "./AlbumArt";
-import MusicBrainzLink from "./MusicBrainzLink";
+import { graphql, useFragment } from 'react-relay';
+import type { TrackItem_play$key } from './__generated__/TrackItem_play.graphql';
+import AlbumArt from './AlbumArt';
+import MusicBrainzLink from './MusicBrainzLink';
 
 function getTimeAgo(date: Date): string | null {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
   if (isNaN(seconds)) return null;
-  if (seconds < 60) return "just now";
+  if (seconds < 60) return 'just now';
   const minutes = Math.floor(seconds / 60);
   if (minutes < 60) return `${minutes}m ago`;
   const hours = Math.floor(minutes / 60);
@@ -45,8 +45,8 @@ export default function TrackItem({ play, hideUser }: TrackItemProps) {
   );
 
   const artistText = Array.isArray(data.artists)
-    ? data.artists.map((a) => a.artistName).join(", ")
-    : "Unknown Artist";
+    ? data.artists.map((a) => a.artistName).join(', ')
+    : 'Unknown Artist';
 
   const timeAgo = data.playedTime ? getTimeAgo(new Date(data.playedTime)) : null;
 
@@ -54,10 +54,7 @@ export default function TrackItem({ play, hideUser }: TrackItemProps) {
     <div className="flex gap-3 py-2 px-2 -mx-2 hover:bg-zinc-900/50 transition-colors">
       {/* Album art */}
       <div className="flex-shrink-0">
-        <AlbumArt
-          releaseMbId={data.releaseMbId}
-          alt={`${data.trackName} album art`}
-        />
+        <AlbumArt releaseMbId={data.releaseMbId} alt={`${data.trackName} album art`} />
       </div>
 
       {/* Content */}
@@ -67,7 +64,7 @@ export default function TrackItem({ play, hideUser }: TrackItemProps) {
           {artistText}
           {data.releaseName && (
             <>
-              {" · "}
+              {' · '}
               <MusicBrainzLink releaseMbId={data.releaseMbId}>
                 <span className="italic">{data.releaseName}</span>
               </MusicBrainzLink>

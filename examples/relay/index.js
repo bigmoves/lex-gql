@@ -12,16 +12,15 @@
  *   pnpm dev               # Start server + vite
  */
 
-import { createServer } from "node:http";
-import { readFileSync, readdirSync, statSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
-import { EventEmitter } from "node:events";
-import { createHandler } from "graphql-http/lib/use/http";
-import { createAdapter, parseLexicon } from "lex-gql";
-import { createDuckDB, setupSchema, createWriter, createDuckDBAdapter } from "lex-gql-duckdb";
-import { WebSocketServer } from "ws";
-import { useServer } from "graphql-ws/lib/use/ws";
-import WebSocket from "ws";
+import { EventEmitter } from 'node:events';
+import { mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { createServer } from 'node:http';
+import { join } from 'node:path';
+import { createHandler } from 'graphql-http/lib/use/http';
+import { useServer } from 'graphql-ws/lib/use/ws';
+import { createAdapter, parseLexicon } from 'lex-gql';
+import { createDuckDB, createDuckDBAdapter, createWriter, setupSchema } from 'lex-gql-duckdb';
+import WebSocket, { WebSocketServer } from 'ws';
 
 // 1. Load lexicons from filesystem
 function loadLexicons(dir) {
@@ -34,10 +33,10 @@ function loadLexicons(dir) {
 
       if (stat.isDirectory()) {
         walk(fullPath);
-      } else if (entry.endsWith(".json")) {
+      } else if (entry.endsWith('.json')) {
         try {
-          const content = JSON.parse(readFileSync(fullPath, "utf-8"));
-          if (content.defs?.main?.type === "record" || content.defs) {
+          const content = JSON.parse(readFileSync(fullPath, 'utf-8'));
+          if (content.defs?.main?.type === 'record' || content.defs) {
             lexicons.push(parseLexicon(content));
           }
         } catch (err) {
@@ -51,26 +50,21 @@ function loadLexicons(dir) {
   return lexicons;
 }
 
-const lexicons = loadLexicons("./lexicons");
-console.log(
-  `Loaded ${lexicons.length} lexicons:`,
-  lexicons.map((l) => l.id).join(", ")
-);
+const lexicons = loadLexicons('./lexicons');
+console.log(`Loaded ${lexicons.length} lexicons:`, lexicons.map((l) => l.id).join(', '));
 
-const SYNC_COLLECTIONS = lexicons
-  .filter((l) => l.defs?.main?.type === "record")
-  .map((l) => l.id);
-console.log(`Syncing collections: ${SYNC_COLLECTIONS.join(", ")}`);
+const SYNC_COLLECTIONS = lexicons.filter((l) => l.defs?.main?.type === 'record').map((l) => l.id);
+console.log(`Syncing collections: ${SYNC_COLLECTIONS.join(', ')}`);
 
 // 2. Setup DuckDB database
-const dbPath = "./data/records.duckdb";
-mkdirSync("./data", { recursive: true });
+const dbPath = './data/records.duckdb';
+mkdirSync('./data', { recursive: true });
 
-console.log("Connecting to DuckDB...");
+console.log('Connecting to DuckDB...');
 const duck = await createDuckDB(dbPath);
 await setupSchema(duck);
 
-const recordCount = await duck.get("SELECT COUNT(*) as c FROM records");
+const recordCount = await duck.get('SELECT COUNT(*) as c FROM records');
 console.log(`DuckDB has ${Number(recordCount.c).toLocaleString()} records`);
 
 // 3. Event emitter for subscriptions
@@ -79,7 +73,7 @@ recordEvents.setMaxListeners(100);
 
 // Look up actor handle from database
 async function getActorHandle(did) {
-  const row = await duck.get("SELECT handle FROM actors WHERE did = ?", [did]);
+  const row = await duck.get('SELECT handle FROM actors WHERE did = ?', [did]);
   return row?.handle || null;
 }
 
@@ -87,7 +81,7 @@ async function getActorHandle(did) {
 async function getActorProfile(did) {
   const row = await duck.get(
     "SELECT record FROM records WHERE did = ? AND collection = 'app.bsky.actor.profile'",
-    [did]
+    [did],
   );
   if (!row?.record) return null;
 
@@ -122,7 +116,7 @@ function parseAtUri(uri) {
 
 // Batch writes for better performance
 const pendingWrites = [];
-const BATCH_SIZE = 500;  // Larger batches with true batch INSERT
+const BATCH_SIZE = 500; // Larger batches with true batch INSERT
 const BATCH_INTERVAL = 100;
 let batchTimeout = null;
 let isFlushing = false;
@@ -179,7 +173,7 @@ const writer = {
 };
 
 // 4. Connect to tap websocket
-const TAP_WS_URL = process.env.TAP_WS_URL || "ws://localhost:2480/channel";
+const TAP_WS_URL = process.env.TAP_WS_URL || 'ws://localhost:2480/channel';
 let ws = null;
 let reconnectTimeout = null;
 let recordCount2 = 0;
@@ -189,22 +183,22 @@ function connectToTap() {
 
   ws = new WebSocket(TAP_WS_URL);
 
-  ws.on("open", () => {
-    console.log("Connected to tap websocket");
+  ws.on('open', () => {
+    console.log('Connected to tap websocket');
   });
 
-  ws.on("message", (data) => {
+  ws.on('message', (data) => {
     try {
       const event = JSON.parse(data.toString());
 
-      if (event.type === "identity" && event.identity) {
+      if (event.type === 'identity' && event.identity) {
         const { did, handle } = event.identity;
         if (did && handle) {
           writer.upsertActor(did, handle);
         }
       }
 
-      if (event.type === "record" && event.record) {
+      if (event.type === 'record' && event.record) {
         const { did, collection, rkey, cid, action, record } = event.record;
 
         if (!SYNC_COLLECTIONS.includes(collection)) {
@@ -213,21 +207,23 @@ function connectToTap() {
 
         const uri = `at://${did}/${collection}/${rkey}`;
 
-        if (action === "delete") {
+        if (action === 'delete') {
           writer.deleteRecord(uri);
           console.log(`Deleted: ${uri}`);
         } else if (record) {
           writer.insertRecord({ uri, cid, record });
           // TODO: Abstract subscription layer in lex-gql to handle field resolution
           // (related records, blob URLs) like queries do, instead of manual lookups
-          Promise.all([getActorHandle(did), getActorProfile(did)]).then(([actorHandle, profile]) => {
-            recordEvents.emit(`${collection}:created`, {
-              ...record,
-              uri,
-              actorHandle,
-              appBskyActorProfileByDid: profile,
-            });
-          });
+          Promise.all([getActorHandle(did), getActorProfile(did)]).then(
+            ([actorHandle, profile]) => {
+              recordEvents.emit(`${collection}:created`, {
+                ...record,
+                uri,
+                actorHandle,
+                appBskyActorProfileByDid: profile,
+              });
+            },
+          );
           recordCount2++;
           if (recordCount2 % 1000 === 0) {
             console.log(`Processed ${recordCount2} events`);
@@ -235,17 +231,17 @@ function connectToTap() {
         }
       }
     } catch (err) {
-      console.error("Error processing message:", err.message);
+      console.error('Error processing message:', err.message);
     }
   });
 
-  ws.on("close", () => {
-    console.log("Disconnected from tap, reconnecting in 5s...");
+  ws.on('close', () => {
+    console.log('Disconnected from tap, reconnecting in 5s...');
     scheduleReconnect();
   });
 
-  ws.on("error", (err) => {
-    console.error("Websocket error:", err.message);
+  ws.on('error', (err) => {
+    console.error('Websocket error:', err.message);
   });
 }
 
@@ -307,12 +303,12 @@ function subscribe({ collection, event }) {
 const adapter = createAdapter(lexicons, { query, subscribe });
 
 // 6. Static file serving
-import { existsSync } from "node:fs";
+import { existsSync } from 'node:fs';
 
 function serveStatic(req, res) {
-  const distPath = "./dist";
+  const distPath = './dist';
   if (!existsSync(distPath)) {
-    res.writeHead(200, { "Content-Type": "text/html" });
+    res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`
       <!DOCTYPE html>
       <html>
@@ -328,39 +324,54 @@ function serveStatic(req, res) {
   }
 
   // Strip query string from URL
-  const urlPath = req.url.split("?")[0];
-  let filePath = join(distPath, urlPath === "/" ? "index.html" : urlPath);
+  const urlPath = req.url.split('?')[0];
+  let filePath = join(distPath, urlPath === '/' ? 'index.html' : urlPath);
 
   // Known static file extensions
-  const staticExtensions = ['.js', '.css', '.html', '.json', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.map'];
+  const staticExtensions = [
+    '.js',
+    '.css',
+    '.html',
+    '.json',
+    '.png',
+    '.jpg',
+    '.jpeg',
+    '.gif',
+    '.svg',
+    '.ico',
+    '.woff',
+    '.woff2',
+    '.ttf',
+    '.map',
+  ];
   const urlExt = urlPath.substring(urlPath.lastIndexOf('.'));
   const isStaticFile = staticExtensions.includes(urlExt.toLowerCase());
 
   // SPA fallback: serve index.html for routes that aren't static files
   if (!existsSync(filePath) && !isStaticFile) {
-    filePath = join(distPath, "index.html");
+    filePath = join(distPath, 'index.html');
   }
 
   if (!existsSync(filePath)) {
     res.writeHead(404);
-    res.end("Not found");
+    res.end('Not found');
     return;
   }
 
-  const ext = filePath.split(".").pop();
+  const ext = filePath.split('.').pop();
   const contentTypes = {
-    html: "text/html",
-    js: "application/javascript",
-    css: "text/css",
-    json: "application/json",
-    png: "image/png",
-    jpg: "image/jpeg",
-    svg: "image/svg+xml",
-    ico: "image/x-icon",
+    html: 'text/html',
+    js: 'application/javascript',
+    css: 'text/css',
+    json: 'application/json',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    svg: 'image/svg+xml',
+    ico: 'image/x-icon',
   };
 
   res.writeHead(200, {
-    "Content-Type": contentTypes[ext] || "application/octet-stream",
+    'Content-Type': contentTypes[ext] || 'application/octet-stream',
   });
   res.end(readFileSync(filePath));
 }
@@ -423,37 +434,37 @@ const graphiqlHtml = `<!DOCTYPE html>
 const graphqlHandler = createHandler({ schema: adapter.schema });
 
 const server = createServer((req, res) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     res.writeHead(204);
     res.end();
     return;
   }
 
-  if (req.method === "GET" && req.url === "/graphiql") {
-    res.writeHead(200, { "Content-Type": "text/html" });
+  if (req.method === 'GET' && req.url === '/graphiql') {
+    res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(graphiqlHtml);
     return;
   }
 
-  if (req.method === "GET" && req.url === "/stats") {
-    duck.get("SELECT COUNT(*) as count FROM records").then((result) => {
-      res.writeHead(200, { "Content-Type": "application/json" });
+  if (req.method === 'GET' && req.url === '/stats') {
+    duck.get('SELECT COUNT(*) as count FROM records').then((result) => {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(
         JSON.stringify({
           recordCount: Number(result.count),
           wsConnected: ws?.readyState === WebSocket.OPEN,
-          database: "DuckDB",
-        })
+          database: 'DuckDB',
+        }),
       );
     });
     return;
   }
 
-  if (req.url === "/graphql") {
+  if (req.url === '/graphql') {
     graphqlHandler(req, res);
     return;
   }
@@ -468,28 +479,28 @@ server.listen(PORT, () => {
   console.log(`\nServer running at http://localhost:${PORT}`);
   console.log(`GraphiQL at http://localhost:${PORT}/graphiql`);
   console.log(`Stats at http://localhost:${PORT}/stats`);
-  console.log("");
-  console.log("Make sure tap is running: docker compose up -d");
+  console.log('');
+  console.log('Make sure tap is running: docker compose up -d');
 });
 
 const wsServer = new WebSocketServer({
   server,
-  path: "/graphql",
+  path: '/graphql',
 });
 
 useServer({ schema: adapter.schema }, wsServer);
 
-console.log("GraphQL subscriptions available via WebSocket");
+console.log('GraphQL subscriptions available via WebSocket');
 
 // 10. Graceful shutdown
 let isShuttingDown = false;
 async function shutdown() {
   if (isShuttingDown) {
-    console.log("Force exiting...");
+    console.log('Force exiting...');
     process.exit(1);
   }
   isShuttingDown = true;
-  console.log("\nShutting down...");
+  console.log('\nShutting down...');
 
   if (reconnectTimeout) clearTimeout(reconnectTimeout);
   if (batchTimeout) clearTimeout(batchTimeout);
@@ -501,7 +512,7 @@ async function shutdown() {
   await writer.flush();
 
   const shutdownTimeout = setTimeout(() => {
-    console.log("Shutdown timeout, force exiting...");
+    console.log('Shutdown timeout, force exiting...');
     process.exit(1);
   }, 3000);
   shutdownTimeout.unref();
@@ -510,14 +521,14 @@ async function shutdown() {
 
   // Close DuckDB asynchronously
   await new Promise((resolve) => duck.db.close(resolve));
-  console.log("Database closed");
+  console.log('Database closed');
 
   server.close(() => {
     clearTimeout(shutdownTimeout);
-    console.log("Server closed");
+    console.log('Server closed');
     process.exit(0);
   });
 }
 
-process.on("SIGINT", shutdown);
-process.on("SIGTERM", shutdown);
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);

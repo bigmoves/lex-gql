@@ -1,4 +1,4 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -7,21 +7,21 @@ interface LayoutProps {
 
 export default function Layout({ children, headerChart }: LayoutProps) {
   const location = useLocation();
-  const isTracksPage = location.pathname.startsWith("/tracks");
-  const isAlbumsPage = location.pathname.startsWith("/albums");
+  const isTracksPage = location.pathname.startsWith('/tracks');
+  const isAlbumsPage = location.pathname.startsWith('/albums');
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-300 font-mono">
       <div className="max-w-4xl mx-auto px-6 py-12">
         <div className="mb-4 border-b border-zinc-800 pb-4 relative">
           {headerChart && (
-            <div className="absolute inset-0 pointer-events-none opacity-40">
-              {headerChart}
-            </div>
+            <div className="absolute inset-0 pointer-events-none opacity-40">{headerChart}</div>
           )}
           <div className="flex items-end justify-between relative">
             <div>
-              <h1 className="text-xs font-medium uppercase tracking-wider text-zinc-500">Listening History</h1>
+              <h1 className="text-xs font-medium uppercase tracking-wider text-zinc-500">
+                Listening History
+              </h1>
               <p className="text-xs text-zinc-600 mt-1">fm.teal.alpha.feed.play</p>
             </div>
 
@@ -29,9 +29,7 @@ export default function Layout({ children, headerChart }: LayoutProps) {
               <Link
                 to="/"
                 className={`px-2 py-1 transition-colors ${
-                  location.pathname === "/"
-                    ? "text-zinc-400"
-                    : "text-zinc-500 hover:text-zinc-300"
+                  location.pathname === '/' ? 'text-zinc-400' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
                 Recent
@@ -39,9 +37,7 @@ export default function Layout({ children, headerChart }: LayoutProps) {
               <Link
                 to="/tracks"
                 className={`px-2 py-1 transition-colors ${
-                  isTracksPage
-                    ? "text-zinc-400"
-                    : "text-zinc-500 hover:text-zinc-300"
+                  isTracksPage ? 'text-zinc-400' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
                 Top Tracks
@@ -49,9 +45,7 @@ export default function Layout({ children, headerChart }: LayoutProps) {
               <Link
                 to="/albums"
                 className={`px-2 py-1 transition-colors ${
-                  isAlbumsPage
-                    ? "text-zinc-400"
-                    : "text-zinc-500 hover:text-zinc-300"
+                  isAlbumsPage ? 'text-zinc-400' : 'text-zinc-500 hover:text-zinc-300'
                 }`}
               >
                 Top Albums
@@ -65,9 +59,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/tracks"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/tracks"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/tracks'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               All Time
@@ -75,9 +69,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/tracks/daily"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/tracks/daily"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/tracks/daily'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               Daily
@@ -85,9 +79,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/tracks/weekly"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/tracks/weekly"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/tracks/weekly'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               Weekly
@@ -95,9 +89,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/tracks/monthly"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/tracks/monthly"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/tracks/monthly'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               Monthly
@@ -110,9 +104,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/albums"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/albums"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/albums'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               All Time
@@ -120,9 +114,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/albums/daily"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/albums/daily"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/albums/daily'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               Daily
@@ -130,9 +124,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/albums/weekly"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/albums/weekly"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/albums/weekly'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               Weekly
@@ -140,9 +134,9 @@ export default function Layout({ children, headerChart }: LayoutProps) {
             <Link
               to="/albums/monthly"
               className={`px-2 py-1 transition-colors ${
-                location.pathname === "/albums/monthly"
-                  ? "text-zinc-300"
-                  : "text-zinc-600 hover:text-zinc-400"
+                location.pathname === '/albums/monthly'
+                  ? 'text-zinc-300'
+                  : 'text-zinc-600 hover:text-zinc-400'
               }`}
             >
               Monthly

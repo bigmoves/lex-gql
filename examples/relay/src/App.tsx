@@ -1,26 +1,18 @@
-import {
-  graphql,
-  useLazyLoadQuery,
-  usePaginationFragment,
-  useSubscription,
-} from "react-relay";
-import { useEffect, useMemo, useRef } from "react";
-import type { AppQuery } from "./__generated__/AppQuery.graphql";
-import type { App_plays$key } from "./__generated__/App_plays.graphql";
-import type { AppSubscription } from "./__generated__/AppSubscription.graphql";
-import TrackItem from "./TrackItem";
-import Layout from "./Layout";
-import ScrobbleChart from "./ScrobbleChart";
-import {
-  ConnectionHandler,
-  type GraphQLSubscriptionConfig,
-} from "relay-runtime";
+import { useEffect, useMemo, useRef } from 'react';
+import { graphql, useLazyLoadQuery, usePaginationFragment, useSubscription } from 'react-relay';
+import { ConnectionHandler, type GraphQLSubscriptionConfig } from 'relay-runtime';
+import type { App_plays$key } from './__generated__/App_plays.graphql';
+import type { AppQuery } from './__generated__/AppQuery.graphql';
+import type { AppSubscription } from './__generated__/AppSubscription.graphql';
+import Layout from './Layout';
+import ScrobbleChart from './ScrobbleChart';
+import TrackItem from './TrackItem';
 
 const SUBSCRIPTIONS_ENABLED = true;
 
 function PlaySubscription() {
-  const subscriptionConfig: GraphQLSubscriptionConfig<AppSubscription> =
-    useMemo(() => ({
+  const subscriptionConfig: GraphQLSubscriptionConfig<AppSubscription> = useMemo(
+    () => ({
       subscription: graphql`
         subscription AppSubscription {
           fmTealAlphaFeedPlayCreated {
@@ -32,11 +24,11 @@ function PlaySubscription() {
       `,
       variables: {},
       updater: (store) => {
-        const newPlay = store.getRootField("fmTealAlphaFeedPlayCreated");
+        const newPlay = store.getRootField('fmTealAlphaFeedPlayCreated');
         if (!newPlay) return;
 
         // Only add plays from the last 24 hours
-        const playedTime = newPlay.getValue("playedTime") as string | null;
+        const playedTime = newPlay.getValue('playedTime') as string | null;
         if (!playedTime) return;
 
         const playDate = new Date(playedTime);
@@ -47,20 +39,18 @@ function PlaySubscription() {
         }
 
         const root = store.getRoot();
-        const connection = ConnectionHandler.getConnection(
-          root,
-          "App_fmTealAlphaFeedPlay",
-          { sortBy: [{ field: "playedTime", direction: "DESC" }] },
-        );
+        const connection = ConnectionHandler.getConnection(root, 'App_fmTealAlphaFeedPlay', {
+          sortBy: [{ field: 'playedTime', direction: 'DESC' }],
+        });
 
         if (!connection) return;
 
         // Check if this play already exists
-        const newUri = newPlay.getValue("uri");
-        const existingEdges = connection.getLinkedRecords("edges") || [];
+        const newUri = newPlay.getValue('uri');
+        const existingEdges = connection.getLinkedRecords('edges') || [];
         const alreadyExists = existingEdges.some((edge) => {
-          const node = edge?.getLinkedRecord("node");
-          return node?.getValue("uri") === newUri;
+          const node = edge?.getLinkedRecord('node');
+          return node?.getValue('uri') === newUri;
         });
 
         if (alreadyExists) return;
@@ -69,23 +59,25 @@ function PlaySubscription() {
           store,
           connection,
           newPlay,
-          "FmTealAlphaFeedPlayEdge",
+          'FmTealAlphaFeedPlayEdge',
         );
 
         ConnectionHandler.insertEdgeBefore(connection, edge);
 
         // Update totalCount
-        const totalCountRecord = root.getLinkedRecord("fmTealAlphaFeedPlay", {
-          sortBy: [{ field: "playedTime", direction: "DESC" }],
+        const totalCountRecord = root.getLinkedRecord('fmTealAlphaFeedPlay', {
+          sortBy: [{ field: 'playedTime', direction: 'DESC' }],
         });
         if (totalCountRecord) {
-          const currentCount = totalCountRecord.getValue("totalCount") as number;
-          if (typeof currentCount === "number") {
-            totalCountRecord.setValue(currentCount + 1, "totalCount");
+          const currentCount = totalCountRecord.getValue('totalCount') as number;
+          if (typeof currentCount === 'number') {
+            totalCountRecord.setValue(currentCount + 1, 'totalCount');
           }
         }
       },
-    }), []);
+    }),
+    [],
+  );
 
   useSubscription(subscriptionConfig);
   return null;
@@ -117,10 +109,7 @@ export default function App() {
     queryVariables,
   );
 
-  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<
-    AppQuery,
-    App_plays$key
-  >(
+  const { data, loadNext, hasNext, isLoadingNext } = usePaginationFragment<AppQuery, App_plays$key>(
     graphql`
       fragment App_plays on Query
       @refetchable(queryName: "AppPaginationQuery")
@@ -152,18 +141,16 @@ export default function App() {
   const isLoadingRef = useRef(false);
   loadNextRef.current = loadNext;
 
-
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  const plays = (data?.fmTealAlphaFeedPlay?.edges
-    ?.map((edge) => edge?.node)
-    .filter((n) => n != null) || [])
-    .sort((a, b) => {
-      if (!a.playedTime || !b.playedTime) return 0;
-      return new Date(b.playedTime).getTime() - new Date(a.playedTime).getTime();
-    });
+  const plays = (
+    data?.fmTealAlphaFeedPlay?.edges?.map((edge) => edge?.node).filter((n) => n != null) || []
+  ).sort((a, b) => {
+    if (!a.playedTime || !b.playedTime) return 0;
+    return new Date(b.playedTime).getTime() - new Date(a.playedTime).getTime();
+  });
 
   // Sync the loading ref with isLoadingNext
   useEffect(() => {
@@ -191,16 +178,16 @@ export default function App() {
 
   // Group plays by date
   const groupedPlays: { date: string; plays: typeof plays }[] = [];
-  let currentDate = "";
+  let currentDate = '';
 
   plays.forEach((play) => {
     if (!play?.playedTime) return;
 
-    const playDate = new Date(play.playedTime).toLocaleDateString("en-US", {
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
+    const playDate = new Date(play.playedTime).toLocaleDateString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
     });
 
     if (playDate !== currentDate) {
@@ -237,17 +224,11 @@ export default function App() {
 
       {hasNext && (
         <div ref={loadMoreRef} className="py-12 text-center">
-          {isLoadingNext
-            ? (
-              <p className="text-xs text-zinc-600 uppercase tracking-wider">
-                Loading...
-              </p>
-            )
-            : (
-              <p className="text-xs text-zinc-700 uppercase tracking-wider">
-                ·
-              </p>
-            )}
+          {isLoadingNext ? (
+            <p className="text-xs text-zinc-600 uppercase tracking-wider">Loading...</p>
+          ) : (
+            <p className="text-xs text-zinc-700 uppercase tracking-wider">·</p>
+          )}
         </div>
       )}
     </Layout>

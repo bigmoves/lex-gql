@@ -10,26 +10,18 @@
         "properties": {
           "avatar": {
             "type": "blob",
-            "accept": [
-              "image/png",
-              "image/jpeg"
-            ],
+            "accept": ["image/png", "image/jpeg"],
             "maxSize": 1000000,
             "description": "Small image to be displayed next to posts from account. AKA, 'profile picture'"
           },
           "banner": {
             "type": "blob",
-            "accept": [
-              "image/png",
-              "image/jpeg"
-            ],
+            "accept": ["image/png", "image/jpeg"],
             "maxSize": 1000000,
             "description": "Larger horizontal image to display behind profile view."
           },
           "labels": {
-            "refs": [
-              "com.atproto.label.defs#selfLabels"
-            ],
+            "refs": ["com.atproto.label.defs#selfLabels"],
             "type": "union",
             "description": "Self-label values, specific to the Bluesky application, on the overall account."
           },

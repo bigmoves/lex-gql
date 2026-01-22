@@ -1,10 +1,10 @@
-import { graphql, useLazyLoadQuery, usePaginationFragment } from "react-relay";
-import { Link, useParams } from "react-router-dom";
-import { useEffect, useMemo, useRef } from "react";
-import type { ProfileQuery as ProfileQueryType } from "./__generated__/ProfileQuery.graphql";
-import type { Profile_plays$key } from "./__generated__/Profile_plays.graphql";
-import TrackItem from "./TrackItem";
-import ScrobbleChart from "./ScrobbleChart";
+import { useEffect, useMemo, useRef } from 'react';
+import { graphql, useLazyLoadQuery, usePaginationFragment } from 'react-relay';
+import { Link, useParams } from 'react-router-dom';
+import type { Profile_plays$key } from './__generated__/Profile_plays.graphql';
+import type { ProfileQuery as ProfileQueryType } from './__generated__/ProfileQuery.graphql';
+import ScrobbleChart from './ScrobbleChart';
+import TrackItem from './TrackItem';
 
 export default function Profile() {
   const { handle } = useParams<{ handle: string }>();
@@ -81,10 +81,7 @@ export default function Profile() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const plays = useMemo(
-    () =>
-      data?.fmTealAlphaFeedPlay?.edges?.map((edge) => edge.node).filter((n) =>
-        n != null
-      ) || [],
+    () => data?.fmTealAlphaFeedPlay?.edges?.map((edge) => edge.node).filter((n) => n != null) || [],
     [data?.fmTealAlphaFeedPlay?.edges],
   );
   const profile = plays?.[0]?.appBskyActorProfileByDid;
@@ -128,7 +125,7 @@ export default function Profile() {
             {profile?.avatar?.url && (
               <img
                 src={profile.avatar.url}
-                alt={profile.displayName ?? handle ?? "User"}
+                alt={profile.displayName ?? handle ?? 'User'}
                 className="w-16 h-16 flex-shrink-0 object-cover"
               />
             )}
@@ -149,36 +146,27 @@ export default function Profile() {
             Recent Tracks
           </h2>
           <p className="text-xs text-zinc-500 uppercase tracking-wider">
-            {(data?.fmTealAlphaFeedPlay?.totalCount ?? 0).toLocaleString()}{" "}
-            scrobbles
+            {(data?.fmTealAlphaFeedPlay?.totalCount ?? 0).toLocaleString()} scrobbles
           </p>
         </div>
 
         <div className="space-y-1">
-          {plays && plays.length > 0
-            ? (
-              plays.map((play, index) => <TrackItem key={index} play={play} hideUser />)
-            )
-            : (
-              <p className="text-zinc-600 text-center py-8 text-xs uppercase tracking-wider">
-                No tracks found for this user
-              </p>
-            )}
+          {plays && plays.length > 0 ? (
+            plays.map((play, index) => <TrackItem key={index} play={play} hideUser />)
+          ) : (
+            <p className="text-zinc-600 text-center py-8 text-xs uppercase tracking-wider">
+              No tracks found for this user
+            </p>
+          )}
         </div>
 
         {hasNext && (
           <div ref={loadMoreRef} className="py-12 text-center">
-            {isLoadingNext
-              ? (
-                <p className="text-xs text-zinc-600 uppercase tracking-wider">
-                  Loading...
-                </p>
-              )
-              : (
-                <p className="text-xs text-zinc-700 uppercase tracking-wider">
-                  ·
-                </p>
-              )}
+            {isLoadingNext ? (
+              <p className="text-xs text-zinc-600 uppercase tracking-wider">Loading...</p>
+            ) : (
+              <p className="text-xs text-zinc-700 uppercase tracking-wider">·</p>
+            )}
           </div>
         )}
       </div>

@@ -28,7 +28,7 @@
   "license": "MIT",
   "peerDependencies": {
     "duckdb": ">=1.0.0",
-    "lex-gql": ">=0.2.1"
+    "lex-gql": ">=0.2.2"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

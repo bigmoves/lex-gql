@@ -1,13 +1,9 @@
-import { StrictMode, Suspense } from "react";
-import { createRoot } from "react-dom/client";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
-import "./index.css";
-import App from "./App.tsx";
-import Profile from "./Profile.tsx";
-import TopTracks from "./TopTracks.tsx";
-import TopAlbums from "./TopAlbums.tsx";
-import LoadingFallback from "./LoadingFallback.tsx";
-import { RelayEnvironmentProvider } from "react-relay";
+import { StrictMode, Suspense } from 'react';
+import { createRoot } from 'react-dom/client';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import './index.css';
+import { createClient } from 'graphql-ws';
+import { RelayEnvironmentProvider } from 'react-relay';
 import {
   Environment,
   type FetchFunction,
@@ -15,21 +11,25 @@ import {
   Network,
   Observable,
   type SubscribeFunction,
-} from "relay-runtime";
-import { createClient } from "graphql-ws";
+} from 'relay-runtime';
+import App from './App.tsx';
+import LoadingFallback from './LoadingFallback.tsx';
+import Profile from './Profile.tsx';
+import TopAlbums from './TopAlbums.tsx';
+import TopTracks from './TopTracks.tsx';
 
-const HTTP_ENDPOINT = "/graphql";
+const HTTP_ENDPOINT = '/graphql';
 
-const WS_ENDPOINT = `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.host}/graphql`;
+const WS_ENDPOINT = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/graphql`;
 
 const fetchGraphQL: FetchFunction = async (request, variables) => {
   const resp = await fetch(HTTP_ENDPOINT, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ query: request.text, variables }),
   });
   if (!resp.ok) {
-    throw new Error("Response failed.");
+    throw new Error('Response failed.');
   }
   return await resp.json();
 };
@@ -40,13 +40,13 @@ const wsClient = createClient({
   shouldRetry: () => true,
   on: {
     connected: () => {
-      console.log("WebSocket connected!");
+      console.log('WebSocket connected!');
     },
     error: (error) => {
-      console.error("WebSocket error:", error);
+      console.error('WebSocket error:', error);
     },
     closed: (event) => {
-      console.log("WebSocket closed:", event);
+      console.log('WebSocket closed:', event);
     },
   },
 });
@@ -54,7 +54,7 @@ const wsClient = createClient({
 const subscribe: SubscribeFunction = (operation, variables) => {
   return Observable.create((sink) => {
     if (!operation.text) {
-      sink.error(new Error("Missing operation text"));
+      sink.error(new Error('Missing operation text'));
       return;
     }
 
@@ -71,13 +71,11 @@ const subscribe: SubscribeFunction = (operation, variables) => {
           }
         },
         error: (error) => {
-          console.error("Subscription error:", error);
+          console.error('Subscription error:', error);
           if (error instanceof Error) {
             sink.error(error);
           } else if (error instanceof CloseEvent) {
-            sink.error(
-              new Error(`WebSocket closed: ${error.code} ${error.reason}`),
-            );
+            sink.error(new Error(`WebSocket closed: ${error.code} ${error.reason}`));
           } else {
             sink.error(new Error(JSON.stringify(error)));
           }
@@ -92,7 +90,7 @@ const environment = new Environment({
   network: Network.create(fetchGraphQL, subscribe),
 });
 
-createRoot(document.getElementById("root")!).render(
+createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <BrowserRouter>
       <RelayEnvironmentProvider environment={environment}>

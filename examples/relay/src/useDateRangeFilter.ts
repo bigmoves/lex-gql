@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo } from 'react';
 
 export function useDateRangeFilter(period: string | undefined) {
   return useMemo(() => {
-    if (!period || period === "all") {
+    if (!period || period === 'all') {
       return { where: undefined };
     }
 
@@ -12,13 +12,13 @@ export function useDateRangeFilter(period: string | undefined) {
 
     let daysAgo = 0;
     switch (period) {
-      case "daily":
+      case 'daily':
         daysAgo = 1;
         break;
-      case "weekly":
+      case 'weekly':
         daysAgo = 7;
         break;
-      case "monthly":
+      case 'monthly':
         daysAgo = 30;
         break;
       default:

@@ -1577,8 +1577,8 @@ function createRecordType(
  * @param {Record<string, GraphQLObjectType>} recordTypes
  * @param {() => GraphQLUnionType | null} getRecordUnionType
  * @param {JoinCollector} joinCollector
+ * @param {DidCollector} didCollector
  * @param {GraphQLObjectType} blobType
- * @param {Function} queryFn
  * @param {GraphQLObjectType | null} strongRefType
  * @param {Record<string, GraphQLObjectType>} typeRegistry
  * @param {Record<string, GraphQLUnionType>} unionRegistry
@@ -1592,8 +1592,8 @@ function createRecordTypeWithResolvers(
   recordTypes,
   getRecordUnionType,
   joinCollector,
+  didCollector,
   blobType,
-  queryFn,
   strongRefType,
   typeRegistry,
   unionRegistry,
@@ -1670,13 +1670,7 @@ function createRecordTypeWithResolvers(
             resolve: async (parent) => {
               const did = parent.did;
               if (!did) return null;
-              const result = await queryFn({
-                type: 'findMany',
-                collection: otherCollection,
-                where: [{ field: 'did', op: 'eq', value: did }],
-                pagination: { first: 1 },
-              });
-              return result.rows?.[0] || null;
+              return didCollector.load(otherCollection, did, true);
             },
           };
         } else {
@@ -1687,13 +1681,7 @@ function createRecordTypeWithResolvers(
             resolve: async (parent) => {
               const did = parent.did;
               if (!did) return [];
-              const result = await queryFn({
-                type: 'findMany',
-                collection: otherCollection,
-                where: [{ field: 'did', op: 'eq', value: did }],
-                pagination: { first: 100 },
-              });
-              return result.rows || [];
+              return didCollector.load(otherCollection, did, false);
             },
           };
         }
@@ -1881,7 +1869,12 @@ export function buildSchema(lexicons) {
   for (const lexicon of lexicons) {
     if (lexicon.defs.main && lexicon.defs.main.type === 'record') {
       const typeName = nsidToTypeName(lexicon.id);
-      aggregateTypes[lexicon.id] = createAggregateResultType(typeName, lexicon.defs.main, lexicon.id, typeRegistry);
+      aggregateTypes[lexicon.id] = createAggregateResultType(
+        typeName,
+        lexicon.defs.main,
+        lexicon.id,
+        typeRegistry,
+      );
       groupByEnums[lexicon.id] = createAggregateGroupByEnum(typeName, lexicon.defs.main);
       fieldConditionInputTypes[typeName] = createPerTypeFieldCondition(
         typeName,
@@ -1928,8 +1921,14 @@ export function buildSchema(lexicons) {
         args: {
           where: { type: whereInputTypes[typeName] },
           groupBy: { type: new GraphQLList(groupByEnums[lexicon.id]) },
-          limit: { type: GraphQLInt, description: 'Maximum number of groups (default: 50, max: 1000)' },
-          orderBy: { type: aggregateOrderByEnum, description: 'Order by count (default: COUNT_DESC)' },
+          limit: {
+            type: GraphQLInt,
+            description: 'Maximum number of groups (default: 50, max: 1000)',
+          },
+          orderBy: {
+            type: aggregateOrderByEnum,
+            description: 'Order by count (default: COUNT_DESC)',
+          },
         },
       };
     }
@@ -2016,8 +2015,9 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
     typeRegistry['com.atproto.repo.strongRef'] = strongRefType;
   }
 
-  // Create join collector for batching
+  // Create collectors for batching
   const joinCollector = new JoinCollector(queryFn);
+  const didCollector = new DidCollector(queryFn);
 
   // Pre-pass: Create nested types from local defs (like #replyRef, #entity, etc.)
   for (const lexicon of lexicons) {
@@ -2052,8 +2052,8 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         recordTypes,
         getRecordUnionType,
         joinCollector,
+        didCollector,
         blobType,
-        queryFn,
         strongRefType,
         typeRegistry,
         unionRegistry,
@@ -2147,7 +2147,12 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
 
     // Add aggregate query field
     const aggregateFieldName = `${fieldName}Aggregate`;
-    const aggregateResultType = createAggregateResultType(typeName, lexicon.defs.main, lexicon.id, typeRegistry);
+    const aggregateResultType = createAggregateResultType(
+      typeName,
+      lexicon.defs.main,
+      lexicon.id,
+      typeRegistry,
+    );
     const groupByEnum = createAggregateGroupByEnum(typeName, lexicon.defs.main);
 
     // Extract array field names from the lexicon for aggregate queries
@@ -2160,8 +2165,14 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
       args: {
         where: { type: whereInputTypes[typeName] },
         groupBy: { type: new GraphQLList(groupByEnum) },
-        limit: { type: GraphQLInt, description: 'Maximum number of groups (default: 50, max: 1000)' },
-        orderBy: { type: aggregateOrderByEnum, description: 'Order by count (default: COUNT_DESC)' },
+        limit: {
+          type: GraphQLInt,
+          description: 'Maximum number of groups (default: 50, max: 1000)',
+        },
+        orderBy: {
+          type: aggregateOrderByEnum,
+          description: 'Order by count (default: COUNT_DESC)',
+        },
       },
       resolve: async (_, args) => {
         /** @type {Operation} */
@@ -2212,7 +2223,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
 /**
  * JoinCollector for batching forward join resolution
  */
-class JoinCollector {
+export class JoinCollector {
   /**
    * @param {(op: Operation) => Promise<any>} queryFn
    */
@@ -2291,6 +2302,120 @@ class JoinCollector {
         const resolvers = callbacks.get(uri) || [];
         for (const resolve of resolvers) {
           resolve(null);
+        }
+      }
+    }
+  }
+}
+
+/**
+ * DidCollector for batching DID-based join resolution
+ * Groups lookups by collection and batches DIDs within each collection
+ */
+export class DidCollector {
+  /**
+   * @param {(op: Operation) => Promise<any>} queryFn
+   */
+  constructor(queryFn) {
+    this.queryFn = queryFn;
+    this.pending = new Map(); // collection -> Map<did, callbacks[]>
+    this.resolved = new Map(); // `${collection}:${did}` -> record or record[]
+    this.scheduled = false;
+  }
+
+  /**
+   * Load a record by DID from a collection
+   * @param {string} collection
+   * @param {string} did
+   * @param {boolean} unique - If true, return single record; if false, return array
+   * @returns {Promise<any>}
+   */
+  load(collection, did, unique = true) {
+    const key = `${collection}:${did}:${unique}`;
+
+    // If already resolved, return immediately
+    if (this.resolved.has(key)) {
+      return Promise.resolve(this.resolved.get(key));
+    }
+
+    // Create a promise for this lookup
+    return new Promise((resolve) => {
+      if (!this.pending.has(collection)) {
+        this.pending.set(collection, new Map());
+      }
+      const collectionMap = this.pending.get(collection);
+      const didKey = `${did}:${unique}`;
+      if (!collectionMap.has(didKey)) {
+        collectionMap.set(didKey, { did, unique, callbacks: [] });
+      }
+      collectionMap.get(didKey).callbacks.push(resolve);
+
+      // Schedule batch resolution
+      if (!this.scheduled) {
+        this.scheduled = true;
+        queueMicrotask(() => this.flush());
+      }
+    });
+  }
+
+  /**
+   * Flush pending DIDs and resolve them in batch
+   */
+  async flush() {
+    if (this.pending.size === 0) {
+      this.scheduled = false;
+      return;
+    }
+
+    const pendingSnapshot = new Map(this.pending);
+    this.pending.clear();
+    this.scheduled = false;
+
+    // Process each collection
+    for (const [collection, didMap] of pendingSnapshot) {
+      const entries = Array.from(didMap.values());
+      const dids = [...new Set(entries.map((e) => e.did))]; // Unique DIDs
+
+      try {
+        // Batch fetch all pending DIDs for this collection
+        const result = await this.queryFn({
+          type: 'findMany',
+          collection,
+          where: [{ field: 'did', op: 'in', value: dids }],
+          pagination: { first: dids.length * 100 }, // Allow multiple records per DID
+        });
+
+        // Group results by DID
+        /** @type {Map<string, any[]>} */
+        const resultsByDid = new Map();
+        for (const row of result.rows || []) {
+          let arr = resultsByDid.get(row.did);
+          if (!arr) {
+            arr = [];
+            resultsByDid.set(row.did, arr);
+          }
+          arr.push(row);
+        }
+
+        // Resolve all callbacks
+        for (const entry of entries) {
+          const { did, unique, callbacks } = entry;
+          const key = `${collection}:${did}:${unique}`;
+          const records = resultsByDid.get(did) || [];
+          const value = unique ? records[0] || null : records;
+
+          this.resolved.set(key, value);
+          for (const resolve of callbacks) {
+            resolve(value);
+          }
+        }
+      } catch (_err) {
+        // On error, resolve all with null/empty
+        for (const entry of entries) {
+          const { unique, callbacks } = entry;
+          for (const resolve of callbacks) {
+            resolve(unique ? null : []);
+          }
         }
       }
     }

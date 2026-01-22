@@ -336,7 +336,9 @@ describe('findMany', () => {
 
     // Cursor format: JSON { v: [sortValues], u: uri } (default sort is indexedAt DESC)
     const lastRow = first.rows[1];
-    const cursor = Buffer.from(JSON.stringify({ v: [lastRow.indexedAt], u: lastRow.uri })).toString('base64');
+    const cursor = Buffer.from(JSON.stringify({ v: [lastRow.indexedAt], u: lastRow.uri })).toString(
+      'base64',
+    );
 
     const second = await query({
       type: 'findMany',
@@ -382,13 +384,15 @@ describe('findMany', () => {
     });
 
     expect(first.rows).toHaveLength(2);
-    expect(first.rows[0].name).toBe('fifth');  // 2024-01-05
+    expect(first.rows[0].name).toBe('fifth'); // 2024-01-05
     expect(first.rows[1].name).toBe('fourth'); // 2024-01-04
     expect(first.hasNext).toBe(true);
 
     // Build cursor from last row
     const lastRow = first.rows[1];
-    const cursor = Buffer.from(JSON.stringify({ v: [lastRow.playedTime], u: lastRow.uri })).toString('base64');
+    const cursor = Buffer.from(
+      JSON.stringify({ v: [lastRow.playedTime], u: lastRow.uri }),
+    ).toString('base64');
 
     // Get second page
     const second = await query({
@@ -400,13 +404,15 @@ describe('findMany', () => {
     });
 
     expect(second.rows).toHaveLength(2);
-    expect(second.rows[0].name).toBe('third');  // 2024-01-03
+    expect(second.rows[0].name).toBe('third'); // 2024-01-03
     expect(second.rows[1].name).toBe('second'); // 2024-01-02
     expect(second.hasNext).toBe(true);
 
     // Get third page
     const lastRow2 = second.rows[1];
-    const cursor2 = Buffer.from(JSON.stringify({ v: [lastRow2.playedTime], u: lastRow2.uri })).toString('base64');
+    const cursor2 = Buffer.from(
+      JSON.stringify({ v: [lastRow2.playedTime], u: lastRow2.uri }),
+    ).toString('base64');
 
     const third = await query({
       type: 'findMany',
@@ -468,7 +474,9 @@ describe('findMany', () => {
 
       // Build cursor for next page
       const lastRow = result.rows[result.rows.length - 1];
-      cursor = Buffer.from(JSON.stringify({ v: [lastRow.playedTime], u: lastRow.uri })).toString('base64');
+      cursor = Buffer.from(JSON.stringify({ v: [lastRow.playedTime], u: lastRow.uri })).toString(
+        'base64',
+      );
     }
 
     // Verify we got all records
@@ -485,7 +493,9 @@ describe('findMany', () => {
     }
 
     // Start from the middle: item3 (2024-01-03)
-    const cursor = Buffer.from(JSON.stringify({ v: ['2024-01-03T00:00:00Z'], u: 'at://did:plc:abc/col/3' })).toString('base64');
+    const cursor = Buffer.from(
+      JSON.stringify({ v: ['2024-01-03T00:00:00Z'], u: 'at://did:plc:abc/col/3' }),
+    ).toString('base64');
 
     // Get records BEFORE item3 (should be item4, item5 in DESC order)
     const result = await query({
@@ -530,7 +540,10 @@ describe('findMany', () => {
         type: 'findMany',
         collection: 'col',
         where: [],
-        sort: [{ field: 'category', dir: 'asc' }, { field: 'playedTime', dir: 'desc' }],
+        sort: [
+          { field: 'category', dir: 'asc' },
+          { field: 'playedTime', dir: 'desc' },
+        ],
         pagination: { first: 2, after: cursor },
       });
 
@@ -542,10 +555,12 @@ describe('findMany', () => {
 
       // Build cursor with both sort field values
       const lastRow = result.rows[result.rows.length - 1];
-      cursor = Buffer.from(JSON.stringify({
-        v: [lastRow.category, lastRow.playedTime],
-        u: lastRow.uri,
-      })).toString('base64');
+      cursor = Buffer.from(
+        JSON.stringify({
+          v: [lastRow.category, lastRow.playedTime],
+          u: lastRow.uri,
+        }),
+      ).toString('base64');
     }
 
     // Verify correct order

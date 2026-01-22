@@ -1,9 +1,9 @@
-import { graphql, useLazyLoadQuery } from "react-relay";
-import { useParams } from "react-router-dom";
-import type { TopTracksQuery } from "./__generated__/TopTracksQuery.graphql";
-import TopTrackItem from "./TopTrackItem";
-import Layout from "./Layout";
-import { useDateRangeFilter } from "./useDateRangeFilter";
+import { graphql, useLazyLoadQuery } from 'react-relay';
+import { useParams } from 'react-router-dom';
+import type { TopTracksQuery } from './__generated__/TopTracksQuery.graphql';
+import Layout from './Layout';
+import TopTrackItem from './TopTrackItem';
+import { useDateRangeFilter } from './useDateRangeFilter';
 
 export default function TopTracks() {
   const { period } = useParams<{ period?: string }>();
@@ -30,7 +30,7 @@ export default function TopTracks() {
       }
     `,
     queryVariables,
-    { fetchKey: period || "all", fetchPolicy: "network-only" },
+    { fetchKey: period || 'all', fetchPolicy: 'network-only' },
   );
 
   const tracks = data.fmTealAlphaFeedPlayAggregate?.groups || [];
@@ -42,7 +42,7 @@ export default function TopTracks() {
         {tracks.map((track, index) => (
           <TopTrackItem
             key={`${track.trackName}-${index}`}
-            trackName={track.trackName || "Unknown Track"}
+            trackName={track.trackName || 'Unknown Track'}
             releaseMbId={track.releaseMbId}
             artists={track.artists ? JSON.stringify(track.artists) : undefined}
             count={track.count}

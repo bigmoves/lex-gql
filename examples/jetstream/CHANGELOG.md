@@ -1,5 +1,12 @@
 # lex-gql-jetstream-example
 
+## 1.0.3
+
+### Patch Changes
+
+- Updated dependencies
+  - lex-gql@0.2.2
+
 ## 1.0.2
 
 ### Patch Changes

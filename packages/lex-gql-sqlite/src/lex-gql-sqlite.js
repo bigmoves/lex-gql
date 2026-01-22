@@ -2,7 +2,7 @@
  * SQLite adapter for lex-gql
  */
 
-import { hydrateRecord, DEFAULT_SORT } from 'lex-gql';
+import { DEFAULT_SORT, hydrateRecord } from 'lex-gql';
 
 /**
  * SQL schema for lex-gql records
@@ -131,7 +131,7 @@ function decodeCursor(cursor, sortFields) {
     const expectedCount = sortFields?.length || 1;
     if (parsed.v.length !== expectedCount) {
       console.debug(
-        `lex-gql-sqlite: Cursor field count mismatch (got ${parsed.v.length}, expected ${expectedCount})`
+        `lex-gql-sqlite: Cursor field count mismatch (got ${parsed.v.length}, expected ${expectedCount})`,
       );
       return null;
     }
@@ -151,7 +151,7 @@ function decodeCursor(cursor, sortFields) {
  */
 function getComparisonOp(direction, isBefore) {
   const isDesc = direction?.toLowerCase() === 'desc';
-  return isBefore ? (isDesc ? '>' : '<') : (isDesc ? '<' : '>');
+  return isBefore ? (isDesc ? '>' : '<') : isDesc ? '<' : '>';
 }
 
 /**
@@ -278,12 +278,13 @@ export function buildWhere(where) {
           params.push(...value);
         }
         break;
-      case 'contains':
+      case 'contains': {
         parts.push(`${fieldPath} LIKE ? ESCAPE '\\'`);
         // Escape LIKE wildcards (% and _) in the search value
         const escapedValue = String(value).replace(/[%_\\]/g, '\\$&');
         params.push(`%${escapedValue}%`);
         break;
+      }
       case 'gt':
         parts.push(`${fieldPath} > ?`);
         params.push(value);
@@ -477,7 +478,14 @@ function getGroupByExpression(field) {
  * @param {any} op
  */
 function aggregate(db, op) {
-  const { collection, where = [], groupBy = [], limit = 50, orderBy = 'COUNT_DESC', arrayFields = [] } = op;
+  const {
+    collection,
+    where = [],
+    groupBy = [],
+    limit = 50,
+    orderBy = 'COUNT_DESC',
+    arrayFields = [],
+  } = op;
 
   // Cap limit at 1000
   const effectiveLimit = Math.min(limit, 1000);

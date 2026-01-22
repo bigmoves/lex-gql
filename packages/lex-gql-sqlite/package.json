@@ -27,7 +27,7 @@
   "license": "MIT",
   "peerDependencies": {
     "better-sqlite3": ">=11.0.0",
-    "lex-gql": ">=0.2.1"
+    "lex-gql": ">=0.2.2"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.12",

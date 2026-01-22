@@ -5,9 +5,9 @@
  * compared to SQLite on large datasets.
  */
 
+import { promisify } from 'node:util';
 import duckdb from 'duckdb';
-import { promisify } from 'util';
-import { hydrateRecord, DEFAULT_SORT } from 'lex-gql';
+import { DEFAULT_SORT, hydrateRecord } from 'lex-gql';
 
 /**
  * SQL schema for lex-gql records
@@ -138,7 +138,7 @@ export function createWriter(conn) {
         rkey,
         cid || null,
         recordJson,
-        timestamp
+        timestamp,
       );
     },
 
@@ -168,7 +168,7 @@ export function createWriter(conn) {
           record = EXCLUDED.record,
           indexed_at = EXCLUDED.indexed_at
       `,
-        ...params
+        ...params,
       );
     },
 
@@ -183,7 +183,7 @@ export function createWriter(conn) {
         ON CONFLICT (did) DO UPDATE SET handle = EXCLUDED.handle
       `,
         did,
-        handle
+        handle,
       );
     },
   };
@@ -220,7 +220,7 @@ function decodeCursor(cursor, sortFields) {
     const expectedCount = sortFields?.length || 1;
     if (parsed.v.length !== expectedCount) {
       console.debug(
-        `lex-gql-duckdb: Cursor field count mismatch (got ${parsed.v.length}, expected ${expectedCount})`
+        `lex-gql-duckdb: Cursor field count mismatch (got ${parsed.v.length}, expected ${expectedCount})`,
       );
       return null;
     }
@@ -240,7 +240,7 @@ function decodeCursor(cursor, sortFields) {
  */
 function getComparisonOp(direction, isBefore) {
   const isDesc = direction?.toLowerCase() === 'desc';
-  return isBefore ? (isDesc ? '>' : '<') : (isDesc ? '<' : '>');
+  return isBefore ? (isDesc ? '>' : '<') : isDesc ? '<' : '>';
 }
 
 /**
@@ -394,12 +394,13 @@ export function buildWhere(where) {
           params.push(...value);
         }
         break;
-      case 'contains':
+      case 'contains': {
         parts.push(`${fieldPath} LIKE ? ESCAPE '\\'`);
         // Escape LIKE wildcards (% and _) in the search value
         const escapedValue = String(value).replace(/[%_\\]/g, '\\$&');
         params.push(`%${escapedValue}%`);
         break;
+      }
       case 'gt':
         parts.push(`${fieldPath} > ${compareValue}`);
         params.push(value);
@@ -613,7 +614,9 @@ async function aggregate(conn, op) {
   const groupExpressions = groupBy.map((/** @type {string} */ f) => getGroupByExpression(f));
 
   const groupFields = groupExpressions
-    .map((/** @type {{ expr: string, alias: string }} */ { expr, alias }) => `${expr} as "${alias}"`)
+    .map(
+      (/** @type {{ expr: string, alias: string }} */ { expr, alias }) => `${expr} as "${alias}"`,
+    )
     .join(', ');
 
   const groupByClause = groupExpressions

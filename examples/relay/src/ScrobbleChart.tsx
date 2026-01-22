@@ -1,6 +1,6 @@
-import { graphql, useFragment } from "react-relay";
-import { useMemo } from "react";
-import type { ScrobbleChart_data$key } from "./__generated__/ScrobbleChart_data.graphql";
+import { useMemo } from 'react';
+import { graphql, useFragment } from 'react-relay';
+import type { ScrobbleChart_data$key } from './__generated__/ScrobbleChart_data.graphql';
 
 interface ScrobbleChartProps {
   queryRef: ScrobbleChart_data$key;
@@ -29,14 +29,16 @@ export default function ScrobbleChart({ queryRef }: ScrobbleChartProps) {
     if (!data?.chartData?.groups) return [];
 
     // Convert aggregated data to chart format
-    const aggregated = data.chartData.groups.map((item) => {
-      // playedTime_day comes back as '2025-08-03', already a date
-      const date = item.playedTime_day || "";
-      return {
-        date,
-        count: item.count,
-      };
-    }).sort((a, b) => a.date.localeCompare(b.date));
+    const aggregated = data.chartData.groups
+      .map((item) => {
+        // playedTime_day comes back as '2025-08-03', already a date
+        const date = item.playedTime_day || '';
+        return {
+          date,
+          count: item.count,
+        };
+      })
+      .sort((a, b) => a.date.localeCompare(b.date));
 
     // Fill in missing days with zero counts
     const now = new Date();
@@ -46,7 +48,7 @@ export default function ScrobbleChart({ queryRef }: ScrobbleChartProps) {
     for (let i = 89; i >= 0; i--) {
       const date = new Date(now);
       date.setDate(date.getDate() - i);
-      const dateStr = date.toISOString().split("T")[0];
+      const dateStr = date.toISOString().split('T')[0];
 
       const existing = aggregated.find((d) => d.date === dateStr);
       filledData.push({
@@ -71,37 +73,29 @@ export default function ScrobbleChart({ queryRef }: ScrobbleChartProps) {
   const range = maxCount - minCount || 1;
 
   // Generate points for the line
-  const points = chartData.map((d, i) => {
-    const x = padding.left + (i / (chartData.length - 1)) * chartWidth;
-    const y = padding.top + chartHeight -
-      ((d.count - minCount) / range) * chartHeight;
-    return `${x},${y}`;
-  }).join(" ");
+  const points = chartData
+    .map((d, i) => {
+      const x = padding.left + (i / (chartData.length - 1)) * chartWidth;
+      const y = padding.top + chartHeight - ((d.count - minCount) / range) * chartHeight;
+      return `${x},${y}`;
+    })
+    .join(' ');
 
   // Generate area path
   const areaPoints = [
     `${padding.left},${padding.top + chartHeight}`,
     ...chartData.map((d, i) => {
       const x = padding.left + (i / (chartData.length - 1)) * chartWidth;
-      const y = padding.top + chartHeight -
-        ((d.count - minCount) / range) * chartHeight;
+      const y = padding.top + chartHeight - ((d.count - minCount) / range) * chartHeight;
       return `${x},${y}`;
     }),
     `${padding.left + chartWidth},${padding.top + chartHeight}`,
-  ].join(" ");
+  ].join(' ');
 
   return (
-    <svg
-      viewBox={`0 0 ${width} ${height}`}
-      className="w-full h-full"
-      preserveAspectRatio="none"
-    >
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-full" preserveAspectRatio="none">
       {/* Area fill */}
-      <polygon
-        points={areaPoints}
-        fill="rgb(139 92 246 / 0.1)"
-        stroke="none"
-      />
+      <polygon points={areaPoints} fill="rgb(139 92 246 / 0.1)" stroke="none" />
 
       {/* Line */}
       <polyline

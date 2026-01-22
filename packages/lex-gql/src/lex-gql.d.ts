@@ -134,6 +134,60 @@ export class LexGqlError extends Error {
     code: string;
     details: Object;
 }
+/**
+ * JoinCollector for batching forward join resolution
+ */
+export class JoinCollector {
+    /**
+     * @param {(op: Operation) => Promise<any>} queryFn
+     */
+    constructor(queryFn: (op: Operation) => Promise<any>);
+    queryFn: (op: Operation) => Promise<any>;
+    pending: Map<any, any>;
+    resolved: Map<any, any>;
+    scheduled: boolean;
+    /**
+     * Add a URI to be resolved
+     * @param {string} uri
+     * @returns {Promise<any>}
+     */
+    load(uri: string): Promise<any>;
+    /**
+     * Flush pending URIs and resolve them in batch
+     */
+    flush(): Promise<void>;
+}
+/**
+ * DidCollector for batching DID-based join resolution
+ * Groups lookups by collection and batches DIDs within each collection
+ */
+export class DidCollector {
+    /**
+     * @param {(op: Operation) => Promise<any>} queryFn
+     */
+    constructor(queryFn: (op: Operation) => Promise<any>);
+    queryFn: (op: Operation) => Promise<any>;
+    pending: Map<any, any>;
+    resolved: Map<any, any>;
+    scheduled: boolean;
+    /**
+     * Load a record by DID from a collection
+     * @param {string} collection
+     * @param {string} did
+     * @param {boolean} unique - If true, return single record; if false, return array
+     * @returns {Promise<any>}
+     */
+    load(collection: string, did: string, unique?: boolean): Promise<any>;
+    /**
+     * Flush pending DIDs and resolve them in batch
+     */
+    flush(): Promise<void>;
+}
+/** @type {Array<{field: string, dir: string}>} */
+export const DEFAULT_SORT: Array<{
+    field: string;
+    dir: string;
+}>;
 export type DatabaseRow = {
     /**
      * - Record AT URI

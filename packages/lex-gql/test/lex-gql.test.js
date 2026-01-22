@@ -7,9 +7,11 @@ import { describe, expect, it } from 'vitest';
 import {
   buildSchema,
   createAdapter,
+  DidCollector,
   ErrorCodes,
   hydrateBlobs,
   hydrateRecord,
+  JoinCollector,
   LexGqlError,
   mapLexiconType,
   nsidToCollectionName,
@@ -2946,5 +2948,233 @@ describe('Hydration Helpers', () => {
 
       expect(() => hydrateRecord(row)).toThrow(SyntaxError);
     });
+  });
+});
+
+describe('DidCollector', () => {
+  it('batches multiple DID lookups for the same collection', async () => {
+    const queryCalls = [];
+    const mockQueryFn = async (op) => {
+      queryCalls.push(op);
+      // Return mock results for each DID
+      const dids = op.where[0].value;
+      return {
+        rows: dids.map((did) => ({
+          did,
+          uri: `at://${did}/app.bsky.actor.profile/self`,
+          displayName: `User ${did}`,
+        })),
+      };
+    };
+
+    const collector = new DidCollector(mockQueryFn);
+
+    // Load multiple DIDs concurrently (within same microtask)
+    const [result1, result2, result3] = await Promise.all([
+      collector.load('app.bsky.actor.profile', 'did:plc:user1', true),
+      collector.load('app.bsky.actor.profile', 'did:plc:user2', true),
+      collector.load('app.bsky.actor.profile', 'did:plc:user3', true),
+    ]);
+
+    // Should have made only ONE query with all DIDs
+    expect(queryCalls).toHaveLength(1);
+    expect(queryCalls[0].collection).toBe('app.bsky.actor.profile');
+    expect(queryCalls[0].where[0].op).toBe('in');
+    expect(queryCalls[0].where[0].value).toContain('did:plc:user1');
+    expect(queryCalls[0].where[0].value).toContain('did:plc:user2');
+    expect(queryCalls[0].where[0].value).toContain('did:plc:user3');
+
+    // Results should be correct
+    expect(result1.did).toBe('did:plc:user1');
+    expect(result2.did).toBe('did:plc:user2');
+    expect(result3.did).toBe('did:plc:user3');
+  });
+
+  it('groups lookups by collection', async () => {
+    const queryCalls = [];
+    const mockQueryFn = async (op) => {
+      queryCalls.push(op);
+      const dids = op.where[0].value;
+      return {
+        rows: dids.map((did) => ({
+          did,
+          uri: `at://${did}/${op.collection}/self`,
+        })),
+      };
+    };
+
+    const collector = new DidCollector(mockQueryFn);
+
+    // Load from different collections concurrently
+    await Promise.all([
+      collector.load('app.bsky.actor.profile', 'did:plc:user1', true),
+      collector.load('app.bsky.feed.post', 'did:plc:user1', false),
+    ]);
+
+    // Should have made TWO queries (one per collection)
+    expect(queryCalls).toHaveLength(2);
+    expect(queryCalls.map((c) => c.collection).sort()).toEqual([
+      'app.bsky.actor.profile',
+      'app.bsky.feed.post',
+    ]);
+  });
+
+  it('returns array for non-unique lookups', async () => {
+    const mockQueryFn = async (op) => {
+      const dids = op.where[0].value;
+      // Return multiple posts per DID
+      return {
+        rows: dids.flatMap((did) => [
+          { did, uri: `at://${did}/app.bsky.feed.post/1`, text: 'Post 1' },
+          { did, uri: `at://${did}/app.bsky.feed.post/2`, text: 'Post 2' },
+        ]),
+      };
+    };
+
+    const collector = new DidCollector(mockQueryFn);
+
+    const posts = await collector.load('app.bsky.feed.post', 'did:plc:user1', false);
+
+    expect(Array.isArray(posts)).toBe(true);
+    expect(posts).toHaveLength(2);
+    expect(posts[0].text).toBe('Post 1');
+    expect(posts[1].text).toBe('Post 2');
+  });
+
+  it('returns single record for unique lookups', async () => {
+    const mockQueryFn = async (op) => {
+      const dids = op.where[0].value;
+      return {
+        rows: dids.map((did) => ({
+          did,
+          uri: `at://${did}/app.bsky.actor.profile/self`,
+          displayName: 'Test User',
+        })),
+      };
+    };
+
+    const collector = new DidCollector(mockQueryFn);
+
+    const profile = await collector.load('app.bsky.actor.profile', 'did:plc:user1', true);
+
+    expect(Array.isArray(profile)).toBe(false);
+    expect(profile.displayName).toBe('Test User');
+  });
+
+  it('returns null for unique lookup with no results', async () => {
+    const mockQueryFn = async () => ({ rows: [] });
+
+    const collector = new DidCollector(mockQueryFn);
+
+    const result = await collector.load('app.bsky.actor.profile', 'did:plc:nonexistent', true);
+
+    expect(result).toBeNull();
+  });
+
+  it('returns empty array for non-unique lookup with no results', async () => {
+    const mockQueryFn = async () => ({ rows: [] });
+
+    const collector = new DidCollector(mockQueryFn);
+
+    const result = await collector.load('app.bsky.feed.post', 'did:plc:nonexistent', false);
+
+    expect(Array.isArray(result)).toBe(true);
+    expect(result).toHaveLength(0);
+  });
+
+  it('caches resolved results', async () => {
+    let callCount = 0;
+    const mockQueryFn = async (op) => {
+      callCount++;
+      const dids = op.where[0].value;
+      return {
+        rows: dids.map((did) => ({ did, name: 'Cached' })),
+      };
+    };
+
+    const collector = new DidCollector(mockQueryFn);
+
+    // First load
+    const result1 = await collector.load('app.bsky.actor.profile', 'did:plc:user1', true);
+    expect(callCount).toBe(1);
+
+    // Second load should use cache (no additional query)
+    const result2 = await collector.load('app.bsky.actor.profile', 'did:plc:user1', true);
+    expect(callCount).toBe(1);
+
+    expect(result1).toBe(result2);
+  });
+
+  it('handles query errors gracefully', async () => {
+    const mockQueryFn = async () => {
+      throw new Error('Database error');
+    };
+
+    const collector = new DidCollector(mockQueryFn);
+
+    const [unique, nonUnique] = await Promise.all([
+      collector.load('app.bsky.actor.profile', 'did:plc:user1', true),
+      collector.load('app.bsky.feed.post', 'did:plc:user1', false),
+    ]);
+
+    expect(unique).toBeNull();
+    expect(nonUnique).toEqual([]);
+  });
+});
+
+describe('JoinCollector', () => {
+  it('batches multiple URI lookups', async () => {
+    const queryCalls = [];
+    const mockQueryFn = async (op) => {
+      queryCalls.push(op);
+      const uris = op.where[0].value;
+      return {
+        rows: uris.map((uri) => ({ uri, text: `Post for ${uri}` })),
+      };
+    };
+
+    const collector = new JoinCollector(mockQueryFn);
+
+    const [result1, result2] = await Promise.all([
+      collector.load('at://did:plc:user1/app.bsky.feed.post/1'),
+      collector.load('at://did:plc:user2/app.bsky.feed.post/2'),
+    ]);
+
+    // Should have made only ONE query
+    expect(queryCalls).toHaveLength(1);
+    expect(queryCalls[0].where[0].op).toBe('in');
+    expect(queryCalls[0].where[0].value).toHaveLength(2);
+
+    expect(result1.uri).toBe('at://did:plc:user1/app.bsky.feed.post/1');
+    expect(result2.uri).toBe('at://did:plc:user2/app.bsky.feed.post/2');
+  });
+
+  it('returns null for missing URIs', async () => {
+    const mockQueryFn = async () => ({ rows: [] });
+
+    const collector = new JoinCollector(mockQueryFn);
+
+    const result = await collector.load('at://did:plc:user/col/nonexistent');
+
+    expect(result).toBeNull();
+  });
+
+  it('caches resolved URIs', async () => {
+    let callCount = 0;
+    const mockQueryFn = async (op) => {
+      callCount++;
+      const uris = op.where[0].value;
+      return {
+        rows: uris.map((uri) => ({ uri, cached: true })),
+      };
+    };
+
+    const collector = new JoinCollector(mockQueryFn);
+
+    await collector.load('at://did:plc:user/col/rkey');
+    expect(callCount).toBe(1);
+
+    await collector.load('at://did:plc:user/col/rkey');
+    expect(callCount).toBe(1); // No additional query
   });
 });
