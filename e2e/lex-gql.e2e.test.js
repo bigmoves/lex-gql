@@ -1273,4 +1273,217 @@ describe('lex-gql e2e with real lexicons', () => {
       expect(post.appBskyActorProfileByDid).toBeNull();
     });
   });
+
+  describe('reverse joins (Via fields)', () => {
+    beforeEach(() => {
+      // Create a post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/post1',
+        cid: 'bafypost1',
+        record: {
+          text: 'This is my post',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+      writer.upsertActor('did:plc:alice', 'alice.bsky.social');
+
+      // Create threadgates pointing to that post (threadgate has a 'post' field with at-uri format)
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.threadgate/post1',
+        cid: 'bafygate1',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/post1',
+          createdAt: '2024-01-15T11:00:00.000Z',
+          allow: [],
+        },
+        indexedAt: '2024-01-15T11:00:00.000Z',
+      });
+
+      // Create another post with a threadgate
+      writer.insertRecord({
+        uri: 'at://did:plc:bob/app.bsky.feed.post/post2',
+        cid: 'bafypost2',
+        record: {
+          text: 'Bob post with threadgate',
+          createdAt: '2024-01-15T12:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T12:00:00.000Z',
+      });
+      writer.upsertActor('did:plc:bob', 'bob.bsky.social');
+
+      writer.insertRecord({
+        uri: 'at://did:plc:bob/app.bsky.feed.threadgate/post2',
+        cid: 'bafygate2',
+        record: {
+          post: 'at://did:plc:bob/app.bsky.feed.post/post2',
+          createdAt: '2024-01-15T12:30:00.000Z',
+          allow: [],
+        },
+        indexedAt: '2024-01-15T12:30:00.000Z',
+      });
+
+      // Create a post without any threadgate
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/post3',
+        cid: 'bafypost3',
+        record: {
+          text: 'No threadgate on this',
+          createdAt: '2024-01-15T09:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T09:00:00.000Z',
+      });
+    });
+
+    it('queries post with threadgate via reverse join', async () => {
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPost(first: 10, where: { uri: { eq: "at://did:plc:alice/app.bsky.feed.post/post1" } }) {
+            edges {
+              node {
+                uri
+                text
+                appBskyFeedThreadgateViaPost(first: 10) {
+                  totalCount
+                  edges {
+                    node {
+                      uri
+                      did
+                      createdAt
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPost.edges).toHaveLength(1);
+
+      const post = result.data.appBskyFeedPost.edges[0].node;
+      expect(post.text).toBe('This is my post');
+      expect(post.appBskyFeedThreadgateViaPost.totalCount).toBe(1);
+      expect(post.appBskyFeedThreadgateViaPost.edges).toHaveLength(1);
+
+      // Check the threadgate was returned
+      expect(post.appBskyFeedThreadgateViaPost.edges[0].node.uri).toBe(
+        'at://did:plc:alice/app.bsky.feed.threadgate/post1',
+      );
+    });
+
+    it('returns empty connection for post with no threadgate', async () => {
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPost(first: 10, where: { uri: { eq: "at://did:plc:alice/app.bsky.feed.post/post3" } }) {
+            edges {
+              node {
+                text
+                appBskyFeedThreadgateViaPost(first: 10) {
+                  totalCount
+                  edges {
+                    node {
+                      uri
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const post = result.data.appBskyFeedPost.edges[0].node;
+      expect(post.text).toBe('No threadgate on this');
+      expect(post.appBskyFeedThreadgateViaPost.totalCount).toBe(0);
+      expect(post.appBskyFeedThreadgateViaPost.edges).toHaveLength(0);
+    });
+
+    it('supports pagination in reverse join fields', async () => {
+      // Add more threadgates pointing to the same post (unusual but tests pagination)
+      for (let i = 2; i <= 5; i++) {
+        writer.insertRecord({
+          uri: `at://did:plc:user${i}/app.bsky.feed.threadgate/gate${i}`,
+          cid: `bafygate${i}`,
+          record: {
+            post: 'at://did:plc:alice/app.bsky.feed.post/post1',
+            createdAt: `2024-01-15T1${i}:00:00.000Z`,
+            allow: [],
+          },
+          indexedAt: `2024-01-15T1${i}:00:00.000Z`,
+        });
+      }
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPost(first: 10, where: { uri: { eq: "at://did:plc:alice/app.bsky.feed.post/post1" } }) {
+            edges {
+              node {
+                appBskyFeedThreadgateViaPost(first: 2) {
+                  totalCount
+                  edges {
+                    node {
+                      uri
+                    }
+                  }
+                  pageInfo {
+                    hasNextPage
+                    endCursor
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const gates = result.data.appBskyFeedPost.edges[0].node.appBskyFeedThreadgateViaPost;
+      expect(gates.totalCount).toBe(5); // 1 original + 4 new
+      expect(gates.edges).toHaveLength(2); // First page only
+      expect(gates.pageInfo.hasNextPage).toBe(true);
+    });
+
+    it('supports sorting in reverse join fields', async () => {
+      // Add another threadgate with different timestamp
+      writer.insertRecord({
+        uri: 'at://did:plc:carol/app.bsky.feed.threadgate/gate2',
+        cid: 'bafygate3',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/post1',
+          createdAt: '2024-01-15T10:30:00.000Z', // Earlier than original
+          allow: [],
+        },
+        indexedAt: '2024-01-15T10:30:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPost(first: 10, where: { uri: { eq: "at://did:plc:alice/app.bsky.feed.post/post1" } }) {
+            edges {
+              node {
+                appBskyFeedThreadgateViaPost(first: 10, sortBy: [{ field: createdAt, direction: ASC }]) {
+                  edges {
+                    node {
+                      uri
+                      createdAt
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const gates = result.data.appBskyFeedPost.edges[0].node.appBskyFeedThreadgateViaPost.edges;
+      expect(gates).toHaveLength(2);
+      // Should be sorted by createdAt ASC (earlier first)
+      expect(gates[0].node.uri).toBe('at://did:plc:carol/app.bsky.feed.threadgate/gate2');
+      expect(gates[1].node.uri).toBe('at://did:plc:alice/app.bsky.feed.threadgate/post1');
+    });
+  });
 });

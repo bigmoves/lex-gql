@@ -1584,6 +1584,251 @@ describe('Query Compiler', () => {
     expect(result.data.appBskyFeedPost.edges[0].node.authorResolved.displayName).toBe('User did1');
   });
 
+  it('resolves reverse join fields (Via fields) with correct operation', async () => {
+    const operations = [];
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.post',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' },
+              },
+            },
+          },
+        },
+      }),
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.like',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: {
+                subject: { type: 'string', format: 'at-uri' },
+                createdAt: { type: 'string', format: 'datetime' },
+              },
+            },
+          },
+        },
+      }),
+    ];
+
+    const postUri = 'at://did:plc:test123/app.bsky.feed.post/abc';
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        operations.push(op);
+        if (op.type === 'findMany' && op.collection === 'app.bsky.feed.post') {
+          return {
+            rows: [{ uri: postUri, text: 'Hello world', did: 'did:plc:test123' }],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 1,
+          };
+        }
+        if (op.type === 'findMany' && op.collection === 'app.bsky.feed.like') {
+          // This should be the reverse join query
+          return {
+            rows: [
+              { uri: 'at://did:plc:other/app.bsky.feed.like/1', subject: postUri, createdAt: '2024-01-01T00:00:00Z' },
+              { uri: 'at://did:plc:other/app.bsky.feed.like/2', subject: postUri, createdAt: '2024-01-02T00:00:00Z' },
+            ],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 2,
+          };
+        }
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    const result = await adapter.execute(`
+      query {
+        appBskyFeedPost(first: 1) {
+          edges {
+            node {
+              uri
+              text
+              appBskyFeedLikeViaSubject(first: 10) {
+                totalCount
+                edges {
+                  node {
+                    uri
+                    createdAt
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    // Should have two findMany operations: one for posts, one for likes (reverse join)
+    const postOp = operations.find((op) => op.collection === 'app.bsky.feed.post');
+    const likeOp = operations.find((op) => op.collection === 'app.bsky.feed.like');
+
+    expect(postOp).toBeDefined();
+    expect(likeOp).toBeDefined();
+    expect(likeOp.type).toBe('findMany');
+    // The reverse join should query where subject equals the parent post's uri
+    expect(likeOp.where).toEqual([{ field: 'subject', op: 'eq', value: postUri }]);
+
+    // Verify the result data
+    expect(result.data.appBskyFeedPost.edges[0].node.text).toBe('Hello world');
+    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.totalCount).toBe(2);
+    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(2);
+  });
+
+  it('reverse join fields support pagination arguments', async () => {
+    const operations = [];
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.post',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.like',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: {
+                subject: { type: 'string', format: 'at-uri' },
+              },
+            },
+          },
+        },
+      }),
+    ];
+
+    const postUri = 'at://did:plc:test/app.bsky.feed.post/xyz';
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        operations.push(op);
+        if (op.collection === 'app.bsky.feed.post') {
+          return {
+            rows: [{ uri: postUri, text: 'Test', did: 'did:plc:test' }],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 1,
+          };
+        }
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    await adapter.execute(`
+      query {
+        appBskyFeedPost(first: 1) {
+          edges {
+            node {
+              appBskyFeedLikeViaSubject(first: 5, after: "cursor123") {
+                edges { node { uri } }
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    const likeOp = operations.find((op) => op.collection === 'app.bsky.feed.like');
+    expect(likeOp).toBeDefined();
+    expect(likeOp.pagination.first).toBe(5);
+    expect(likeOp.pagination.after).toBe('cursor123');
+  });
+
+  it('reverse join fields return empty connection when parent has no uri', async () => {
+    const operations = [];
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.post',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.like',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: {
+                subject: { type: 'string', format: 'at-uri' },
+              },
+            },
+          },
+        },
+      }),
+    ];
+
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        operations.push(op);
+        if (op.collection === 'app.bsky.feed.post') {
+          // Return a post without a uri (edge case)
+          return {
+            rows: [{ text: 'No uri post', did: 'did:plc:test' }],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 1,
+          };
+        }
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    const result = await adapter.execute(`
+      query {
+        appBskyFeedPost(first: 1) {
+          edges {
+            node {
+              text
+              appBskyFeedLikeViaSubject(first: 10) {
+                totalCount
+                edges { node { uri } }
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    // Should not make a query for likes since parent has no uri
+    const likeOps = operations.filter((op) => op.collection === 'app.bsky.feed.like');
+    expect(likeOps).toHaveLength(0);
+
+    // Should return empty connection
+    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.totalCount).toBe(0);
+    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(0);
+  });
+
   it('generates aggregate operation with count', async () => {
     const operations = [];
     const lexicons = [
