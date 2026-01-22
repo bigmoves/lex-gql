@@ -259,7 +259,7 @@ export type Aggregate = {
     fn: string;
 };
 export type Operation = {
-    type: "findMany" | "findOne" | "count" | "aggregate" | "create" | "update" | "delete";
+    type: "findMany" | "findManyPartitioned" | "findOne" | "count" | "aggregate" | "create" | "update" | "delete";
     collection: string;
     where?: WhereClause[] | undefined;
     select?: string[] | undefined;
@@ -273,6 +273,16 @@ export type Operation = {
     limit?: number | undefined;
     orderBy?: "COUNT_ASC" | "COUNT_DESC" | undefined;
     arrayFields?: string[] | undefined;
+    partitionField?: string | undefined;
+    partitionValues?: string[] | undefined;
+};
+export type PartitionedResultEntry = {
+    rows: Record<string, any>[];
+    hasNext: boolean;
+    hasPrev: boolean;
+};
+export type PartitionedResult = {
+    [x: string]: PartitionedResultEntry;
 };
 export type AdapterOptions = {
     query: (op: Operation) => Promise<any>;

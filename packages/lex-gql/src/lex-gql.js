@@ -62,7 +62,7 @@ import {
 
 /**
  * @typedef {Object} Operation
- * @property {'findMany'|'findOne'|'count'|'aggregate'|'create'|'update'|'delete'} type
+ * @property {'findMany'|'findManyPartitioned'|'findOne'|'count'|'aggregate'|'create'|'update'|'delete'} type
  * @property {string} collection
  * @property {WhereClause[]} [where]
  * @property {string[]} [select]
@@ -76,6 +76,19 @@ import {
  * @property {number} [limit]
  * @property {'COUNT_ASC'|'COUNT_DESC'} [orderBy]
  * @property {string[]} [arrayFields]
+ * @property {string} [partitionField]
+ * @property {string[]} [partitionValues]
+ */
+
+/**
+ * @typedef {Object} PartitionedResultEntry
+ * @property {Record<string, *>[]} rows
+ * @property {boolean} hasNext
+ * @property {boolean} hasPrev
+ */
+
+/**
+ * @typedef {Object.<string, PartitionedResultEntry>} PartitionedResult
  */
 
 /**
@@ -1733,6 +1746,7 @@ function createRecordTypeWithResolvers(
               };
             }
 
+            /** @type {Operation} */
             const operation = {
               type: 'findMany',
               collection: fromLexicon,
