@@ -1713,7 +1713,6 @@ function createRecordTypeWithResolvers(
           after: { type: GraphQLString },
           last: { type: GraphQLInt },
           before: { type: GraphQLString },
-          where: { type: whereInputTypes[fromTypeName] },
         };
         if (sortInputTypes[fromTypeName]) {
           reverseFieldArgs.sortBy = {

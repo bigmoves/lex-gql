@@ -1347,7 +1347,7 @@ describe('Schema Builder', () => {
     expect(sdl).toContain('input AppBskyActorProfileFieldCondition');
   });
 
-  it('adds sortBy and where arguments to reverse join fields', () => {
+  it('adds sortBy argument to reverse join fields', () => {
     const lexicons = [
       {
         id: 'app.bsky.feed.post',
@@ -1388,10 +1388,9 @@ describe('Schema Builder', () => {
     expect(postTypeMatch).not.toBeNull();
     const postTypeDef = postTypeMatch[0];
 
-    // Reverse join field should have sortBy and where arguments
+    // Reverse join field should have sortBy argument
     expect(postTypeDef).toContain('appBskyFeedLikeViaSubject(');
     expect(postTypeDef).toContain('sortBy:');
-    expect(postTypeDef).toContain('where:');
   });
 });
 
