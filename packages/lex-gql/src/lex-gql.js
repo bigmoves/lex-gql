@@ -2510,6 +2510,147 @@ export class DidCollector {
 }
 
 /**
+ * ReverseJoinCollector for batching reverse join resolution
+ * Groups lookups by (collection, fieldName, pagination, sort) and batches parent URIs
+ */
+export class ReverseJoinCollector {
+  /**
+   * @param {(op: Operation) => Promise<any>} queryFn
+   */
+  constructor(queryFn) {
+    this.queryFn = queryFn;
+    /** @type {Map<string, { collection: string, fieldName: string, pagination: any, sort: any, parentUris: string[], callbacks: Array<(result: any) => void> }>} */
+    this.pending = new Map();
+    this.scheduled = false;
+  }
+
+  /**
+   * Create a hash key for grouping requests with identical parameters
+   * @param {string} collection
+   * @param {string} fieldName
+   * @param {any} pagination
+   * @param {any} sort
+   * @returns {string}
+   */
+  _makeKey(collection, fieldName, pagination, sort) {
+    return JSON.stringify({ collection, fieldName, pagination, sort });
+  }
+
+  /**
+   * Load reverse join results for a parent URI
+   * @param {string} collection - The collection to query (e.g., 'app.bsky.feed.threadgate')
+   * @param {string} fieldName - The field that references the parent (e.g., 'post')
+   * @param {string} parentUri - The parent record's URI
+   * @param {{ first?: number, after?: string, last?: number, before?: string }} pagination
+   * @param {Array<{ field: string, dir?: string }>} sort
+   * @returns {Promise<{ rows: any[], hasNext: boolean, hasPrev: boolean }>}
+   */
+  load(collection, fieldName, parentUri, pagination, sort) {
+    const key = this._makeKey(collection, fieldName, pagination, sort);
+
+    return new Promise((resolve) => {
+      if (!this.pending.has(key)) {
+        this.pending.set(key, {
+          collection,
+          fieldName,
+          pagination,
+          sort,
+          parentUris: [],
+          callbacks: [],
+        });
+      }
+
+      const group = /** @type {NonNullable<ReturnType<typeof this.pending.get>>} */ (
+        this.pending.get(key)
+      );
+      group.parentUris.push(parentUri);
+      group.callbacks.push(resolve);
+
+      // Schedule batch resolution
+      if (!this.scheduled) {
+        this.scheduled = true;
+        queueMicrotask(() => this.flush());
+      }
+    });
+  }
+
+  /**
+   * Flush pending requests and resolve them in batch
+   */
+  async flush() {
+    if (this.pending.size === 0) {
+      this.scheduled = false;
+      return;
+    }
+
+    const pendingSnapshot = new Map(this.pending);
+    this.pending.clear();
+    this.scheduled = false;
+
+    // Process each group
+    for (const [_key, group] of pendingSnapshot) {
+      const { collection, fieldName, pagination, sort, parentUris, callbacks } = group;
+
+      try {
+        // Try findManyPartitioned first
+        /** @type {Operation} */
+        const operation = {
+          type: 'findManyPartitioned',
+          collection,
+          partitionField: fieldName,
+          partitionValues: parentUris,
+          sort,
+          pagination,
+        };
+
+        const result = await this.queryFn(operation);
+
+        // If adapter returns null, fall back to individual queries
+        if (result === null) {
+          await this._fallbackToIndividualQueries(group);
+          continue;
+        }
+
+        // Distribute results to callbacks
+        for (let i = 0; i < parentUris.length; i++) {
+          const uri = parentUris[i];
+          const partitionResult = result[uri] || { rows: [], hasNext: false, hasPrev: false };
+          callbacks[i](partitionResult);
+        }
+      } catch (_err) {
+        // On error, fall back to individual queries
+        await this._fallbackToIndividualQueries(group);
+      }
+    }
+  }
+
+  /**
+   * Fallback to individual findMany queries when findManyPartitioned is not supported
+   * @param {{ collection: string, fieldName: string, pagination: any, sort: any, parentUris: string[], callbacks: Array<(result: any) => void> }} group
+   */
+  async _fallbackToIndividualQueries(group) {
+    const { collection, fieldName, pagination, sort, parentUris, callbacks } = group;
+
+    const promises = parentUris.map(async (uri, i) => {
+      try {
+        const result = await this.queryFn({
+          type: 'findMany',
+          collection,
+          where: [{ field: fieldName, op: 'eq', value: uri }],
+          sort,
+          pagination,
+        });
+        callbacks[i](result);
+      } catch (_err) {
+        callbacks[i]({ rows: [], hasNext: false, hasPrev: false });
+      }
+    });
+
+    await Promise.all(promises);
+  }
+}
+
+/**
  * Create a GraphQL adapter with query resolvers
  * @param {Lexicon[]} lexicons
  * @param {AdapterOptions} options

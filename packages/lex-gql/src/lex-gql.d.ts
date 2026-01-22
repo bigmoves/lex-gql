@@ -183,6 +183,74 @@ export class DidCollector {
      */
     flush(): Promise<void>;
 }
+/**
+ * ReverseJoinCollector for batching reverse join resolution
+ * Groups lookups by (collection, fieldName, pagination, sort) and batches parent URIs
+ */
+export class ReverseJoinCollector {
+    /**
+     * @param {(op: Operation) => Promise<any>} queryFn
+     */
+    constructor(queryFn: (op: Operation) => Promise<any>);
+    queryFn: (op: Operation) => Promise<any>;
+    /** @type {Map<string, { collection: string, fieldName: string, pagination: any, sort: any, parentUris: string[], callbacks: Array<(result: any) => void> }>} */
+    pending: Map<string, {
+        collection: string;
+        fieldName: string;
+        pagination: any;
+        sort: any;
+        parentUris: string[];
+        callbacks: Array<(result: any) => void>;
+    }>;
+    scheduled: boolean;
+    /**
+     * Create a hash key for grouping requests with identical parameters
+     * @param {string} collection
+     * @param {string} fieldName
+     * @param {any} pagination
+     * @param {any} sort
+     * @returns {string}
+     */
+    _makeKey(collection: string, fieldName: string, pagination: any, sort: any): string;
+    /**
+     * Load reverse join results for a parent URI
+     * @param {string} collection - The collection to query (e.g., 'app.bsky.feed.threadgate')
+     * @param {string} fieldName - The field that references the parent (e.g., 'post')
+     * @param {string} parentUri - The parent record's URI
+     * @param {{ first?: number, after?: string, last?: number, before?: string }} pagination
+     * @param {Array<{ field: string, dir?: string }>} sort
+     * @returns {Promise<{ rows: any[], hasNext: boolean, hasPrev: boolean }>}
+     */
+    load(collection: string, fieldName: string, parentUri: string, pagination: {
+        first?: number;
+        after?: string;
+        last?: number;
+        before?: string;
+    }, sort: Array<{
+        field: string;
+        dir?: string;
+    }>): Promise<{
+        rows: any[];
+        hasNext: boolean;
+        hasPrev: boolean;
+    }>;
+    /**
+     * Flush pending requests and resolve them in batch
+     */
+    flush(): Promise<void>;
+    /**
+     * Fallback to individual findMany queries when findManyPartitioned is not supported
+     * @param {{ collection: string, fieldName: string, pagination: any, sort: any, parentUris: string[], callbacks: Array<(result: any) => void> }} group
+     */
+    _fallbackToIndividualQueries(group: {
+        collection: string;
+        fieldName: string;
+        pagination: any;
+        sort: any;
+        parentUris: string[];
+        callbacks: Array<(result: any) => void>;
+    }): Promise<void>;
+}
 /** @type {Array<{field: string, dir: string}>} */
 export const DEFAULT_SORT: Array<{
     field: string;
