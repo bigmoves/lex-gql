@@ -1,5 +1,12 @@
 # relay-example
 
+## 0.0.3
+
+### Patch Changes
+
+- Updated dependencies [bf8625f]
+  - lex-gql@0.3.0
+
 ## 0.0.2
 
 ### Patch Changes
