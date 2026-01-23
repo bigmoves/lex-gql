@@ -1834,6 +1834,117 @@ describe('Query Compiler', () => {
     expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(0);
   });
 
+  it('batches reverse join queries across multiple parent nodes', async () => {
+    const operations = [];
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.post',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              required: ['text'],
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+      parseLexicon({
+        lexicon: 1,
+        id: 'app.bsky.feed.like',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              required: ['subject'],
+              properties: {
+                subject: { type: 'string', format: 'at-uri' },
+              },
+            },
+          },
+        },
+      }),
+    ];
+
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        operations.push({ ...op });
+
+        if (op.type === 'findMany' && op.collection === 'app.bsky.feed.post') {
+          return {
+            rows: [
+              { uri: 'at://did1/app.bsky.feed.post/1', text: 'Post 1' },
+              { uri: 'at://did2/app.bsky.feed.post/2', text: 'Post 2' },
+              { uri: 'at://did3/app.bsky.feed.post/3', text: 'Post 3' },
+            ],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 3,
+          };
+        }
+
+        if (op.type === 'findManyPartitioned' && op.collection === 'app.bsky.feed.like') {
+          // Return likes for each post
+          const result = {};
+          for (const uri of op.partitionValues) {
+            result[uri] = {
+              rows: [
+                { uri: `${uri.replace('post', 'like')}/like1`, subject: uri },
+                { uri: `${uri.replace('post', 'like')}/like2`, subject: uri },
+              ],
+              hasNext: false,
+              hasPrev: false,
+              totalCount: 2,
+            };
+          }
+          return result;
+        }
+
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    const result = await adapter.execute(`
+      query {
+        appBskyFeedPost(first: 10) {
+          edges {
+            node {
+              uri
+              text
+              appBskyFeedLikeViaSubject(first: 10) {
+                totalCount
+                edges {
+                  node {
+                    uri
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    `);
+
+    // Should have exactly 2 operations: findMany for posts, findManyPartitioned for likes
+    expect(operations).toHaveLength(2);
+    expect(operations[0].type).toBe('findMany');
+    expect(operations[0].collection).toBe('app.bsky.feed.post');
+    expect(operations[1].type).toBe('findManyPartitioned');
+    expect(operations[1].collection).toBe('app.bsky.feed.like');
+    expect(operations[1].partitionField).toBe('subject');
+    expect(operations[1].partitionValues).toHaveLength(3);
+
+    // Verify the results are correct
+    const posts = result.data.appBskyFeedPost.edges;
+    expect(posts).toHaveLength(3);
+    expect(posts[0].node.appBskyFeedLikeViaSubject.totalCount).toBe(2);
+    expect(posts[1].node.appBskyFeedLikeViaSubject.totalCount).toBe(2);
+    expect(posts[2].node.appBskyFeedLikeViaSubject.totalCount).toBe(2);
+  });
+
   it('generates aggregate operation with count', async () => {
     const operations = [];
     const lexicons = [
