@@ -60,7 +60,7 @@ const result = await adapter.execute(`
 - **Automatic schema generation** from AT Protocol lexicons
 - **Relay-style pagination** with connections, edges, and pageInfo
 - **Forward joins** via `*Resolved` fields for strongRef and at-uri references
-- **Reverse joins** via `*Via*` fields (e.g., `appBskyFeedLikeViaSubject`)
+- **Reverse joins** via `*Via*` fields (e.g., `appBskyFeedLikeViaSubject`) with automatic N+1 batching
 - **DID joins** between collections via `*ByDid` fields
 - **Filtering** with field conditions (eq, in, contains, gt, gte, lt, lte)
 - **Sorting** with multi-field sort support
@@ -142,6 +142,7 @@ lex-gql follows the hexagonal architecture pattern. Your data layer implements t
 ```typescript
 type Operation =
   | { type: 'findMany'; collection: string; where: WhereClause[]; pagination: Pagination; sort?: SortClause[] }
+  | { type: 'findManyPartitioned'; collection: string; partitionField: string; partitionValues: string[]; pagination?: Pagination; sort?: SortClause[] }
   | { type: 'aggregate'; collection: string; where: WhereClause[]; groupBy?: string[] }
   | { type: 'create'; collection: string; rkey?: string; record: object }
   | { type: 'update'; collection: string; rkey: string; record: object }
@@ -174,11 +175,57 @@ For batched forward join resolution, lex-gql issues `findMany` operations with `
 
 Adapters **must** handle this case by omitting the collection filter and returning records matching the URIs. The returned records must include a `collection` field for union type resolution.
 
+### Reverse Joins
+
+Reverse joins let you query records that point TO a record, rather than records that a field points FROM. They're automatically generated for any field with `format: 'at-uri'`.
+
+**Naming Convention:** `{collection}Via{FieldName}`
+
+Examples:
+- `app.bsky.feed.like` has a `subject` field pointing to posts
+- Posts get a `appBskyFeedLikeViaSubject` field to query likes pointing to them
+- `app.bsky.feed.threadgate` has a `post` field
+- Posts get a `appBskyFeedThreadgateViaPost` field
+
+```graphql
+query {
+  appBskyFeedPost(first: 10) {
+    edges {
+      node {
+        uri
+        text
+        # Get all likes pointing to this post
+        appBskyFeedLikeViaSubject(first: 5, sortBy: [{ field: "createdAt", direction: DESC }]) {
+          totalCount
+          edges {
+            node {
+              uri
+              createdAt
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Arguments:**
+- `first`, `after`, `last`, `before` - Relay pagination (per-parent)
+- `sortBy` - Sort order for results
+
+**N+1 Prevention:**
+
+Reverse join queries are automatically batched. When you query 100 posts and each requests likes, lex-gql issues ONE batched `findManyPartitioned` query instead of 100 individual queries. Adapters that implement `findManyPartitioned` get efficient per-partition pagination (e.g., using SQL window functions for top-N-per-group queries). Adapters can return `null` from `findManyPartitioned` to fall back to individual `findMany` queries.
+
 ### Response Format
 
 ```typescript
 // For findMany
-{ rows: Record[]; hasNext: boolean; hasPrev: boolean }
+{ rows: Record[]; hasNext: boolean; hasPrev: boolean; totalCount?: number }
+
+// For findManyPartitioned (return null to trigger fallback to individual findMany queries)
+{ [partitionValue: string]: { rows: Record[]; hasNext: boolean; hasPrev: boolean; totalCount?: number } } | null
 
 // For aggregate
 { count: number; groups: { [field]: value; count: number }[] }
