@@ -85,6 +85,7 @@ import {
  * @property {Record<string, *>[]} rows
  * @property {boolean} hasNext
  * @property {boolean} hasPrev
+ * @property {number} [totalCount]
  */
 
 /**
@@ -1591,6 +1592,7 @@ function createRecordType(
  * @param {() => GraphQLUnionType | null} getRecordUnionType
  * @param {JoinCollector} joinCollector
  * @param {DidCollector} didCollector
+ * @param {ReverseJoinCollector} reverseJoinCollector
  * @param {GraphQLObjectType} blobType
  * @param {GraphQLObjectType | null} strongRefType
  * @param {Record<string, GraphQLObjectType>} typeRegistry
@@ -1611,6 +1613,7 @@ function createRecordTypeWithResolvers(
   getRecordUnionType,
   joinCollector,
   didCollector,
+  reverseJoinCollector,
   blobType,
   strongRefType,
   typeRegistry,
@@ -1746,22 +1749,23 @@ function createRecordTypeWithResolvers(
               };
             }
 
-            /** @type {Operation} */
-            const operation = {
-              type: 'findMany',
-              collection: fromLexicon,
-              where: [{ field: fieldName, op: 'eq', value: uri }],
-              sort: compileSortBy(args.sortBy),
-              pagination: {
-                first: args.first,
-                after: args.after,
-                last: args.last,
-                before: args.before,
-              },
+            const sort = compileSortBy(args.sortBy);
+            const pagination = {
+              first: args.first,
+              after: args.after,
+              last: args.last,
+              before: args.before,
             };
 
-            const result = await queryFn(operation);
-            return formatConnection(result, operation.sort);
+            const result = await reverseJoinCollector.load(
+              fromLexicon,
+              fieldName,
+              uri,
+              pagination,
+              sort,
+            );
+
+            return formatConnection(result, sort);
           },
         };
       }
@@ -2097,6 +2101,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
   // Create collectors for batching
   const joinCollector = new JoinCollector(queryFn);
   const didCollector = new DidCollector(queryFn);
+  const reverseJoinCollector = new ReverseJoinCollector(queryFn);
 
   // Discover reverse joins before building types
   const reverseJoinMap = discoverReverseJoins(lexicons);
@@ -2135,6 +2140,7 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         getRecordUnionType,
         joinCollector,
         didCollector,
+        reverseJoinCollector,
         blobType,
         strongRefType,
         typeRegistry,
@@ -2543,7 +2549,7 @@ export class ReverseJoinCollector {
    * @param {string} parentUri - The parent record's URI
    * @param {{ first?: number, after?: string, last?: number, before?: string }} pagination
    * @param {Array<{ field: string, dir?: string }>} sort
-   * @returns {Promise<{ rows: any[], hasNext: boolean, hasPrev: boolean }>}
+   * @returns {Promise<{ rows: any[], hasNext: boolean, hasPrev: boolean, totalCount: number }>}
    */
   load(collection, fieldName, parentUri, pagination, sort) {
     const key = this._makeKey(collection, fieldName, pagination, sort);
@@ -2614,7 +2620,7 @@ export class ReverseJoinCollector {
         // Distribute results to callbacks
         for (let i = 0; i < parentUris.length; i++) {
           const uri = parentUris[i];
-          const partitionResult = result[uri] || { rows: [], hasNext: false, hasPrev: false };
+          const partitionResult = result[uri] || { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
           callbacks[i](partitionResult);
         }
       } catch (_err) {
@@ -2642,7 +2648,7 @@ export class ReverseJoinCollector {
         });
         callbacks[i](result);
       } catch (_err) {
-        callbacks[i]({ rows: [], hasNext: false, hasPrev: false });
+        callbacks[i]({ rows: [], hasNext: false, hasPrev: false, totalCount: 0 });
       }
     });
 

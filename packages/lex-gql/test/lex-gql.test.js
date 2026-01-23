@@ -1631,17 +1631,21 @@ describe('Query Compiler', () => {
             totalCount: 1,
           };
         }
-        if (op.type === 'findMany' && op.collection === 'app.bsky.feed.like') {
-          // This should be the reverse join query
-          return {
-            rows: [
-              { uri: 'at://did:plc:other/app.bsky.feed.like/1', subject: postUri, createdAt: '2024-01-01T00:00:00Z' },
-              { uri: 'at://did:plc:other/app.bsky.feed.like/2', subject: postUri, createdAt: '2024-01-02T00:00:00Z' },
-            ],
-            hasNext: false,
-            hasPrev: false,
-            totalCount: 2,
-          };
+        if (op.type === 'findManyPartitioned' && op.collection === 'app.bsky.feed.like') {
+          // This should be the batched reverse join query
+          const result = {};
+          for (const uri of op.partitionValues) {
+            result[uri] = {
+              rows: [
+                { uri: 'at://did:plc:other/app.bsky.feed.like/1', subject: uri, createdAt: '2024-01-01T00:00:00Z' },
+                { uri: 'at://did:plc:other/app.bsky.feed.like/2', subject: uri, createdAt: '2024-01-02T00:00:00Z' },
+              ],
+              hasNext: false,
+              hasPrev: false,
+              totalCount: 2,
+            };
+          }
+          return result;
         }
         return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
       },
@@ -1669,15 +1673,16 @@ describe('Query Compiler', () => {
       }
     `);
 
-    // Should have two findMany operations: one for posts, one for likes (reverse join)
+    // Should have two operations: findMany for posts, findManyPartitioned for likes (reverse join)
     const postOp = operations.find((op) => op.collection === 'app.bsky.feed.post');
     const likeOp = operations.find((op) => op.collection === 'app.bsky.feed.like');
 
     expect(postOp).toBeDefined();
     expect(likeOp).toBeDefined();
-    expect(likeOp.type).toBe('findMany');
-    // The reverse join should query where subject equals the parent post's uri
-    expect(likeOp.where).toEqual([{ field: 'subject', op: 'eq', value: postUri }]);
+    expect(likeOp.type).toBe('findManyPartitioned');
+    // The reverse join should query via partitionField and partitionValues
+    expect(likeOp.partitionField).toBe('subject');
+    expect(likeOp.partitionValues).toEqual([postUri]);
 
     // Verify the result data
     expect(result.data.appBskyFeedPost.edges[0].node.text).toBe('Hello world');

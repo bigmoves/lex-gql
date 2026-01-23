@@ -219,7 +219,7 @@ export class ReverseJoinCollector {
      * @param {string} parentUri - The parent record's URI
      * @param {{ first?: number, after?: string, last?: number, before?: string }} pagination
      * @param {Array<{ field: string, dir?: string }>} sort
-     * @returns {Promise<{ rows: any[], hasNext: boolean, hasPrev: boolean }>}
+     * @returns {Promise<{ rows: any[], hasNext: boolean, hasPrev: boolean, totalCount: number }>}
      */
     load(collection: string, fieldName: string, parentUri: string, pagination: {
         first?: number;
@@ -233,6 +233,7 @@ export class ReverseJoinCollector {
         rows: any[];
         hasNext: boolean;
         hasPrev: boolean;
+        totalCount: number;
     }>;
     /**
      * Flush pending requests and resolve them in batch
@@ -348,6 +349,7 @@ export type PartitionedResultEntry = {
     rows: Record<string, any>[];
     hasNext: boolean;
     hasPrev: boolean;
+    totalCount?: number | undefined;
 };
 export type PartitionedResult = {
     [x: string]: PartitionedResultEntry;
