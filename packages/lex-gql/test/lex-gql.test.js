@@ -21,6 +21,7 @@ import {
   parseRefUri,
   refToTypeName,
   resolveRefKey,
+  ReverseJoinCollector,
 } from '../src/lex-gql.js';
 
 // Load all lexicon files recursively
@@ -3368,6 +3369,141 @@ describe('DidCollector', () => {
 
     expect(unique).toBeNull();
     expect(nonUnique).toEqual([]);
+  });
+});
+
+describe('ReverseJoinCollector', () => {
+  it('batches multiple reverse join requests into one findManyPartitioned call', async () => {
+    const operations = [];
+    const mockQueryFn = async (op) => {
+      operations.push(op);
+      if (op.type === 'findManyPartitioned') {
+        // Return results keyed by parent URI
+        const result = {};
+        for (const uri of op.partitionValues) {
+          result[uri] = {
+            rows: [{ uri: `${uri}/child/1`, parent: uri }],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 1,
+          };
+        }
+        return result;
+      }
+      return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+    };
+
+    const collector = new ReverseJoinCollector(mockQueryFn);
+
+    // Simulate multiple concurrent resolver calls
+    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
+    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 10 }, []);
+    const promise3 = collector.load('app.bsky.feed.like', 'subject', 'at://did3/post/3', { first: 10 }, []);
+
+    const [result1, result2, result3] = await Promise.all([promise1, promise2, promise3]);
+
+    // Should have made exactly one findManyPartitioned call
+    expect(operations).toHaveLength(1);
+    expect(operations[0].type).toBe('findManyPartitioned');
+    expect(operations[0].collection).toBe('app.bsky.feed.like');
+    expect(operations[0].partitionField).toBe('subject');
+    expect(operations[0].partitionValues).toEqual([
+      'at://did1/post/1',
+      'at://did2/post/2',
+      'at://did3/post/3',
+    ]);
+
+    // Each result should have the correct data
+    expect(result1.rows).toHaveLength(1);
+    expect(result1.rows[0].parent).toBe('at://did1/post/1');
+    expect(result2.rows[0].parent).toBe('at://did2/post/2');
+    expect(result3.rows[0].parent).toBe('at://did3/post/3');
+  });
+
+  it('groups requests by collection, fieldName, pagination, and sort', async () => {
+    const operations = [];
+    const mockQueryFn = async (op) => {
+      operations.push(op);
+      if (op.type === 'findManyPartitioned') {
+        const result = {};
+        for (const uri of op.partitionValues) {
+          result[uri] = { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+        }
+        return result;
+      }
+      return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+    };
+
+    const collector = new ReverseJoinCollector(mockQueryFn);
+
+    // Same collection/field but different pagination
+    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
+    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 5 }, []);  // Different pagination
+
+    await Promise.all([promise1, promise2]);
+
+    // Should have made two separate calls due to different pagination
+    expect(operations).toHaveLength(2);
+  });
+
+  it('falls back to individual queries when findManyPartitioned returns null', async () => {
+    const operations = [];
+    const mockQueryFn = async (op) => {
+      operations.push(op);
+      if (op.type === 'findManyPartitioned') {
+        return null; // Adapter doesn't support it
+      }
+      if (op.type === 'findMany') {
+        return {
+          rows: [{ uri: 'child', parent: op.where[0].value }],
+          hasNext: false,
+          hasPrev: false,
+          totalCount: 1,
+        };
+      }
+      return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+    };
+
+    const collector = new ReverseJoinCollector(mockQueryFn);
+
+    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
+    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 10 }, []);
+
+    const [result1, result2] = await Promise.all([promise1, promise2]);
+
+    // Should have tried findManyPartitioned, then fallen back to 2 findMany calls
+    expect(operations).toHaveLength(3);
+    expect(operations[0].type).toBe('findManyPartitioned');
+    expect(operations[1].type).toBe('findMany');
+    expect(operations[2].type).toBe('findMany');
+
+    // Results should still be correct
+    expect(result1.rows[0].parent).toBe('at://did1/post/1');
+    expect(result2.rows[0].parent).toBe('at://did2/post/2');
+  });
+
+  it('returns empty result for missing partitions', async () => {
+    const mockQueryFn = async (op) => {
+      if (op.type === 'findManyPartitioned') {
+        // Only return result for first URI
+        return {
+          'at://did1/post/1': { rows: [{ uri: 'child' }], hasNext: false, hasPrev: false, totalCount: 1 },
+          // Missing at://did2/post/2
+        };
+      }
+      return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+    };
+
+    const collector = new ReverseJoinCollector(mockQueryFn);
+
+    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
+    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 10 }, []);
+
+    const [result1, result2] = await Promise.all([promise1, promise2]);
+
+    expect(result1.rows).toHaveLength(1);
+    expect(result2.rows).toHaveLength(0);
+    expect(result2.hasNext).toBe(false);
   });
 });
 
