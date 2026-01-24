@@ -571,7 +571,8 @@ function createBlobType() {
         resolve: (blob, { preset = 'feed_fullsize' }) => {
           const { ref, did } = blob;
           if (!did || !ref) {
-            throw new Error('Blob missing required did or ref for URL generation');
+            // Return null for malformed blobs instead of throwing
+            return null;
           }
           if (!VALID_BLOB_PRESETS.includes(preset)) {
             throw new Error(
