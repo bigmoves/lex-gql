@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.1
+
+### Patch Changes
+
+- Fix strongRef resolution in \*Resolved fields
+
+  - Fix resolver to correctly extract URI from strongRef `{uri, cid}` objects instead of passing the object directly to `joinCollector.load()`
+  - Fix `buildSchema` to type `*Resolved` fields as `Record` union instead of `String`
+  - Add like lexicon test fixture with strongRef subject field
+  - Add unit tests for strongRef schema generation
+  - Add E2E tests for strongRef subjectResolved resolution
+
 ## 0.3.0
 
 ### Minor Changes

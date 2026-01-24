@@ -1200,6 +1200,198 @@ describe('lex-gql e2e with real lexicons', () => {
     });
   });
 
+  describe('strongRef top-level field resolution', () => {
+    it('resolves like.subject strongRef via subjectResolved', async () => {
+      // Create a post to be liked
+      writer.insertRecord({
+        uri: 'at://did:plc:bob/app.bsky.feed.post/liked',
+        cid: 'bafyliked',
+        record: {
+          text: 'This post will be liked',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      // Create a like with strongRef subject
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.like/abc123',
+        cid: 'bafylike',
+        record: {
+          subject: {
+            uri: 'at://did:plc:bob/app.bsky.feed.post/liked',
+            cid: 'bafyliked',
+          },
+          createdAt: '2024-01-15T11:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T11:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedLike(first: 10) {
+            edges {
+              node {
+                uri
+                subject {
+                  uri
+                  cid
+                }
+                subjectResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                    uri
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedLike.edges).toHaveLength(1);
+
+      const like = result.data.appBskyFeedLike.edges[0].node;
+      expect(like.uri).toBe('at://did:plc:alice/app.bsky.feed.like/abc123');
+      expect(like.subject.uri).toBe('at://did:plc:bob/app.bsky.feed.post/liked');
+      expect(like.subject.cid).toBe('bafyliked');
+      expect(like.subjectResolved).not.toBeNull();
+      expect(like.subjectResolved.text).toBe('This post will be liked');
+      expect(like.subjectResolved.uri).toBe('at://did:plc:bob/app.bsky.feed.post/liked');
+    });
+
+    it('returns null for subjectResolved when referenced post does not exist', async () => {
+      // Create a like with strongRef to non-existent post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.like/orphan',
+        cid: 'bafyorphan',
+        record: {
+          subject: {
+            uri: 'at://did:plc:bob/app.bsky.feed.post/nonexistent',
+            cid: 'bafynonexistent',
+          },
+          createdAt: '2024-01-15T11:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T11:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedLike(first: 10) {
+            edges {
+              node {
+                subject {
+                  uri
+                }
+                subjectResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const like = result.data.appBskyFeedLike.edges[0].node;
+      expect(like.subject.uri).toBe('at://did:plc:bob/app.bsky.feed.post/nonexistent');
+      expect(like.subjectResolved).toBeNull();
+    });
+  });
+
+  describe('at-uri format field resolution', () => {
+    it('resolves postgate.post at-uri via postResolved', async () => {
+      // Create a post that will be referenced by postgate
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.post/gated',
+        cid: 'bafygated',
+        record: {
+          text: 'This post has a postgate',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      // Create a postgate with at-uri string reference
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.postgate/gated',
+        cid: 'bafypostgate',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/gated',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostgate(first: 10) {
+            edges {
+              node {
+                uri
+                post
+                postResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                    uri
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      expect(result.data.appBskyFeedPostgate.edges).toHaveLength(1);
+
+      const postgate = result.data.appBskyFeedPostgate.edges[0].node;
+      expect(postgate.uri).toBe('at://did:plc:alice/app.bsky.feed.postgate/gated');
+      expect(postgate.post).toBe('at://did:plc:alice/app.bsky.feed.post/gated');
+      expect(postgate.postResolved).not.toBeNull();
+      expect(postgate.postResolved.text).toBe('This post has a postgate');
+      expect(postgate.postResolved.uri).toBe('at://did:plc:alice/app.bsky.feed.post/gated');
+    });
+
+    it('returns null for postResolved when referenced post does not exist', async () => {
+      // Create a postgate with at-uri to non-existent post
+      writer.insertRecord({
+        uri: 'at://did:plc:alice/app.bsky.feed.postgate/orphan',
+        cid: 'bafyorphangate',
+        record: {
+          post: 'at://did:plc:alice/app.bsky.feed.post/nonexistent',
+          createdAt: '2024-01-15T10:00:00.000Z',
+        },
+        indexedAt: '2024-01-15T10:00:00.000Z',
+      });
+
+      const result = await adapter.execute(`
+        query {
+          appBskyFeedPostgate(first: 10) {
+            edges {
+              node {
+                post
+                postResolved {
+                  ... on AppBskyFeedPost {
+                    text
+                  }
+                }
+              }
+            }
+          }
+        }
+      `);
+
+      expect(result.errors).toBeUndefined();
+      const postgate = result.data.appBskyFeedPostgate.edges[0].node;
+      expect(postgate.post).toBe('at://did:plc:alice/app.bsky.feed.post/nonexistent');
+      expect(postgate.postResolved).toBeNull();
+    });
+  });
+
   describe('ByDid resolvers', () => {
     beforeEach(() => {
       // Create profile for Alice

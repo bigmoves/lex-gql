@@ -1477,6 +1477,7 @@ function createRecordType(
   whereInputTypes,
   typeRegistry,
   unionRegistry,
+  getRecordUnionType,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -1516,10 +1517,13 @@ function createRecordType(
 
         // Add forward join field if applicable
         if (isForwardJoinField(prop)) {
-          fields[`${prop.name}Resolved`] = {
-            type: GraphQLString, // Will be Record union later
-            description: `Resolved reference for ${prop.name}`,
-          };
+          const recordUnionType = getRecordUnionType ? getRecordUnionType() : null;
+          if (recordUnionType) {
+            fields[`${prop.name}Resolved`] = {
+              type: recordUnionType,
+              description: `Resolved reference for ${prop.name}`,
+            };
+          }
         }
       }
 
@@ -1668,7 +1672,10 @@ function createRecordTypeWithResolvers(
               type: recordUnionType,
               description: `Resolved reference for ${prop.name}`,
               resolve: async (parent) => {
-                const uri = parent[prop.name];
+                const ref = parent[prop.name];
+                if (!ref) return null;
+                // Handle both string URI and strongRef {uri, cid} object
+                const uri = typeof ref === 'string' ? ref : ref.uri;
                 if (!uri) return null;
                 return joinCollector.load(uri);
               },
@@ -1911,6 +1918,7 @@ export function buildSchema(lexicons) {
         whereInputTypes,
         typeRegistry,
         unionRegistry,
+        getRecordUnionType,
       );
       // Also add record types to the registry for cross-type ref resolution
       typeRegistry[lexicon.id] = recordTypes[lexicon.id];

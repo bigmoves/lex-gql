@@ -159,6 +159,74 @@ type SortClause = { field: string; dir: 'asc' | 'desc' }
 type Pagination = { first?: number; after?: string; last?: number; before?: string }
 ```
 
+### Forward Joins
+
+Forward joins let you resolve references to other records. They're automatically generated for:
+- **strongRef fields** - References with `type: 'ref'` pointing to `com.atproto.repo.strongRef`
+- **at-uri fields** - String fields with `format: 'at-uri'`
+
+**Naming Convention:** `{fieldName}Resolved`
+
+Examples:
+- `app.bsky.feed.like` has a `subject` strongRef field → gets `subjectResolved`
+- `app.bsky.feed.postgate` has a `post` at-uri field → gets `postResolved`
+- `app.bsky.actor.profile` has a `pinnedPost` strongRef field → gets `pinnedPostResolved`
+
+```graphql
+query {
+  appBskyFeedLike(first: 10) {
+    edges {
+      node {
+        uri
+        subject {
+          uri
+          cid
+        }
+        # Resolve the liked post
+        subjectResolved {
+          ... on AppBskyFeedPost {
+            text
+            createdAt
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Nested Resolution:**
+
+The `ComAtprotoRepoStrongRef` type also has a `uriResolved` field for nested strongRef resolution:
+
+```graphql
+query {
+  appBskyFeedPost(first: 10) {
+    edges {
+      node {
+        text
+        reply {
+          parent {
+            uri
+            cid
+            # Resolve the parent post via the strongRef
+            uriResolved {
+              ... on AppBskyFeedPost {
+                text
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**N+1 Prevention:**
+
+Forward join queries are automatically batched. When you query 100 likes and each requests `subjectResolved`, lex-gql issues ONE batched query for all unique URIs instead of 100 individual queries.
+
 ### Cross-Collection URI Resolution
 
 For batched forward join resolution, lex-gql issues `findMany` operations with `collection: '*'`. This special value means "query across all collections by URI":

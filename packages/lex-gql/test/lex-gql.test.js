@@ -2679,6 +2679,57 @@ describe('Forward Joins on Nested Types', () => {
   });
 });
 
+describe('strongRef Resolved field schema generation', () => {
+  it('generates subjectResolved field for like with strongRef subject', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // AppBskyFeedLike should have subjectResolved field that returns Record union
+    expect(sdl).toMatch(/type AppBskyFeedLike \{[\s\S]*?subjectResolved: Record/);
+  });
+
+  it('generates subject field as ComAtprotoRepoStrongRef type', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // AppBskyFeedLike.subject should be ComAtprotoRepoStrongRef
+    expect(sdl).toMatch(/type AppBskyFeedLike \{[\s\S]*?subject: ComAtprotoRepoStrongRef/);
+  });
+
+  it('ComAtprotoRepoStrongRef has uriResolved for nested resolution', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // ComAtprotoRepoStrongRef should have uriResolved for nested resolution path
+    expect(sdl).toMatch(/type ComAtprotoRepoStrongRef \{[\s\S]*?uri: String/);
+    expect(sdl).toMatch(/type ComAtprotoRepoStrongRef \{[\s\S]*?cid: String/);
+    expect(sdl).toMatch(/type ComAtprotoRepoStrongRef \{[\s\S]*?uriResolved: Record/);
+  });
+});
+
+describe('at-uri format Resolved field schema generation', () => {
+  it('generates postResolved field for postgate with at-uri post field', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // AppBskyFeedPostgate should have postResolved field that returns Record union
+    expect(sdl).toMatch(/type AppBskyFeedPostgate \{[\s\S]*?postResolved: Record/);
+  });
+
+  it('post field remains as String type (at-uri format)', () => {
+    const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
+    const schema = buildSchema(parsedLexicons);
+    const sdl = printSchema(schema);
+
+    // AppBskyFeedPostgate.post should be String (the raw at-uri)
+    expect(sdl).toMatch(/type AppBskyFeedPostgate \{[\s\S]*?post: String/);
+  });
+});
+
 describe('Union Type Resolution', () => {
   it('creates union type for fields with refs array', () => {
     const parsedLexicons = realLexicons.map((l) => parseLexicon(l.content));
