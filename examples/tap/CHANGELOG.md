@@ -1,5 +1,13 @@
 # lex-gql-tap-example
 
+## 1.0.6
+
+### Patch Changes
+
+- Updated dependencies [f0eb4a7]
+  - lex-gql@0.3.2
+  - lex-gql-sqlite@0.2.1
+
 ## 1.0.5
 
 ### Patch Changes
