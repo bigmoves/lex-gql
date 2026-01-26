@@ -354,9 +354,35 @@ export type PartitionedResultEntry = {
 export type PartitionedResult = {
     [x: string]: PartitionedResultEntry;
 };
+export type SearchParams = {
+    /**
+     * - Collection name (e.g., 'app.bsky.feed.post')
+     */
+    collection: string;
+    /**
+     * - Search query string
+     */
+    query: string;
+    /**
+     * - Optional where clause (validated against filterable fields)
+     */
+    where?: any;
+    /**
+     * - Maximum results to return
+     */
+    first?: number | undefined;
+    /**
+     * - Cursor for pagination
+     */
+    after?: string | undefined;
+};
 export type AdapterOptions = {
     query: (op: Operation) => Promise<any>;
     subscribe?: ((op: SubscribeOperation) => AsyncIterable<any>) | undefined;
+    /**
+     * - Search function for full-text search
+     */
+    search?: ((params: SearchParams) => Promise<any>) | undefined;
     context?: Record<string, any> | undefined;
     maxDepth?: number | undefined;
 };

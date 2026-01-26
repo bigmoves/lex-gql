@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1
+
+### Patch Changes
+
+- fix: include search property in AdapterOptions type definitions
+
 ## 0.4.0
 
 ### Minor Changes
