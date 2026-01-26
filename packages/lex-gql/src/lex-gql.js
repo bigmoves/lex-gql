@@ -93,9 +93,19 @@ import {
  */
 
 /**
+ * @typedef {Object} SearchParams
+ * @property {string} collection - Collection name (e.g., 'app.bsky.feed.post')
+ * @property {string} query - Search query string
+ * @property {*} [where] - Optional where clause (validated against filterable fields)
+ * @property {number} [first] - Maximum results to return
+ * @property {string} [after] - Cursor for pagination
+ */
+
+/**
  * @typedef {Object} AdapterOptions
  * @property {(op: Operation) => Promise<*>} query
  * @property {(op: SubscribeOperation) => AsyncIterable<*>} [subscribe]
+ * @property {(params: SearchParams) => Promise<*>} [search] - Search function for full-text search
  * @property {Record<string, *>} [context]
  * @property {number} [maxDepth]
  */
@@ -1460,8 +1470,9 @@ function discoverReverseJoins(lexicons) {
  * @param {GraphQLObjectType | null} strongRefType
  * @param {Record<string, GraphQLInputObjectType>} sortInputTypes
  * @param {Record<string, GraphQLInputObjectType>} whereInputTypes
- * @param {Record<string, GraphQLObjectType>} [typeRegistry] - Unified type registry for ref resolution
- * @param {Record<string, GraphQLUnionType>} [unionRegistry] - Registry for union types
+ * @param {Record<string, GraphQLObjectType>} typeRegistry - Unified type registry for ref resolution
+ * @param {Record<string, GraphQLUnionType>} unionRegistry - Registry for union types
+ * @param {() => GraphQLUnionType | null} getRecordUnionType - Getter for Record union type
  * @returns {GraphQLObjectType}
  */
 function createRecordType(
@@ -1605,8 +1616,6 @@ function createRecordType(
  * @param {Map<string, Array<{fromLexicon: string, fieldName: string}>>} reverseJoinMap
  * @param {Record<string, GraphQLObjectType>} connectionTypes
  * @param {Record<string, GraphQLInputObjectType>} sortInputTypes
- * @param {Record<string, GraphQLInputObjectType>} whereInputTypes
- * @param {(op: Operation) => Promise<any>} queryFn
  * @returns {GraphQLObjectType}
  */
 function createRecordTypeWithResolvers(
@@ -1626,8 +1635,6 @@ function createRecordTypeWithResolvers(
   reverseJoinMap,
   connectionTypes,
   sortInputTypes,
-  whereInputTypes,
-  queryFn,
 ) {
   return new GraphQLObjectType({
     name: typeName,
@@ -2067,9 +2074,10 @@ export function buildSchema(lexicons) {
  * @param {Lexicon[]} lexicons
  * @param {(op: Operation) => Promise<any>} queryFn
  * @param {(op: SubscribeOperation) => AsyncIterable<*>} [subscribeFn]
+ * @param {(params: SearchParams) => Promise<*>} [searchFn]
  * @returns {GraphQLSchema}
  */
-function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
+function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn, searchFn) {
   /** @type {Record<string, GraphQLObjectType>} */
   const recordTypes = {};
   /** @type {Record<string, GraphQLObjectType>} */
@@ -2157,8 +2165,6 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         reverseJoinMap,
         connectionTypes,
         sortInputTypes,
-        whereInputTypes,
-        queryFn,
       );
       // Register in type registry
       typeRegistry[lexicon.id] = recordTypes[lexicon.id];
@@ -2219,6 +2225,10 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
     queryFields[fieldName] = {
       type: connectionTypes[lexicon.id],
       args: {
+        query: {
+          type: GraphQLString,
+          description: 'Full-text search query. When present, searches via Meilisearch.',
+        },
         first: { type: GraphQLInt },
         after: { type: GraphQLString },
         last: { type: GraphQLInt },
@@ -2227,6 +2237,19 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn) {
         sortBy: { type: new GraphQLList(sortInputTypes[typeName]) },
       },
       resolve: async (_, args, _context, info) => {
+        // Search mode - delegate to searchFn if query parameter is present
+        if (args.query && searchFn) {
+          const result = await searchFn({
+            collection: lexicon.id,
+            query: args.query,
+            where: args.where,
+            first: args.first || 20,
+            after: args.after,
+          });
+          return formatConnection(result);
+        }
+
+        // Browse mode - existing queryFn path
         /** @type {Operation} */
         const operation = {
           type: 'findMany',
@@ -2629,7 +2652,12 @@ export class ReverseJoinCollector {
         // Distribute results to callbacks
         for (let i = 0; i < parentUris.length; i++) {
           const uri = parentUris[i];
-          const partitionResult = result[uri] || { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+          const partitionResult = result[uri] || {
+            rows: [],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 0,
+          };
           callbacks[i](partitionResult);
         }
       } catch (_err) {
@@ -2676,9 +2704,9 @@ export class ReverseJoinCollector {
  * }}
  */
 export function createAdapter(lexicons, options) {
-  const { query, subscribe } = options;
+  const { query, subscribe, search } = options;
 
-  const schema = buildSchemaWithResolvers(lexicons, query, subscribe);
+  const schema = buildSchemaWithResolvers(lexicons, query, subscribe, search);
 
   return {
     schema,

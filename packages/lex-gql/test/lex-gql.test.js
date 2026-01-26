@@ -19,9 +19,9 @@ import {
   nsidToTypeName,
   parseLexicon,
   parseRefUri,
+  ReverseJoinCollector,
   refToTypeName,
   resolveRefKey,
-  ReverseJoinCollector,
 } from '../src/lex-gql.js';
 
 // Load all lexicon files recursively
@@ -1638,8 +1638,16 @@ describe('Query Compiler', () => {
           for (const uri of op.partitionValues) {
             result[uri] = {
               rows: [
-                { uri: 'at://did:plc:other/app.bsky.feed.like/1', subject: uri, createdAt: '2024-01-01T00:00:00Z' },
-                { uri: 'at://did:plc:other/app.bsky.feed.like/2', subject: uri, createdAt: '2024-01-02T00:00:00Z' },
+                {
+                  uri: 'at://did:plc:other/app.bsky.feed.like/1',
+                  subject: uri,
+                  createdAt: '2024-01-01T00:00:00Z',
+                },
+                {
+                  uri: 'at://did:plc:other/app.bsky.feed.like/2',
+                  subject: uri,
+                  createdAt: '2024-01-02T00:00:00Z',
+                },
               ],
               hasNext: false,
               hasPrev: false,
@@ -1688,7 +1696,9 @@ describe('Query Compiler', () => {
     // Verify the result data
     expect(result.data.appBskyFeedPost.edges[0].node.text).toBe('Hello world');
     expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.totalCount).toBe(2);
-    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(2);
+    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(
+      2,
+    );
   });
 
   it('reverse join fields support pagination arguments', async () => {
@@ -1831,7 +1841,9 @@ describe('Query Compiler', () => {
 
     // Should return empty connection
     expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.totalCount).toBe(0);
-    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(0);
+    expect(result.data.appBskyFeedPost.edges[0].node.appBskyFeedLikeViaSubject.edges).toHaveLength(
+      0,
+    );
   });
 
   it('batches reverse join queries across multiple parent nodes', async () => {
@@ -3098,7 +3110,7 @@ describe('Blob URL resolver', () => {
     );
   });
 
-  it('throws error when did is missing from blob', () => {
+  it('returns null when did is missing from blob', () => {
     const lexicons = [
       {
         id: 'app.bsky.actor.profile',
@@ -3124,12 +3136,10 @@ describe('Blob URL resolver', () => {
       // did is missing
     };
 
-    expect(() => urlField.resolve(blob, {})).toThrow(
-      'Blob missing required did or ref for URL generation',
-    );
+    expect(urlField.resolve(blob, {})).toBeNull();
   });
 
-  it('throws error when ref is missing from blob', () => {
+  it('returns null when ref is missing from blob', () => {
     const lexicons = [
       {
         id: 'app.bsky.actor.profile',
@@ -3155,9 +3165,7 @@ describe('Blob URL resolver', () => {
       did: 'did:plc:user123',
     };
 
-    expect(() => urlField.resolve(blob, {})).toThrow(
-      'Blob missing required did or ref for URL generation',
-    );
+    expect(urlField.resolve(blob, {})).toBeNull();
   });
 
   it('throws error for invalid preset', () => {
@@ -3558,9 +3566,27 @@ describe('ReverseJoinCollector', () => {
     const collector = new ReverseJoinCollector(mockQueryFn);
 
     // Simulate multiple concurrent resolver calls
-    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
-    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 10 }, []);
-    const promise3 = collector.load('app.bsky.feed.like', 'subject', 'at://did3/post/3', { first: 10 }, []);
+    const promise1 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did1/post/1',
+      { first: 10 },
+      [],
+    );
+    const promise2 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did2/post/2',
+      { first: 10 },
+      [],
+    );
+    const promise3 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did3/post/3',
+      { first: 10 },
+      [],
+    );
 
     const [result1, result2, result3] = await Promise.all([promise1, promise2, promise3]);
 
@@ -3599,8 +3625,20 @@ describe('ReverseJoinCollector', () => {
     const collector = new ReverseJoinCollector(mockQueryFn);
 
     // Same collection/field but different pagination
-    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
-    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 5 }, []);  // Different pagination
+    const promise1 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did1/post/1',
+      { first: 10 },
+      [],
+    );
+    const promise2 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did2/post/2',
+      { first: 5 },
+      [],
+    ); // Different pagination
 
     await Promise.all([promise1, promise2]);
 
@@ -3628,8 +3666,20 @@ describe('ReverseJoinCollector', () => {
 
     const collector = new ReverseJoinCollector(mockQueryFn);
 
-    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
-    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 10 }, []);
+    const promise1 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did1/post/1',
+      { first: 10 },
+      [],
+    );
+    const promise2 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did2/post/2',
+      { first: 10 },
+      [],
+    );
 
     const [result1, result2] = await Promise.all([promise1, promise2]);
 
@@ -3649,7 +3699,12 @@ describe('ReverseJoinCollector', () => {
       if (op.type === 'findManyPartitioned') {
         // Only return result for first URI
         return {
-          'at://did1/post/1': { rows: [{ uri: 'child' }], hasNext: false, hasPrev: false, totalCount: 1 },
+          'at://did1/post/1': {
+            rows: [{ uri: 'child' }],
+            hasNext: false,
+            hasPrev: false,
+            totalCount: 1,
+          },
           // Missing at://did2/post/2
         };
       }
@@ -3658,8 +3713,20 @@ describe('ReverseJoinCollector', () => {
 
     const collector = new ReverseJoinCollector(mockQueryFn);
 
-    const promise1 = collector.load('app.bsky.feed.like', 'subject', 'at://did1/post/1', { first: 10 }, []);
-    const promise2 = collector.load('app.bsky.feed.like', 'subject', 'at://did2/post/2', { first: 10 }, []);
+    const promise1 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did1/post/1',
+      { first: 10 },
+      [],
+    );
+    const promise2 = collector.load(
+      'app.bsky.feed.like',
+      'subject',
+      'at://did2/post/2',
+      { first: 10 },
+      [],
+    );
 
     const [result1, result2] = await Promise.all([promise1, promise2]);
 
@@ -3723,5 +3790,271 @@ describe('JoinCollector', () => {
 
     await collector.load('at://did:plc:user/col/rkey');
     expect(callCount).toBe(1); // No additional query
+  });
+});
+
+describe('Search functionality', () => {
+  it('uses search function when query parameter is provided', async () => {
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'xyz.test.record',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+    ];
+
+    const queryCalls = [];
+    const searchCalls = [];
+
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        queryCalls.push(op);
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+      search: async (params) => {
+        searchCalls.push(params);
+        return {
+          rows: [{ uri: 'at://did/xyz.test.record/1', text: 'hello world' }],
+          hasNext: false,
+          hasPrev: false,
+          totalCount: 1,
+        };
+      },
+    });
+
+    const result = await adapter.execute(`
+      query {
+        xyzTestRecord(query: "hello") {
+          edges { node { uri text } }
+        }
+      }
+    `);
+
+    expect(result.errors).toBeUndefined();
+    expect(queryCalls).toHaveLength(0);
+    expect(searchCalls).toHaveLength(1);
+    expect(searchCalls[0].collection).toBe('xyz.test.record');
+    expect(searchCalls[0].query).toBe('hello');
+    expect(result.data.xyzTestRecord.edges[0].node.text).toBe('hello world');
+  });
+
+  it('uses query function when no query parameter is provided', async () => {
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'xyz.test.record',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+    ];
+
+    const queryCalls = [];
+    const searchCalls = [];
+
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        queryCalls.push(op);
+        return {
+          rows: [{ uri: 'at://did/xyz.test.record/1', text: 'browsed result' }],
+          hasNext: false,
+          hasPrev: false,
+          totalCount: 1,
+        };
+      },
+      search: async (params) => {
+        searchCalls.push(params);
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    const result = await adapter.execute(`
+      query {
+        xyzTestRecord(first: 10) {
+          edges { node { uri text } }
+        }
+      }
+    `);
+
+    expect(result.errors).toBeUndefined();
+    expect(queryCalls).toHaveLength(1);
+    expect(searchCalls).toHaveLength(0);
+    expect(result.data.xyzTestRecord.edges[0].node.text).toBe('browsed result');
+  });
+
+  it('passes where clause to search function', async () => {
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'xyz.test.record',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: {
+                text: { type: 'string' },
+                status: { type: 'string' },
+              },
+            },
+          },
+        },
+      }),
+    ];
+
+    const searchCalls = [];
+
+    const adapter = createAdapter(lexicons, {
+      query: async () => ({ rows: [], hasNext: false, hasPrev: false, totalCount: 0 }),
+      search: async (params) => {
+        searchCalls.push(params);
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    await adapter.execute(`
+      query {
+        xyzTestRecord(query: "hello", where: { status: { eq: "active" } }) {
+          edges { node { uri } }
+        }
+      }
+    `);
+
+    expect(searchCalls).toHaveLength(1);
+    expect(searchCalls[0].query).toBe('hello');
+    expect(searchCalls[0].where).toEqual({ status: { eq: 'active' } });
+  });
+
+  it('passes pagination to search function', async () => {
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'xyz.test.record',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+    ];
+
+    const searchCalls = [];
+
+    const adapter = createAdapter(lexicons, {
+      query: async () => ({ rows: [], hasNext: false, hasPrev: false, totalCount: 0 }),
+      search: async (params) => {
+        searchCalls.push(params);
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    await adapter.execute(`
+      query {
+        xyzTestRecord(query: "hello", first: 50, after: "cursor123") {
+          edges { node { uri } }
+        }
+      }
+    `);
+
+    expect(searchCalls).toHaveLength(1);
+    expect(searchCalls[0].first).toBe(50);
+    expect(searchCalls[0].after).toBe('cursor123');
+  });
+
+  it('defaults to first: 20 when not specified in search mode', async () => {
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'xyz.test.record',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+    ];
+
+    const searchCalls = [];
+
+    const adapter = createAdapter(lexicons, {
+      query: async () => ({ rows: [], hasNext: false, hasPrev: false, totalCount: 0 }),
+      search: async (params) => {
+        searchCalls.push(params);
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+    });
+
+    await adapter.execute(`
+      query {
+        xyzTestRecord(query: "hello") {
+          edges { node { uri } }
+        }
+      }
+    `);
+
+    expect(searchCalls).toHaveLength(1);
+    expect(searchCalls[0].first).toBe(20);
+  });
+
+  it('falls back to query function when search is not provided', async () => {
+    const lexicons = [
+      parseLexicon({
+        lexicon: 1,
+        id: 'xyz.test.record',
+        defs: {
+          main: {
+            type: 'record',
+            record: {
+              type: 'object',
+              properties: { text: { type: 'string' } },
+            },
+          },
+        },
+      }),
+    ];
+
+    const queryCalls = [];
+
+    const adapter = createAdapter(lexicons, {
+      query: async (op) => {
+        queryCalls.push(op);
+        return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
+      },
+      // No search function provided
+    });
+
+    const result = await adapter.execute(`
+      query {
+        xyzTestRecord(query: "hello") {
+          edges { node { uri } }
+        }
+      }
+    `);
+
+    // Should fall back to regular query since no search function
+    expect(result.errors).toBeUndefined();
+    expect(queryCalls).toHaveLength(1);
   });
 });

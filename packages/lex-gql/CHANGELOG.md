@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.0
+
+### Minor Changes
+
+- Add `query` parameter for full-text search to collection query fields
+
+  - Add optional `query` argument to collection queries
+  - When `query` is present, delegates to optional `search` function
+  - Both paths use `formatConnection` for consistent response shape
+  - Fix blob URL resolver to return null for missing did/ref
+
 ## 0.3.2
 
 ### Patch Changes
