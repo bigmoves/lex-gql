@@ -4018,7 +4018,7 @@ describe('Search functionality', () => {
     expect(searchCalls[0].first).toBe(20);
   });
 
-  it('falls back to query function when search is not provided', async () => {
+  it('throws error when query used without search function', async () => {
     const lexicons = [
       parseLexicon({
         lexicon: 1,
@@ -4035,11 +4035,8 @@ describe('Search functionality', () => {
       }),
     ];
 
-    const queryCalls = [];
-
     const adapter = createAdapter(lexicons, {
-      query: async (op) => {
-        queryCalls.push(op);
+      query: async () => {
         return { rows: [], hasNext: false, hasPrev: false, totalCount: 0 };
       },
       // No search function provided
@@ -4053,8 +4050,8 @@ describe('Search functionality', () => {
       }
     `);
 
-    // Should fall back to regular query since no search function
-    expect(result.errors).toBeUndefined();
-    expect(queryCalls).toHaveLength(1);
+    // Should error since no search function is provided
+    expect(result.errors).toHaveLength(1);
+    expect(result.errors[0].message).toContain('search function');
   });
 });

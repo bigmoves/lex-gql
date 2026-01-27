@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0
+
+### Minor Changes
+
+- Add sort parameter to search function and require searchFn for query parameter
+
+  - Pass `sort` parameter to `searchFn` when using full-text search
+  - Throw error when `query` parameter is used without a `search` function configured
+  - Limit sortable fields to integers, booleans, and datetime strings (removes plain string sorting)
+
 ## 0.4.1
 
 ### Patch Changes

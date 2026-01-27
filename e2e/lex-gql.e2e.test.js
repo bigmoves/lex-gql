@@ -580,10 +580,10 @@ describe('lex-gql e2e with real lexicons', () => {
       });
     });
 
-    it('sorts by record field ascending', async () => {
+    it('sorts by datetime field ascending', async () => {
       const result = await adapter.execute(`
         query {
-          appBskyFeedPost(first: 10, sortBy: [{ field: text, direction: ASC }]) {
+          appBskyFeedPost(first: 10, sortBy: [{ field: createdAt, direction: ASC }]) {
             edges {
               node { text }
             }

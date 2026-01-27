@@ -797,9 +797,11 @@ function createSortFieldEnum(typeName, recordDef) {
     indexedAt: { value: 'indexedAt' },
   };
 
-  // Add primitive lexicon fields
+  // Add sortable lexicon fields: integers, booleans, and datetime strings
   for (const prop of recordDef.properties) {
-    if (['string', 'integer', 'number', 'boolean'].includes(prop.type)) {
+    if (['integer', 'boolean'].includes(prop.type)) {
+      values[prop.name] = { value: prop.name };
+    } else if (prop.type === 'string' && prop.format === 'datetime') {
       values[prop.name] = { value: prop.name };
     }
   }
@@ -2238,13 +2240,17 @@ function buildSchemaWithResolvers(lexicons, queryFn, subscribeFn, searchFn) {
       },
       resolve: async (_, args, _context, info) => {
         // Search mode - delegate to searchFn if query parameter is present
-        if (args.query && searchFn) {
+        if (args.query) {
+          if (!searchFn) {
+            throw new Error('Full-text search requires a search function. Provide a search option when building the schema.');
+          }
           const result = await searchFn({
             collection: lexicon.id,
             query: args.query,
             where: args.where,
             first: args.first || 20,
             after: args.after,
+            sort: compileSortBy(args.sortBy),
           });
           return formatConnection(result);
         }

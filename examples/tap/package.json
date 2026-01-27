@@ -1,6 +1,6 @@
 {
   "name": "lex-gql-tap-example",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "private": true,
   "type": "module",
   "description": "Example: lex-gql queries with AT Protocol tap",
